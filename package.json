@@ -15,7 +15,7 @@
     "test": "npm run lint && npm run tests-cmd",
     "tdd": "nodemon -q -x 'npm run tests-cmd'",
     "build": "rimraf lib && babel src -d lib",
-    "start": "nodemon --watch src -x 'npm run build && node ./bin/webd2-server'"
+    "start": "DEBUG=webd2-api:* nodemon --watch src -x 'npm run build && node ./bin/webd2-server'"
   },
   "repository": {
     "type": "git",

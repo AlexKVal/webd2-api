@@ -3,7 +3,7 @@ import logger from 'morgan'
 import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 
-import api from './routes/api'
+import apiV1 from './routes/api-v1'
 
 const app = express()
 
@@ -13,7 +13,7 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(cookieParser())
 
 // routes
-app.use('/api/v1', api)
+app.use('/api/v1', apiV1)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
