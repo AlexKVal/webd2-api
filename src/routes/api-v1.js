@@ -7,7 +7,7 @@ import userSerialize from '../serializers/user'
 const debug = debugLogger('webd2-api:api')
 const router = express.Router()
 
-const database = dbConnect('DSN=D2Main.NET')
+const database = dbConnect(`DSN=${process.env.D2ALIAS}`)
 
 router.get('/', function (req, res, next) {
   debug('the root of api/v1')

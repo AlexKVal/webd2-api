@@ -2,8 +2,6 @@
 
 WIP: json api server for the webd2
 
-[![Build Status](https://travis-ci.org/AlexKVal/webd2-api.svg?branch=master)](https://travis-ci.org/AlexKVal/webd2-api)
-
 ## TDD
 
 ```
@@ -21,6 +19,10 @@ For auto rebuilding and restarting server use
 `npm run watch` on unix
 
 `npm run win` on windows
+
+#### Config
+
+Set env variable `D2ALIAS` to odbc alias configured to the main database
 
 ## License
 It is licensed under the [MIT License](https://github.com/alexkval/webd2-api/blob/master/LICENSE).
