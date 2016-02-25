@@ -1,20 +1,16 @@
 import express from 'express'
 import debugLogger from 'debug'
-import {dbConnect} from 'webd2-db'
 
-import userSerialize from '../serializers/user'
+import User from '../models/user'
 
 const debug = debugLogger('webd2-api:api')
 const router = express.Router()
 
-const database = dbConnect(`DSN=${process.env.D2ALIAS}`)
-
 router.get('/', function (req, res, next) {
   debug('the root of api/v1')
 
-  database
-    .select('select PersID as id, Name, Password from sPersonal where Hide=False')
-    .then((rows) => res.send(userSerialize(rows)))
+  User.all()
+    .then((users) => res.send(users))
     .catch((err) => res.send(err))
 })
 
