@@ -16,5 +16,11 @@ For auto rebuilding and restarting server use
 > npm start
 ```
 
+#### Development on unix + windows
+
+`npm run watch` on unix
+
+`npm run win` on windows
+
 ## License
 It is licensed under the [MIT License](https://github.com/alexkval/webd2-api/blob/master/LICENSE).
