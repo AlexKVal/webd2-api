@@ -3,6 +3,7 @@ import logger from 'morgan'
 import bodyParser from 'body-parser'
 import cookieParser from 'cookie-parser'
 
+import jsonErrors from './middleware/json-errors'
 import apiV1 from './routes/api-v1'
 
 const app = express()
@@ -14,6 +15,8 @@ app.use(cookieParser())
 
 // routes
 app.use('/api/v1', apiV1)
+// send proper json-api formatted errors
+app.use(jsonErrors)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
