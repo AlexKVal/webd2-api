@@ -17,7 +17,12 @@ function readAll (req, res, next) {
 }
 
 function params (req, res, next, id) {
-  req.id = id
+  const idInt = parseInt(id, 10)
+  debug(`users/params id: ${id}, idInt: ${idInt}`)
+
+  if (isNaN(idInt)) return next(new NotFoundError(`param ${id}`))
+
+  req.id = idInt
   next()
 }
 

@@ -10,10 +10,12 @@ ${attributes.join(',')}
 FROM sPersonal
 WHERE Hide=False`
 
-const sqlOne = `SELECT PersID as id,
-${attributes.join(',')}
-FROM sPersonal
-WHERE Hide=False AND PersID=?`
+const sqlOne = function sqlOne (id) {
+  return `SELECT PersID as id,
+    ${attributes.join(',')}
+    FROM sPersonal
+    WHERE Hide=False AND PersID=${id}`
+}
 
 const User = {
   all () {
@@ -24,8 +26,14 @@ const User = {
 
   get (id) {
     return database
-      .select(sqlOne, [id])
-      .then((rows) => getSerializer('users', attributes)(rows))
+      .select(sqlOne(id))
+      .then((rows) => {
+        if (rows.length === 0) {
+          return Promise.reject('[odbc] returned empty result')
+        } else {
+          return getSerializer('users', attributes)(rows)
+        }
+      })
   }
 }
 

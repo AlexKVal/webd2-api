@@ -4,7 +4,7 @@ import api from '../api'
 
 const router = express.Router()
 
-router.param('/:id', api.users.params)
+router.param('id', api.users.params)
 
 router.route('/')
   .get(api.users.readAll)
