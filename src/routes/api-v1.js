@@ -1,18 +1,17 @@
 import express from 'express'
-import debugLogger from 'debug'
 
-import User from '../models/user'
-import {DbError} from '../errors'
+import api from '../api'
 
-const debug = debugLogger('webd2-api:api')
 const router = express.Router()
 
-router.get('/', function (req, res, next) {
-  debug('the root of api/v1')
-
-  User.all()
-    .then((users) => res.send(users))
-    .catch((errMessage) => next(new DbError(errMessage)))
-})
+/**
+ * Users
+ */
+router.get('/users', api.users.readAll)
+// router.post('/users', api.users.create)
+router.get('/users/:id', api.users.read)
+// router.put('/users/:id', api.users.update)
+// router.del('/users/:id', api.users.delete)
+// router.put('/users/password', api.users.changePassword)
 
 export default router
