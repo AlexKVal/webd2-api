@@ -24,5 +24,9 @@ For auto rebuilding and restarting server use
 
 Set env variable `D2ALIAS` to odbc alias configured to the main database
 
+#### TODO
+
+- cors should be configurable
+
 ## License
 It is licensed under the [MIT License](https://github.com/alexkval/webd2-api/blob/master/LICENSE).
