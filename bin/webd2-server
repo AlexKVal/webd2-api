@@ -4,7 +4,7 @@
  * Module dependencies.
  */
 
-var app = require('../lib').default
+var app = require('../lib')
 var debug = require('debug')('webd2-api:server')
 var http = require('http')
 
