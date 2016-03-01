@@ -14,9 +14,9 @@
     "tests-cmd": "tape tests/**/*-test.js | faucet",
     "test": "npm run lint && npm run tests-cmd",
     "tdd": "nodemon -q -x 'npm run tests-cmd'",
-    "start": "DEBUG=webd2-api:* nodemon --watch lib -x bin/webd2-server",
-    "win": "set DEBUG=webd2-api:* && node bin/webd2-server"
+    "start": "node node_modules/nodemon/bin/nodemon bin/webd2-server"
   },
+
   "engines": {
     "node": "^4.3.1"
   },

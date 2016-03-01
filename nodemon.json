@@ -1,0 +1,12 @@
+{
+  "execMap": {
+    "": "node.exe --harmony_destructuring"
+  },
+  "watch": [
+    "lib"
+  ],
+  "env": {
+    "NODE_ENV": "development",
+    "DEBUG": "webd2-api:*"
+  }
+}
