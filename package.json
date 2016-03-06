@@ -46,6 +46,7 @@
     "express": "~4.13.1",
     "jsonapi-serializer": "^2.1.1",
     "lodash": "^4.6.1",
-    "morgan": "~1.6.1"
+    "morgan": "~1.6.1",
+    "pluralize": "^1.2.1"
   }
 }
