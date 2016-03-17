@@ -11,8 +11,7 @@
   ],
   "scripts": {
     "lint": "standard",
-    "tests-cmd": "tape tests/**/*-test.js | faucet",
-    "test": "npm run lint && npm run tests-cmd",
+    "test": "node --harmony_destructuring node_modules/tape/bin/tape tests/**/*-test.js",
     "tdd": "nodemon -q -x 'npm run tests-cmd'",
     "start": "node node_modules/nodemon/bin/nodemon bin/webd2-server"
   },
@@ -34,9 +33,9 @@
   "homepage": "https://github.com/alexkval/webd2-api#readme",
   "devDependencies": {
     "blue-tape": "^0.2.0",
-    "faucet": "0.0.1",
     "nodemon": "^1.9.0",
-    "standard": "^6.0.7"
+    "standard": "^6.0.7",
+    "tape": "^4.5.1"
   },
   "dependencies": {
     "body-parser": "~1.13.2",
