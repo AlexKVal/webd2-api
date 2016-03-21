@@ -47,6 +47,7 @@
     "jsonwebtoken": "^5.7.0",
     "lodash": "^4.6.1",
     "morgan": "~1.6.1",
-    "pluralize": "^1.2.1"
+    "pluralize": "^1.2.1",
+    "webd2-db": "^0.1.0"
   }
 }
