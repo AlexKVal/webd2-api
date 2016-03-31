@@ -3,7 +3,7 @@ const test = require('tape')
 
 const {castTypesRows, castTypesRow} = require('../../lib/utils/cast-types')
 
-test('id has integer type', (t) => {
+test('all ids are string type', (t) => {
   const odbcRow = {
     id: '45'
   }
@@ -11,7 +11,7 @@ test('id has integer type', (t) => {
 
   const row = castTypesRow(odbcRow, schema)
 
-  t.equal(row.id, 45)
+  t.equal(row.id, '45')
   t.end()
 })
 
@@ -104,9 +104,9 @@ test('castRow', (t) => {
 
   const row = castTypesRow(odbcRow, schema)
 
-  t.equal(row.id, 45, 'id has "id" type')
+  t.equal(row.id, '45', 'id has "id" type')
   t.equal(row.name, 'admin', 'name: string type')
-  t.equal(row.rights, 3, 'rights: id type')
+  t.equal(row.rights, '3', 'rights: id type')
   t.equal(row.hide, false, 'hide: boolean type')
   t.equal(row.enabled, true, 'enabled: boolean type')
   t.end()
@@ -134,15 +134,15 @@ test('castRows', (t) => {
 
   t.equal(rows.length, 2)
 
-  t.equal(rows[0].id, 45, 'id has "id" type')
+  t.equal(rows[0].id, '45', 'id has "id" type')
   t.equal(rows[0].name, 'admin', 'name: string type')
-  t.equal(rows[0].rights, 3, 'rights: id type')
+  t.equal(rows[0].rights, '3', 'rights: id type')
   t.equal(rows[0].hide, false, 'hide: boolean type')
   t.equal(rows[0].enabled, true, 'enabled: boolean type')
 
-  t.equal(rows[1].id, 46, 'id has "id" type')
+  t.equal(rows[1].id, '46', 'id has "id" type')
   t.equal(rows[1].name, 'user', 'name: string type')
-  t.equal(rows[1].rights, 2, 'rights: id type')
+  t.equal(rows[1].rights, '2', 'rights: id type')
   t.equal(rows[1].hide, true, 'hide: boolean type')
   t.equal(rows[1].enabled, false, 'enabled: boolean type')
 
