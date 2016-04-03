@@ -51,7 +51,7 @@ test('"string" type', (t) => {
   t.end()
 })
 
-test('"string" when "null" returns empty string', (t) => {
+test('null and undefined are returned as empty string', (t) => {
   const odbcRow = {
     any: null,
     other: undefined,
@@ -68,6 +68,23 @@ test('"string" when "null" returns empty string', (t) => {
   t.equal(row.any, '')
   t.equal(row.other, '')
   t.equal(row.third, 'str')
+  t.end()
+})
+
+test('casting of boolean values with schema.string done right', (t) => {
+  const odbcRow = {
+    falseString: false,
+    trueString: true
+  }
+  const schema = {
+    falseString: 'string',
+    trueString: 'string'
+  }
+
+  const row = castTypesRow(odbcRow, schema)
+
+  t.equal(row.falseString, 'false')
+  t.equal(row.trueString, 'true')
   t.end()
 })
 
