@@ -51,6 +51,26 @@ test('"string" type', (t) => {
   t.end()
 })
 
+test('"string" when "null" returns empty string', (t) => {
+  const odbcRow = {
+    any: null,
+    other: undefined,
+    third: 'str'
+  }
+  const schema = {
+    any: 'string',
+    other: 'string',
+    third: 'string'
+  }
+
+  const row = castTypesRow(odbcRow, schema)
+
+  t.equal(row.any, '')
+  t.equal(row.other, '')
+  t.equal(row.third, 'str')
+  t.end()
+})
+
 test('"boolean" type', (t) => {
   const odbcRow = {
     enabled: '0',
