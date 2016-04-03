@@ -3,7 +3,7 @@ const test = require('tape')
 
 const {
   generateSetDataLines
-} = require('../../lib/utils/sql-generators')
+} = require('../../lib/sql-builder/sql-generators')
 
 test('generateSetDataLines returns empty array with empty schema', (t) => {
   const data = {
