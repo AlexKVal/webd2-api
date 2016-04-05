@@ -2,12 +2,13 @@
 const test = require('tape')
 
 const {castTypesRows, castTypesRow} = require('../../lib/utils/cast-types')
+const Schema = require('../../lib/sql-builder/schema')
 
 test('all ids are string type', (t) => {
   const odbcRow = {
     id: '45'
   }
-  const schema = {}
+  const schema = new Schema({})
 
   const row = castTypesRow(odbcRow, schema)
 
@@ -21,7 +22,7 @@ test('unknown type returned as is', (t) => {
     other: true,
     third: 'str'
   }
-  const schema = {}
+  const schema = new Schema({})
 
   const row = castTypesRow(odbcRow, schema)
 
@@ -37,11 +38,11 @@ test('"string" type', (t) => {
     other: true,
     third: 'str'
   }
-  const schema = {
+  const schema = new Schema({
     any: 'string',
     other: 'string',
     third: 'string'
-  }
+  })
 
   const row = castTypesRow(odbcRow, schema)
 
@@ -57,11 +58,11 @@ test('null and undefined are returned as empty string', (t) => {
     other: undefined,
     third: 'str'
   }
-  const schema = {
+  const schema = new Schema({
     any: 'string',
     other: 'string',
     third: 'string'
-  }
+  })
 
   const row = castTypesRow(odbcRow, schema)
 
@@ -76,10 +77,10 @@ test('casting of boolean values with schema.string done right', (t) => {
     falseString: false,
     trueString: true
   }
-  const schema = {
+  const schema = new Schema({
     falseString: 'string',
     trueString: 'string'
-  }
+  })
 
   const row = castTypesRow(odbcRow, schema)
 
@@ -93,10 +94,10 @@ test('"boolean" type', (t) => {
     enabled: '0',
     hidden: '1'
   }
-  const schema = {
+  const schema = new Schema({
     enabled: 'boolean',
     hidden: 'boolean'
-  }
+  })
 
   const row = castTypesRow(odbcRow, schema)
 
@@ -110,10 +111,10 @@ test('"integer" type', (t) => {
     some: '25',
     other: '100'
   }
-  const schema = {
+  const schema = new Schema({
     some: 'integer',
     other: 'integer'
-  }
+  })
 
   const row = castTypesRow(odbcRow, schema)
 
@@ -122,13 +123,13 @@ test('"integer" type', (t) => {
   t.end()
 })
 
-const schema = {
+const schema = new Schema({
   name: 'string',
   password: 'string',
   rights: 'id',
   hide: 'boolean',
   enabled: 'boolean'
-}
+})
 
 test('castRow', (t) => {
   const odbcRow = {
