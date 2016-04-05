@@ -4,6 +4,7 @@ const test = require('tape')
 const {
   generateUpdateSetPart
 } = require('../../lib/sql-builder/sql-generators')
+const Schema = require('../../lib/sql-builder/schema')
 
 test('generateUpdateSetPart returns empty array with empty schema', (t) => {
   const data = {
@@ -11,7 +12,7 @@ test('generateUpdateSetPart returns empty array with empty schema', (t) => {
     hide: false,
     someNumber: 33
   }
-  const schema = {}
+  const schema = new Schema({})
 
   const setLines = generateUpdateSetPart(data, schema)
 
@@ -25,10 +26,10 @@ test('generateUpdateSetPart: "boolean" and "integer" types', (t) => {
     hide: false,
     someNumber: 33
   }
-  const schema = {
+  const schema = new Schema({
     hide: 'boolean',
     someNumber: 'integer'
-  }
+  })
 
   const setLines = generateUpdateSetPart(data, schema)
 
@@ -43,10 +44,10 @@ test('generateUpdateSetPart: strings are escaped and single-quoted', (t) => {
     name: 'some name',
     quetedString: 'input with \'quotes\''
   }
-  const schema = {
+  const schema = new Schema({
     name: 'string',
     quetedString: 'string'
-  }
+  })
 
   const setLines = generateUpdateSetPart(data, schema)
 
@@ -61,10 +62,10 @@ test('generateUpdateSetPart: null and undefined are converted to empty string', 
     nullString: null,
     undefinedString: undefined
   }
-  const schema = {
+  const schema = new Schema({
     nullString: 'string',
     undefinedString: 'string'
-  }
+  })
 
   const setLines = generateUpdateSetPart(data, schema)
 
@@ -79,10 +80,10 @@ test('generateUpdateSetPart: other data types are converted to strings', (t) => 
     shouldBeString: 123,
     shouldBeString2: false
   }
-  const schema = {
+  const schema = new Schema({
     shouldBeString: 'string',
     shouldBeString2: 'string'
-  }
+  })
 
   const setLines = generateUpdateSetPart(data, schema)
 
