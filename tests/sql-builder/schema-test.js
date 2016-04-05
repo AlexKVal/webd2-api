@@ -23,3 +23,18 @@ test('Schema.dataFields describes only dataFields', (t) => {
   t.equal(schema.dataFields.hide, 'boolean')
   t.end()
 })
+
+test('Schema.dataFieldsNames contains array of dataFields names', (t) => {
+  const schema = new Schema({
+    name: 'string',
+    hide: 'boolean',
+    group: {
+      belongsTo: 'user-group'
+    }
+  })
+
+  t.equal(schema.dataFieldsNames.length, 2)
+  t.equal(schema.dataFieldsNames[0], 'name')
+  t.equal(schema.dataFieldsNames[1], 'hide')
+  t.end()
+})
