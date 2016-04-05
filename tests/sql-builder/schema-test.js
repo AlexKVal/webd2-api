@@ -38,3 +38,20 @@ test('Schema.dataFieldsNames contains array of dataFields names', (t) => {
   t.equal(schema.dataFieldsNames[1], 'hide')
   t.end()
 })
+
+test('Schema.relations is object which contains descriptions of relations', (t) => {
+  const schema = new Schema({
+    name: 'string',
+    group: {
+      belongsTo: 'user-group'
+    },
+    posts: {
+      hasMany: 'post'
+    }
+  })
+
+  t.equal(Object.keys(schema.relations).length, 2)
+  t.equal(schema.relations.group.belongsTo, 'user-group')
+  t.equal(schema.relations.posts.hasMany, 'post')
+  t.end()
+})
