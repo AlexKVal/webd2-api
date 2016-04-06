@@ -1,7 +1,7 @@
 'use strict'
 const test = require('tape')
 
-const {castTypesRows, castTypesRow} = require('../../lib/utils/cast-types')
+const {castTypes, castTypesRows, castTypesRow} = require('../../lib/utils/cast-types')
 const Schema = require('../../lib/sql-builder/schema')
 
 test('all ids are string type', (t) => {
@@ -183,6 +183,30 @@ test('castRows', (t) => {
   t.equal(rows[1].rights, '2', 'rights: id type')
   t.equal(rows[1].hide, true, 'hide: boolean type')
   t.equal(rows[1].enabled, false, 'enabled: boolean type')
+
+  t.end()
+})
+
+test('castTypes handles "row"', (t) => {
+  const odbcRow = {
+    id: '45'
+  }
+
+  const row = castTypes(odbcRow, schema)
+
+  t.equal(row.id, '45', 'id has "id" type')
+  t.end()
+})
+
+test('castTypes handles "rows"', (t) => {
+  const odbcRows = [
+    { id: '45' },
+    { id: '46' }
+  ]
+
+  const rows = castTypes(odbcRows, schema)
+
+  t.equal(rows.length, 2)
 
   t.end()
 })
