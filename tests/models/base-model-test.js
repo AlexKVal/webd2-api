@@ -4,15 +4,18 @@ const test = require('tape')
 const BaseModel = require('../../lib/models/base-model')
 const Schema = require('../../lib/sql-builder/Schema')
 
-const dbMock = {}
+const dbMock = {
+  exec () {
+    return Promise.resolve()
+  }
+}
+class SomeModel extends BaseModel {}
 
 test('BaseModel is abstract class', (t) => {
   const fn1 = function fn1 () {
     return new BaseModel(dbMock, 'name')
   }
   t.throws(fn1, /is abstract class/)
-
-  class SomeModel extends BaseModel {}
 
   const fn2 = function fn2 () {
     return new SomeModel(dbMock, 'name')
@@ -23,8 +26,6 @@ test('BaseModel is abstract class', (t) => {
 })
 
 test('BaseModel needs database layer', (t) => {
-  class SomeModel extends BaseModel {}
-
   const fn = function fn () {
     return new SomeModel()
   }
@@ -33,8 +34,6 @@ test('BaseModel needs database layer', (t) => {
 })
 
 test('BaseModel constructor gets name and optionally schema', (t) => {
-  class SomeModel extends BaseModel {}
-
   const fn = function fn () {
     return new SomeModel(dbMock)
   }
@@ -43,7 +42,6 @@ test('BaseModel constructor gets name and optionally schema', (t) => {
 })
 
 test('BaseModel if schema is not provided, then default one is created', (t) => {
-  class SomeModel extends BaseModel {}
   const model = new SomeModel(dbMock, 'some-name')
 
   t.equal(model.name, 'some-name')
@@ -52,8 +50,6 @@ test('BaseModel if schema is not provided, then default one is created', (t) => 
 })
 
 test('BaseModel throws if "schema" is not a conf obj or instance of Schema', (t) => {
-  class SomeModel extends BaseModel {}
-
   const fn0 = function fn0 () {
     return new SomeModel(dbMock, 'name', 'any non object')
   }
@@ -75,9 +71,23 @@ test('BaseModel throws if "schema" is not a conf obj or instance of Schema', (t)
  * #all
  */
 test('BaseModel#all returns Promise', (t) => {
-  class SomeModel extends BaseModel {}
   const model = new SomeModel(dbMock, 'name', {})
 
   t.ok(model.all() instanceof Promise)
+  t.end()
+})
+
+test('BaseModel#all calls db#exec', (t) => {
+  t.plan(1)
+
+  const db = {
+    exec () {
+      t.pass('db#exec call')
+      return Promise.resolve()
+    }
+  }
+  const model = new SomeModel(db, 'name', {})
+
+  model.all()
   t.end()
 })
