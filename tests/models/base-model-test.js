@@ -58,3 +58,14 @@ test('BaseModel throws if "schema" is not a conf obj or instance of Schema', (t)
   t.doesNotThrow(fn2, /schema attribute should be an instance of Schema/, 'does not throw with Schema')
   t.end()
 })
+
+/**
+ * #all
+ */
+test('BaseModel#all returns Promise', (t) => {
+  class SomeModel extends BaseModel {}
+  const model = new SomeModel('name', {})
+
+  t.ok(model.all() instanceof Promise)
+  t.end()
+})
