@@ -38,3 +38,23 @@ test('BaseModel if schema is not provided, then default one is created', (t) => 
   t.ok((model.schema instanceof Schema))
   t.end()
 })
+
+test('BaseModel throws if "schema" is not a conf obj or instance of Schema', (t) => {
+  class SomeModel extends BaseModel {}
+
+  const fn0 = function fn0 () {
+    return new SomeModel('name', 'any non object')
+  }
+  t.throws(fn0, /schema attribute should be an instance of Schema/, 'throws with not an object')
+
+  const fn1 = function fn1 () {
+    return new SomeModel('name', {})
+  }
+  t.doesNotThrow(fn1, /schema attribute should be an instance of Schema/, 'does not throw with object')
+
+  const fn2 = function fn2 () {
+    return new SomeModel('name', new Schema({}))
+  }
+  t.doesNotThrow(fn2, /schema attribute should be an instance of Schema/, 'does not throw with Schema')
+  t.end()
+})
