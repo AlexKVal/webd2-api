@@ -70,8 +70,12 @@ test('BaseModel throws if "schema" is not a conf obj or instance of Schema', (t)
 /**
  * #all
  */
+class ModelForAll extends BaseModel {
+  sqlAll () {}
+}
+
 test('BaseModel#all returns Promise', (t) => {
-  const model = new SomeModel(dbMock, 'name', {})
+  const model = new ModelForAll(dbMock, 'name', {})
 
   t.ok(model.all() instanceof Promise)
   t.end()
@@ -86,8 +90,57 @@ test('BaseModel#all calls db#exec', (t) => {
       return Promise.resolve()
     }
   }
-  const model = new SomeModel(db, 'name', {})
+  const model = new ModelForAll(db, 'name', {})
 
+  model.all()
+  t.end()
+})
+
+test('BaseModel#all catches db-layer error message and returns it as Error object', (t) => {
+  t.plan(3)
+
+  const db = {
+    exec () {
+      t.pass('db#exec call')
+      return Promise.reject(new Error('db error message'))
+    }
+  }
+
+  const model = new ModelForAll(db, 'name', {})
+  model.all()
+  .catch((e) => {
+    t.pass('catch db error')
+    t.assert(/db error message/.test(e.message), 'assert error message')
+    t.end()
+  })
+})
+
+test('BaseModel#all throws error if sqlAll is not overriden', (t) => {
+  const db = {
+    exec () { return Promise.resolve() }
+  }
+
+  class ModelAllThrows extends BaseModel {}
+  const model = new ModelAllThrows(db, 'name', {})
+  t.throws(() => model.all())
+  t.end()
+})
+
+test('BaseModel#all sends generated sql-query to db layer', (t) => {
+  t.plan(1)
+
+  const db = {
+    exec (sql) {
+      t.equal(sql, 'SELECT * FROM table')
+      return Promise.resolve()
+    }
+  }
+
+  class AModel extends BaseModel {
+    sqlAll () { return 'SELECT * FROM table' }
+  }
+
+  const model = new AModel(db, 'name', {})
   model.all()
   t.end()
 })
