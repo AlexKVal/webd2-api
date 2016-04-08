@@ -226,3 +226,38 @@ test('BaseModel#get throws error if no "id" provided', (t) => {
   t.throws(() => model.get(/* no id */), /no id has been provided/)
   t.end()
 })
+
+test('BaseModel#get rejects with error if db returns no rows', (t) => {
+  t.plan(3)
+
+  const db = {
+    exec () {
+      t.pass('db#exec call')
+      return Promise.resolve([/* no rows */])
+    }
+  }
+
+  const model = new ModelForGet(db, 'name', {})
+  model.get(1)
+  .catch((e) => {
+    t.pass('catch db error')
+    t.assert(/db returned no data/.test(e.message), 'assert error message')
+    t.end()
+  })
+})
+
+test('BaseModel#get returns row if got one off db', (t) => {
+  t.plan(3)
+
+  const db = {}
+  db.exec = () => Promise.resolve([{someData: 'some value'}])
+
+  const model = new ModelForGet(db, 'name', {})
+  model.get(1)
+  .then((row) => {
+    t.pass('get(id) resolves')
+    t.assert(row, 'some data has been returned')
+    t.equal(row.someData, 'some value')
+    t.end()
+  })
+})
