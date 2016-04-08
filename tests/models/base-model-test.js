@@ -115,14 +115,12 @@ test('BaseModel#all catches db-layer error message and returns it as Error objec
   })
 })
 
-test('BaseModel#all throws error if sqlAll is not overriden', (t) => {
-  const db = {
-    exec () { return Promise.resolve() }
+test('BaseModel#all throws error if sqlAll is not overridden', (t) => {
+  class ModelAllThrows extends BaseModel {
+    // sqlAll () {} is not overridden
   }
-
-  class ModelAllThrows extends BaseModel {}
-  const model = new ModelAllThrows(db, 'name', {})
-  t.throws(() => model.all())
+  const model = new ModelAllThrows(dbMock, 'name', {})
+  t.throws(() => model.all(), /you should override sqlAll/)
   t.end()
 })
 
@@ -142,5 +140,89 @@ test('BaseModel#all sends generated sql-query to db layer', (t) => {
 
   const model = new AModel(db, 'name', {})
   model.all()
+  t.end()
+})
+
+/**
+ * #get(id)
+ */
+class ModelForGet extends BaseModel {
+  sqlOne () {}
+}
+
+test('BaseModel#get returns Promise', (t) => {
+  const model = new ModelForGet(dbMock, 'name', {})
+
+  t.ok(model.get(1) instanceof Promise)
+  t.end()
+})
+
+test('BaseModel#get calls db#exec', (t) => {
+  t.plan(1)
+
+  const db = {
+    exec () {
+      t.pass('db#exec call')
+      return Promise.resolve()
+    }
+  }
+  const model = new ModelForGet(db, 'name', {})
+
+  model.get(1)
+  t.end()
+})
+
+test('BaseModel#get catches db-layer error message and returns it as Error object', (t) => {
+  t.plan(3)
+
+  const db = {
+    exec () {
+      t.pass('db#exec call')
+      return Promise.reject(new Error('db error message get'))
+    }
+  }
+
+  const model = new ModelForGet(db, 'name', {})
+  model.get(1)
+  .catch((e) => {
+    t.pass('catch db error')
+    t.assert(/db error message get/.test(e.message), 'assert error message')
+    t.end()
+  })
+})
+
+test('BaseModel#get throws error if sqlOne is not overridden', (t) => {
+  class ModelGetThrows extends BaseModel {}
+  const model = new ModelGetThrows(dbMock, 'name', {
+    // sqlOne () {} is not overridden
+  })
+  t.throws(() => model.get(1), /you should override sqlOne/)
+  t.end()
+})
+
+test('BaseModel#get sends generated sql-query to db layer', (t) => {
+  t.plan(1)
+
+  const db = {
+    exec (sql) {
+      t.equal(sql, 'SELECT * FROM tableGet')
+      return Promise.resolve()
+    }
+  }
+
+  class AGetModel extends BaseModel {
+    sqlOne () { return 'SELECT * FROM tableGet' }
+  }
+
+  const model = new AGetModel(db, 'name', {})
+  model.get(1)
+  t.end()
+})
+
+test('BaseModel#get throws error if no "id" provided', (t) => {
+  const model = new ModelForGet(dbMock, 'name', {
+    // sqlOne () {} is not overridden
+  })
+  t.throws(() => model.get(/* no id */), /no id has been provided/)
   t.end()
 })
