@@ -74,7 +74,7 @@ class ModelForAll extends BaseModel {
   sqlAll () {}
 }
 
-test('BaseModel#all returns Promise', (t) => {
+test('BaseModel#all returns a Promise', (t) => {
   const model = new ModelForAll(dbMock, 'name', {})
 
   t.ok(model.all() instanceof Promise)
@@ -102,7 +102,7 @@ test('BaseModel#all catches db-layer error message and returns it as Error objec
   const db = {
     exec () {
       t.pass('db#exec call')
-      return Promise.reject(new Error('db error message'))
+      return Promise.reject('db error message')
     }
   }
 
@@ -150,7 +150,7 @@ class ModelForGet extends BaseModel {
   sqlOne () {}
 }
 
-test('BaseModel#get returns Promise', (t) => {
+test('BaseModel#get returns a Promise', (t) => {
   const model = new ModelForGet(dbMock, 'name', {})
 
   t.ok(model.get(1) instanceof Promise)
@@ -178,7 +178,7 @@ test('BaseModel#get catches db-layer error message and returns it as Error objec
   const db = {
     exec () {
       t.pass('db#exec call')
-      return Promise.reject(new Error('db error message get'))
+      return Promise.reject('db error message get')
     }
   }
 
@@ -260,4 +260,80 @@ test('BaseModel#get returns row if got one off db', (t) => {
     t.equal(row.someData, 'some value')
     t.end()
   })
+})
+
+/**
+ * #update(id, data)
+ */
+class ModelForUpdate extends BaseModel {
+  sqlUpdate () {}
+}
+
+test('BaseModel#update returns a Promise', (t) => {
+  const model = new ModelForUpdate(dbMock, 'name', {})
+
+  t.ok(model.update(1, {name: 'new'}) instanceof Promise)
+  t.end()
+})
+
+test('BaseModel#update calls db#exec', (t) => {
+  t.plan(1)
+
+  const db = {
+    exec () {
+      t.pass('db#exec call')
+      return Promise.resolve()
+    }
+  }
+  const model = new ModelForUpdate(db, 'name', {})
+
+  model.update(1, {name: 'new'})
+  t.end()
+})
+
+test('BaseModel#update catches db-layer error message and returns it as Error object', (t) => {
+  t.plan(3)
+
+  const db = {
+    exec () {
+      t.pass('db#exec call')
+      return Promise.reject('db error message update')
+    }
+  }
+
+  const model = new ModelForUpdate(db, 'name', {})
+  model.update(1, {name: 'new'})
+  .catch((e) => {
+    t.pass('catch db error')
+    t.assert(/db error message update/.test(e.message), 'assert error message')
+    t.end()
+  })
+})
+
+test('BaseModel#update throws error if sqlUpdate is not overridden', (t) => {
+  class ModelUpdateThrows extends BaseModel {}
+  const model = new ModelUpdateThrows(dbMock, 'name', {
+    // sqlUpdate () {} is not overridden
+  })
+  t.throws(() => model.update(1, {name: 'new'}), /you should override sqlUpdate/)
+  t.end()
+})
+
+test('BaseModel#update sends generated sql-query to db layer', (t) => {
+  t.plan(1)
+
+  const db = {
+    exec (sql) {
+      t.equal(sql, 'SELECT * FROM tableUpdate')
+      return Promise.resolve()
+    }
+  }
+
+  class AnUpdateModel extends BaseModel {
+    sqlUpdate () { return 'SELECT * FROM tableUpdate' }
+  }
+
+  const model = new AnUpdateModel(db, 'name', {})
+  model.update(1, {name: 'new'})
+  t.end()
 })
