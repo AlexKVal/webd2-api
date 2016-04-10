@@ -417,3 +417,39 @@ test('BaseModel#update returns an updated model', function (t) {
     t.end()
   })
 })
+
+/**
+ * #create(data)
+ */
+//
+test('BaseModel#create returns saved model', function (t) {
+  t.plan(3)
+
+  const db = {
+    sqlQueryCounter: 0,
+    exec (sql) {
+      if (this.sqlQueryCounter === 0) {
+        t.pass('1st query is sqlCreate') // successful insert
+        this.sqlQueryCounter += 1
+        return Promise.resolve()
+      } else if (this.sqlQueryCounter === 1) {
+        t.pass('2nd sqlGet')
+        this.sqlQueryCounter += 1
+        return Promise.resolve([{saved: 'new data'}])
+      } else {
+        t.fail('more db.exec() calls')
+      }
+    }
+  }
+
+  class ModelForFullCreate extends BaseModel {
+    sqlCreate () {}
+    sqlDataWithID () {}
+  }
+  const model = new ModelForFullCreate(db, 'name', {})
+  model.create({name: 'new'})
+  .then((row) => {
+    t.equal(row.saved, 'new data', 'saved model has been returned')
+    t.end()
+  })
+})
