@@ -11,7 +11,7 @@ const dbMock = {
 }
 class SomeModel extends BaseModel {}
 
-test('BaseModel is abstract class', (t) => {
+test('BaseModel is abstract class', function (t) {
   const fn1 = function fn1 () {
     return new BaseModel(dbMock, 'name')
   }
@@ -25,7 +25,7 @@ test('BaseModel is abstract class', (t) => {
   t.end()
 })
 
-test('BaseModel needs database layer', (t) => {
+test('BaseModel needs database layer', function (t) {
   const fn = function fn () {
     return new SomeModel()
   }
@@ -33,7 +33,7 @@ test('BaseModel needs database layer', (t) => {
   t.end()
 })
 
-test('BaseModel constructor gets name and optionally schema', (t) => {
+test('BaseModel constructor gets name and optionally schema', function (t) {
   const fn = function fn () {
     return new SomeModel(dbMock)
   }
@@ -41,7 +41,7 @@ test('BaseModel constructor gets name and optionally schema', (t) => {
   t.end()
 })
 
-test('BaseModel if schema is not provided, then default one is created', (t) => {
+test('BaseModel if schema is not provided, then default one is created', function (t) {
   const model = new SomeModel(dbMock, 'some-name')
 
   t.equal(model.name, 'some-name')
@@ -49,7 +49,7 @@ test('BaseModel if schema is not provided, then default one is created', (t) => 
   t.end()
 })
 
-test('BaseModel throws if "schema" is not a conf obj or instance of Schema', (t) => {
+test('BaseModel throws if "schema" is not a conf obj or instance of Schema', function (t) {
   const fn0 = function fn0 () {
     return new SomeModel(dbMock, 'name', 'any non object')
   }
@@ -74,14 +74,14 @@ class ModelForAll extends BaseModel {
   sqlAll () {}
 }
 
-test('BaseModel#all returns a Promise', (t) => {
+test('BaseModel#all returns a Promise', function (t) {
   const model = new ModelForAll(dbMock, 'name', {})
 
   t.ok(model.all() instanceof Promise)
   t.end()
 })
 
-test('BaseModel#all calls db#exec', (t) => {
+test('BaseModel#all calls db#exec', function (t) {
   t.plan(1)
 
   const db = {
@@ -96,7 +96,7 @@ test('BaseModel#all calls db#exec', (t) => {
   t.end()
 })
 
-test('BaseModel#all catches db-layer error message and returns it as Error object', (t) => {
+test('BaseModel#all catches db-layer error message and returns it as Error object', function (t) {
   t.plan(3)
 
   const db = {
@@ -115,7 +115,7 @@ test('BaseModel#all catches db-layer error message and returns it as Error objec
   })
 })
 
-test('BaseModel#all throws error if sqlAll is not overridden', (t) => {
+test('BaseModel#all throws error if sqlAll is not overridden', function (t) {
   class ModelAllThrows extends BaseModel {
     // sqlAll () {} is not overridden
   }
@@ -124,7 +124,7 @@ test('BaseModel#all throws error if sqlAll is not overridden', (t) => {
   t.end()
 })
 
-test('BaseModel#all sends generated sql-query to db layer', (t) => {
+test('BaseModel#all sends generated sql-query to db layer', function (t) {
   t.plan(1)
 
   const db = {
@@ -150,14 +150,14 @@ class ModelForGet extends BaseModel {
   sqlOne () {}
 }
 
-test('BaseModel#get returns a Promise', (t) => {
+test('BaseModel#get returns a Promise', function (t) {
   const model = new ModelForGet(dbMock, 'name', {})
 
   t.ok(model.get(1) instanceof Promise)
   t.end()
 })
 
-test('BaseModel#get calls db#exec', (t) => {
+test('BaseModel#get calls db#exec', function (t) {
   t.plan(1)
 
   const db = {
@@ -172,7 +172,7 @@ test('BaseModel#get calls db#exec', (t) => {
   t.end()
 })
 
-test('BaseModel#get catches db-layer error message and returns it as Error object', (t) => {
+test('BaseModel#get catches db-layer error message and returns it as Error object', function (t) {
   t.plan(3)
 
   const db = {
@@ -191,16 +191,16 @@ test('BaseModel#get catches db-layer error message and returns it as Error objec
   })
 })
 
-test('BaseModel#get throws error if sqlOne is not overridden', (t) => {
-  class ModelGetThrows extends BaseModel {}
-  const model = new ModelGetThrows(dbMock, 'name', {
+test('BaseModel#get throws error if sqlOne is not overridden', function (t) {
+  class ModelGetThrows extends BaseModel {
     // sqlOne () {} is not overridden
-  })
+  }
+  const model = new ModelGetThrows(dbMock, 'name', {})
   t.throws(() => model.get(1), /you should override sqlOne/)
   t.end()
 })
 
-test('BaseModel#get sends generated sql-query to db layer', (t) => {
+test('BaseModel#get sends generated sql-query to db layer', function (t) {
   t.plan(1)
 
   const db = {
@@ -219,15 +219,16 @@ test('BaseModel#get sends generated sql-query to db layer', (t) => {
   t.end()
 })
 
-test('BaseModel#get throws error if no "id" provided', (t) => {
-  const model = new ModelForGet(dbMock, 'name', {
+test('BaseModel#get throws error if no "id" provided', function (t) {
+  class ModelForGetIdThrows extends BaseModel {
     // sqlOne () {} is not overridden
-  })
+  }
+  const model = new ModelForGetIdThrows(dbMock, 'name', {})
   t.throws(() => model.get(/* no id */), /no id has been provided/)
   t.end()
 })
 
-test('BaseModel#get rejects with error if db returns no rows', (t) => {
+test('BaseModel#get rejects with error if db returns no rows', function (t) {
   t.plan(3)
 
   const db = {
@@ -246,7 +247,7 @@ test('BaseModel#get rejects with error if db returns no rows', (t) => {
   })
 })
 
-test('BaseModel#get returns row if got one off db', (t) => {
+test('BaseModel#get returns row if got one off db', function (t) {
   t.plan(3)
 
   const db = {}
@@ -267,31 +268,17 @@ test('BaseModel#get returns row if got one off db', (t) => {
  */
 class ModelForUpdate extends BaseModel {
   sqlUpdate () {}
+  sqlIsRowExist () {}
 }
 
-test('BaseModel#update returns a Promise', (t) => {
+test('BaseModel#update returns a Promise', function (t) {
   const model = new ModelForUpdate(dbMock, 'name', {})
 
   t.ok(model.update(1, {name: 'new'}) instanceof Promise)
   t.end()
 })
 
-test('BaseModel#update calls db#exec', (t) => {
-  t.plan(1)
-
-  const db = {
-    exec () {
-      t.pass('db#exec call')
-      return Promise.resolve()
-    }
-  }
-  const model = new ModelForUpdate(db, 'name', {})
-
-  model.update(1, {name: 'new'})
-  t.end()
-})
-
-test('BaseModel#update catches db-layer error message and returns it as Error object', (t) => {
+test('BaseModel#update catches db-layer error message and returns it as Error object', function (t) {
   t.plan(3)
 
   const db = {
@@ -310,30 +297,101 @@ test('BaseModel#update catches db-layer error message and returns it as Error ob
   })
 })
 
-test('BaseModel#update throws error if sqlUpdate is not overridden', (t) => {
-  class ModelUpdateThrows extends BaseModel {}
-  const model = new ModelUpdateThrows(dbMock, 'name', {
-    // sqlUpdate () {} is not overridden
-  })
-  t.throws(() => model.update(1, {name: 'new'}), /you should override sqlUpdate/)
+test('BaseModel#update throws error if sqlIsRowExist is not overridden', function (t) {
+  class ModelUpdateThrows extends BaseModel {
+    // sqlIsRowExist () {} is not overridden
+    sqlUpdate () {}
+  }
+  const model = new ModelUpdateThrows(dbMock, 'name', {})
+  t.throws(() => model.update(1, {name: 'new'}), /you should override sqlIsRowExist/)
   t.end()
 })
 
-test('BaseModel#update sends generated sql-query to db layer', (t) => {
-  t.plan(1)
+test('BaseModel#update sends generated sql-query to db layer', function (t) {
+  t.plan(2) // two db.exec() calls
 
   const db = {
+    sqlQueryCounter: 0,
     exec (sql) {
-      t.equal(sql, 'SELECT * FROM tableUpdate')
-      return Promise.resolve()
+      if (this.sqlQueryCounter === 0) {
+        t.equal(sql, 'SELECT id FROM tableUpdate WHERE id=1', '1st query is sqlIsRowExist')
+        this.sqlQueryCounter += 1
+        return Promise.resolve([{some: 'row'}])
+      } else if (this.sqlQueryCounter === 1) {
+        t.equal(sql, 'SELECT * FROM tableUpdate', '2nd query is sqlUpdate')
+        this.sqlQueryCounter += 1
+        return Promise.resolve()
+      } else {
+        t.fail('more than two db.exec() calls')
+      }
     }
   }
 
   class AnUpdateModel extends BaseModel {
+    sqlIsRowExist (id) { return `SELECT id FROM tableUpdate WHERE id=${id}` }
     sqlUpdate () { return 'SELECT * FROM tableUpdate' }
   }
 
   const model = new AnUpdateModel(db, 'name', {})
   model.update(1, {name: 'new'})
+  .then(() => t.end())
+})
+
+test('BaseModel#update throws error if no "id" or "data" provided', function (t) {
+  const model = new ModelForUpdate(dbMock, 'name', {})
+  t.throws(() => model.update(/* no id */), /no id has been provided/)
+  t.throws(() => model.update(1 /* no data */), /no data has been provided/)
   t.end()
 })
+
+test('BaseModel#update throws error if no "id" or "data" provided', function (t) {
+  const model = new ModelForUpdate(dbMock, 'name', {})
+  t.throws(() => model.update(/* no id */), /no id has been provided/)
+  t.throws(() => model.update(1 /* no data */), /no data has been provided/)
+  t.end()
+})
+
+test('BaseModel#update rejects with error if no row with "id" exists', function (t) {
+  t.plan(3)
+
+  const db = {
+    sqlQueryCounter: 0,
+    exec (sql) {
+      if (this.sqlQueryCounter === 0) {
+        t.pass('1st query is sqlIsRowExist')
+        this.sqlQueryCounter += 1
+        return Promise.resolve([/* no row with id has been found */])
+      } else if (this.sqlQueryCounter === 1) {
+        t.fail('if row with "id" not found it should not call sqlUpdate')
+        this.sqlQueryCounter += 1
+        return Promise.resolve()
+      } else {
+        t.fail('more db.exec() calls')
+      }
+    }
+  }
+
+  const model = new ModelForUpdate(db, 'name', {})
+  model.update(1, {name: 'new'})
+  .catch((e) => {
+    t.pass('catch error')
+    t.assert(/row with id: 1 does not exist/.test(e.message), 'assert error message')
+    t.end()
+  })
+})
+
+// test('BaseModel#update returns row if got one off db', function (t) {
+//   t.plan(3)
+//
+//   const db = {}
+//   db.exec = () => Promise.resolve([{someData: 'some value'}])
+//
+//   const model = new ModelForUpdate(db, 'name', {})
+//   model.get(1)
+//   .then((row) => {
+//     t.pass('get(id) resolves')
+//     t.assert(row, 'some data has been returned')
+//     t.equal(row.someData, 'some value')
+//     t.end()
+//   })
+// })
