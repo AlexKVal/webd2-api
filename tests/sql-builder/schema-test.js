@@ -73,3 +73,25 @@ test('Schema: belongsTo autogenerates "fkAs" if undefined', (t) => {
   t.equal(schema.relations.rights.fkAs, 'whatever', 'user-defined')
   t.end()
 })
+
+test('Schema: "attributes" is array of all "data" + "belongsTo.fkAs" fields', (t) => {
+  const schema = new Schema({
+    name: 'string',
+    boolFlag: 'boolean',
+    someNumber: 'integer',
+
+    group: {
+      belongsTo: 'user-group',
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: 'rights',
+      fkField: 'rights',
+      fkAs: 'whatever'
+    }
+  })
+
+  t.equal(schema.attributes.length, 5)
+  t.deepEqual(schema.attributes, ['name', 'boolFlag', 'someNumber', 'userGroupId', 'whatever'])
+  t.end()
+})
