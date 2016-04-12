@@ -507,3 +507,35 @@ test('BaseModel deserializerOptions takes into account "belongsTo" relations', f
 
   t.end()
 })
+
+test('BaseModel#deserialize method', function (t) {
+  const model = new SomeModel(dbMock, 'user', {
+    name: 'string',
+    group: {
+      belongsTo: 'user-group',
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: 'user-rights',
+      fkField: 'rights'
+    }
+  })
+
+  model.deserialize({
+    data: [ {
+      attributes: {
+        name: 'Admin',
+        'user-group-id': '1',
+        'user-rights-id': '3'
+      },
+      id: '1',
+      type: 'users'
+    } ]
+  }, (_, data) => {
+    t.deepEqual(data, [
+      {id: '1', name: 'Admin', userGroupId: '1', userRightsId: '3'}
+    ])
+
+    t.end()
+  })
+})
