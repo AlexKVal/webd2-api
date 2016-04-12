@@ -490,7 +490,7 @@ test('BaseModel#serialize takes into account "belongsTo" relations', function (t
 /**
  * De-serializer
  */
-test.only('BaseModel deserializerOptions takes into account "belongsTo" relations', function (t) {
+test('BaseModel deserializerOptions takes into account "belongsTo" relations', function (t) {
   const model = new SomeModel(dbMock, 'user', {
     name: 'string',
     group: {
