@@ -486,3 +486,24 @@ test('BaseModel#serialize takes into account "belongsTo" relations', function (t
 
   t.end()
 })
+
+/**
+ * De-serializer
+ */
+test.only('BaseModel deserializerOptions takes into account "belongsTo" relations', function (t) {
+  const model = new SomeModel(dbMock, 'user', {
+    name: 'string',
+    group: {
+      belongsTo: 'user-group',
+      fkField: 'GrpID'
+    }
+  })
+
+  t.equal(Object.keys(model.deserializerOptions).length, 2)
+  t.equal(model.deserializerOptions.keyForAttribute, 'camelCase')
+  t.ok(model.deserializerOptions['user-groups'])
+  t.ok(model.deserializerOptions['user-groups'].valueForRelationship)
+  t.equal(typeof model.deserializerOptions['user-groups'].valueForRelationship, 'function')
+
+  t.end()
+})
