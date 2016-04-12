@@ -19,5 +19,13 @@ test('camelizes all dasherized keys', (t) => {
   t.equal(normalized.userRights, '3')
   t.notok(normalized['user-group'])
   t.notok(normalized['user-rights'])
+
+  t.deepEqual(data, {
+    id: '45',
+    name: 'Admin',
+    userGroup: '1',
+    userRights: '3'
+  })
+
   t.end()
 })
