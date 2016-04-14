@@ -3,6 +3,18 @@ const test = require('tape')
 
 const Schema = require('../../lib/sql-builder/schema')
 
+/**
+ * mocks for 'belongsTo' relation models
+ */
+const userGroupModel = { name: 'user-group' }
+const postModel = { name: 'post' }
+const rightsModel = { name: 'rights' }
+const registry = {
+  'user-group': userGroupModel,
+  post: postModel,
+  rights: rightsModel
+}
+
 test('Schema: allows "new Schema()" and just "Schema()"', (t) => {
   t.ok(((Schema({})) instanceof Schema))
   t.ok(((new Schema({})) instanceof Schema))
@@ -14,7 +26,7 @@ test('Schema.dataFields describes only dataFields', (t) => {
     name: 'string',
     hide: 'boolean',
     group: {
-      belongsTo: 'user-group'
+      belongsTo: registry['user-group']
     }
   })
 
@@ -29,7 +41,7 @@ test('Schema.dataFieldsNames contains array of dataFields names', (t) => {
     name: 'string',
     hide: 'boolean',
     group: {
-      belongsTo: 'user-group'
+      belongsTo: registry['user-group']
     }
   })
 
@@ -43,27 +55,27 @@ test('Schema.relations is object which contains descriptions of relations', (t) 
   const schema = new Schema({
     name: 'string',
     group: {
-      belongsTo: 'user-group'
+      belongsTo: registry['user-group']
     },
     posts: {
-      hasMany: 'post'
+      hasMany: registry['post']
     }
   })
 
   t.equal(Object.keys(schema.relations).length, 2)
-  t.equal(schema.relations.group.belongsTo, 'user-group')
-  t.equal(schema.relations.posts.hasMany, 'post')
+  t.equal(schema.relations.group.belongsTo.name, 'user-group')
+  t.equal(schema.relations.posts.hasMany.name, 'post')
   t.end()
 })
 
 test('Schema: belongsTo autogenerates "fkAs" if undefined', (t) => {
   const schema = new Schema({
     group: {
-      belongsTo: 'user-group',
+      belongsTo: registry['user-group'],
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: 'rights',
+      belongsTo: registry['rights'],
       fkField: 'rights',
       fkAs: 'whatever'
     }
@@ -81,11 +93,11 @@ test('Schema: "attributes" is array of all "data" + "belongsTo.fkAs" fields', (t
     someNumber: 'integer',
 
     group: {
-      belongsTo: 'user-group',
+      belongsTo: registry['user-group'],
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: 'rights',
+      belongsTo: registry['rights'],
       fkField: 'rights',
       fkAs: 'whatever'
     }
@@ -103,11 +115,11 @@ test('Schema: "belongsToKeys" is array of belongsTo names', (t) => {
     someNumber: 'integer',
 
     group: {
-      belongsTo: 'user-group',
+      belongsTo: registry['user-group'],
       fkField: 'GrpID'
     },
     'user-rights': {
-      belongsTo: 'rights',
+      belongsTo: registry['rights'],
       fkField: 'rights',
       fkAs: 'whatever'
     }
