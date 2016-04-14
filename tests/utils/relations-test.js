@@ -3,7 +3,7 @@ const test = require('tape')
 
 const Relations = require('../../lib/utils/relations')
 
-test.only('Relations: constructor requires registry of models', (t) => {
+test('Relations: constructor requires registry of models', (t) => {
   const registry = {
     model1: {},
     model2: {}

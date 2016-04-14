@@ -107,26 +107,3 @@ test('Schema: "attributes" is array of all "data" + "belongsTo.fkAs" fields', (t
   t.deepEqual(schema.attributes, ['name', 'boolFlag', 'someNumber', 'userGroupId', 'whatever'])
   t.end()
 })
-
-test('Schema: "belongsToKeys" is array of belongsTo names', (t) => {
-  const schema = new Schema({
-    name: 'string',
-    boolFlag: 'boolean',
-    someNumber: 'integer',
-
-    group: {
-      belongsTo: registry['user-group'],
-      fkField: 'GrpID'
-    },
-    'user-rights': {
-      belongsTo: registry['rights'],
-      fkField: 'rights',
-      fkAs: 'whatever'
-    }
-  })
-
-  t.ok(Array.isArray(schema.belongsToKeys))
-  t.equal(schema.belongsToKeys.length, 2)
-  t.deepEqual(schema.belongsToKeys, ['group', 'user-rights'])
-  t.end()
-})
