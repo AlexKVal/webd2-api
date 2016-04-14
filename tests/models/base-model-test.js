@@ -471,7 +471,7 @@ test('BaseModel#serialize takes into account "belongsTo" relations', function (t
   const model = new SomeModel(dbMock, 'user', {
     name: 'string',
     group: {
-      belongsTo: 'user-group',
+      belongsTo: { name: 'user-group' },
       fkField: 'GrpID'
     }
   })
@@ -494,7 +494,7 @@ test('BaseModel deserializerOptions takes into account "belongsTo" relations', f
   const model = new SomeModel(dbMock, 'user', {
     name: 'string',
     group: {
-      belongsTo: 'user-group',
+      belongsTo: { name: 'user-group' },
       fkField: 'GrpID'
     }
   })
@@ -512,11 +512,11 @@ test('BaseModel#deserialize method', function (t) {
   const model = new SomeModel(dbMock, 'user', {
     name: 'string',
     group: {
-      belongsTo: 'user-group',
+      belongsTo: { name: 'user-group' },
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: 'user-rights',
+      belongsTo: { name: 'user-rights' },
       fkField: 'rights'
     }
   })
