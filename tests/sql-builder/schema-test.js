@@ -107,3 +107,17 @@ test('Schema: "attributes" is array of all "data" + "belongsTo.fkAs" fields', (t
   t.deepEqual(schema.attributes, ['name', 'boolFlag', 'someNumber', 'userGroupId', 'whatever'])
   t.end()
 })
+
+test('Schema: throws if "belongsTo" is not a model', (t) => {
+  function fn1 () {
+    Schema({
+      group: {
+        belongsTo: 'model-name', // not a model
+        fkField: 'GrpID'
+      }
+    })
+  }
+
+  t.throws(fn1, /belongsTo should be a model/)
+  t.end()
+})
