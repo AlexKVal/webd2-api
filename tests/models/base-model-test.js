@@ -486,28 +486,55 @@ test('BaseModel#deserialize method', function (t) {
 /**
  * belongsTo
  */
-test('BaseModel#fetchAll "withRelated" off just calls all()', function (t) {
-  t.plan(2)
+test('BaseModel#fetchAll uses all() method under the hood', function (t) {
+  t.plan(1)
 
   class ModelForFetchAll extends BaseModel {
     all () {
       t.pass('all() called')
-      return Promise.resolve([{some: 'data'}])
+      return Promise.resolve()
     }
   }
 
   const model = new ModelForFetchAll(dbMock, 'user', {})
 
   model.fetchAll()
+  .then(() => t.end())
+})
+
+test('BaseModel#fetchAll returns cast and serialized data', function (t) {
+  t.plan(2)
+
+  class ModelForFetchAll extends BaseModel {
+    all () {
+      t.pass('all() called')
+
+      return Promise.resolve([
+        {id: '1', name: 'Mathew', enabled: '0'},
+        {id: '2', name: 'John', enabled: '1'}
+      ])
+    }
+  }
+
+  const model = new ModelForFetchAll(dbMock, 'user', {
+    name: 'string',
+    enabled: 'boolean'
+  })
+
+  model.fetchAll()
   .then((data) => {
-    t.equal(data[0].some, 'data', 'data returned')
+    t.deepEqual(data, {
+      data: [
+        { attributes: { enabled: false, name: 'Mathew' }, id: '1', type: 'users' },
+        { attributes: { enabled: true, name: 'John' }, id: '2', type: 'users' }
+      ]
+    })
   })
   .catch(() => t.fail('should not be called'))
   .then(() => t.end())
 })
 
-// TODO
-test.skip('BaseModel#fetchAll "withRelated" fetches rows w/ relations', function (t) {
+test.skip('BaseModel#fetchAll returns JSONApi-serialized data w/ included relations', function (t) {
   t.plan(5)
 
   const db = {
