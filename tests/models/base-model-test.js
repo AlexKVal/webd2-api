@@ -539,3 +539,81 @@ test('BaseModel#deserialize method', function (t) {
     t.end()
   })
 })
+
+/**
+ * belongsTo
+ */
+test('BaseModel#fetchAll "withRelated" off just calls all()', function (t) {
+  t.plan(2)
+
+  class ModelForFetchAll extends BaseModel {
+    all () {
+      t.pass('all() called')
+      return Promise.resolve([{some: 'data'}])
+    }
+  }
+
+  const model = new ModelForFetchAll(dbMock, 'user', {})
+
+  model.fetchAll()
+  .then((data) => {
+    t.equal(data[0].some, 'data', 'data returned')
+  })
+  .catch(() => t.fail('should not be called'))
+  .then(() => t.end())
+})
+
+// TODO
+test.skip('BaseModel#fetchAll "withRelated" fetches rows w/ relations', function (t) {
+  t.plan(5)
+
+  const db = {
+    exec (sql) {
+      if (sql === 'userModel SQL') {
+        t.pass('userModel db.exec() called')
+
+        return Promise.resolve([
+          { id: '101', name: 'kengar', userGroupId: '2' },
+          { id: '102', name: 'john', userGroupId: '3' }
+        ])
+      } else if (sql === 'groupModel SQL') {
+        t.pass('groupModel db.exec() called')
+
+        return Promise.resolve([
+          { id: '3', name: 'Admins' },
+          { id: '2', name: 'Users' }
+        ])
+      } else {
+        t.fail('this should not be called')
+      }
+    }
+  }
+
+  class UserModel extends BaseModel {
+    sqlAll () { t.pass('UserModel.sqlAll() called'); return 'userModel SQL' }
+  }
+
+  class GroupModel extends BaseModel {
+    sqlAll () { t.pass('GroupModel.sqlAll() called'); return 'groupModel SQL' }
+  }
+
+  const groupModel = new GroupModel(db, 'user-group', {
+    name: 'string'
+  })
+
+  const userModel = new UserModel(db, 'user', {
+    name: 'string',
+    group: {
+      belongsTo: groupModel,
+      fkField: 'GrpID'
+    }
+  })
+
+  userModel.fetchAll({withRelated: 'user-group'})
+  .then((data) => {
+    // t.equal(data[0].some, 'data', 'data returned')
+    t.pass('data returned') // TODO
+  })
+  .catch(() => t.fail('should not be called'))
+  .then(() => t.end())
+})
