@@ -109,3 +109,31 @@ test('Schema: throws if "belongsTo" is not a model', (t) => {
   t.throws(fn1, /belongsTo should be a model/)
   t.end()
 })
+
+test('Schema.belongsToRelations is array of all "belongsTo" relations', (t) => {
+  const userGroupModel = { name: 'user-group' }
+  const rightsModel = { name: 'user-group' }
+
+  const schema = new Schema({
+    group: {
+      belongsTo: userGroupModel,
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: rightsModel
+    }
+  })
+
+  t.equal(schema.belongsToRelations.length, 2)
+  t.deepEqual(schema.belongsToRelations, [
+    {
+      name: 'group',
+      relationModel: userGroupModel
+    },
+    {
+      name: 'rights',
+      relationModel: rightsModel
+    }
+  ])
+  t.end()
+})
