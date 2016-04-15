@@ -91,25 +91,6 @@ test('BaseModel#all calls db#exec', function (t) {
   t.end()
 })
 
-test('BaseModel#all catches db-layer error message and returns it as Error object', function (t) {
-  t.plan(3)
-
-  const db = {
-    exec () {
-      t.pass('db#exec call')
-      return Promise.reject('db error message')
-    }
-  }
-
-  const model = new ModelForAll(db, 'name', {})
-  model.all()
-  .catch((e) => {
-    t.pass('catch db error')
-    t.assert(/db error message/.test(e.message), 'assert error message')
-    t.end()
-  })
-})
-
 test('BaseModel#all throws error if sqlAll is not overridden', function (t) {
   class ModelAllThrows extends BaseModel {
     // sqlAll () {} is not overridden
@@ -165,25 +146,6 @@ test('BaseModel#get calls db#exec', function (t) {
 
   model.get(1)
   t.end()
-})
-
-test('BaseModel#get catches db-layer error message and returns it as Error object', function (t) {
-  t.plan(3)
-
-  const db = {
-    exec () {
-      t.pass('db#exec call')
-      return Promise.reject('db error message get')
-    }
-  }
-
-  const model = new ModelForGet(db, 'name', {})
-  model.get(1)
-  .catch((e) => {
-    t.pass('catch db error')
-    t.assert(/db error message get/.test(e.message), 'assert error message')
-    t.end()
-  })
 })
 
 test('BaseModel#get throws error if sqlOne is not overridden', function (t) {
@@ -271,25 +233,6 @@ test('BaseModel#update returns a Promise', function (t) {
 
   t.ok(model.update(1, {name: 'new'}) instanceof Promise)
   t.end()
-})
-
-test('BaseModel#update catches db-layer error message and returns it as Error object', function (t) {
-  t.plan(3)
-
-  const db = {
-    exec () {
-      t.pass('db#exec call')
-      return Promise.reject('db error message update')
-    }
-  }
-
-  const model = new ModelForUpdate(db, 'name', {})
-  model.update(1, {name: 'new'})
-  .catch((e) => {
-    t.pass('catch db error')
-    t.assert(/db error message update/.test(e.message), 'assert error message')
-    t.end()
-  })
 })
 
 test('BaseModel#update throws error if sqlIsRowExist is not overridden', function (t) {
