@@ -10,7 +10,7 @@ const dbMock = {
 }
 class SomeModel extends BaseModel {}
 
-test('BaseModel is abstract class', function (t) {
+test('BaseModel is abstract class', (t) => {
   const fn1 = function fn1 () {
     return new BaseModel(dbMock, 'name')
   }
@@ -24,7 +24,7 @@ test('BaseModel is abstract class', function (t) {
   t.end()
 })
 
-test('BaseModel needs database layer', function (t) {
+test('BaseModel needs database layer', (t) => {
   const fn = function fn () {
     return new SomeModel()
   }
@@ -32,7 +32,7 @@ test('BaseModel needs database layer', function (t) {
   t.end()
 })
 
-test('BaseModel constructor gets name and optionally schema', function (t) {
+test('BaseModel constructor gets name and optionally schema', (t) => {
   const fn = function fn () {
     return new SomeModel(dbMock)
   }
@@ -40,7 +40,7 @@ test('BaseModel constructor gets name and optionally schema', function (t) {
   t.end()
 })
 
-test('BaseModel if schema is not provided, then default one is created', function (t) {
+test('BaseModel if schema is not provided, then default one is created', (t) => {
   const model = new SomeModel(dbMock, 'some-name')
 
   t.equal(model.name, 'some-name')
@@ -48,7 +48,7 @@ test('BaseModel if schema is not provided, then default one is created', functio
   t.end()
 })
 
-test('BaseModel throws if "schema" is not an object', function (t) {
+test('BaseModel throws if "schema" is not an object', (t) => {
   const fn0 = function fn0 () {
     return new SomeModel(dbMock, 'name', 'any non object')
   }
@@ -69,14 +69,14 @@ class ModelForAll extends BaseModel {
   sqlAll () {}
 }
 
-test('BaseModel#all returns a Promise', function (t) {
+test('BaseModel#all returns a Promise', (t) => {
   const model = new ModelForAll(dbMock, 'name', {})
 
   t.ok(model.all() instanceof Promise)
   t.end()
 })
 
-test('BaseModel#all calls db#exec', function (t) {
+test('BaseModel#all calls db#exec', (t) => {
   t.plan(1)
 
   const db = {
@@ -91,7 +91,7 @@ test('BaseModel#all calls db#exec', function (t) {
   t.end()
 })
 
-test('BaseModel#all throws error if sqlAll is not overridden', function (t) {
+test('BaseModel#all throws error if sqlAll is not overridden', (t) => {
   class ModelAllThrows extends BaseModel {
     // sqlAll () {} is not overridden
   }
@@ -100,7 +100,7 @@ test('BaseModel#all throws error if sqlAll is not overridden', function (t) {
   t.end()
 })
 
-test('BaseModel#all sends generated sql-query to db layer', function (t) {
+test('BaseModel#all sends generated sql-query to db layer', (t) => {
   t.plan(1)
 
   const db = {
@@ -126,14 +126,14 @@ class ModelForGet extends BaseModel {
   sqlOne () {}
 }
 
-test('BaseModel#get returns a Promise', function (t) {
+test('BaseModel#get returns a Promise', (t) => {
   const model = new ModelForGet(dbMock, 'name', {})
 
   t.ok(model.get(1) instanceof Promise)
   t.end()
 })
 
-test('BaseModel#get calls db#exec', function (t) {
+test('BaseModel#get calls db#exec', (t) => {
   t.plan(1)
 
   const db = {
@@ -148,7 +148,7 @@ test('BaseModel#get calls db#exec', function (t) {
   t.end()
 })
 
-test('BaseModel#get throws error if sqlOne is not overridden', function (t) {
+test('BaseModel#get throws error if sqlOne is not overridden', (t) => {
   class ModelGetThrows extends BaseModel {
     // sqlOne () {} is not overridden
   }
@@ -157,7 +157,7 @@ test('BaseModel#get throws error if sqlOne is not overridden', function (t) {
   t.end()
 })
 
-test('BaseModel#get sends generated sql-query to db layer', function (t) {
+test('BaseModel#get sends generated sql-query to db layer', (t) => {
   t.plan(1)
 
   const db = {
@@ -176,7 +176,7 @@ test('BaseModel#get sends generated sql-query to db layer', function (t) {
   t.end()
 })
 
-test('BaseModel#get throws error if no "id" provided', function (t) {
+test('BaseModel#get throws error if no "id" provided', (t) => {
   class ModelForGetIdThrows extends BaseModel {
     // sqlOne () {} is not overridden
   }
@@ -185,7 +185,7 @@ test('BaseModel#get throws error if no "id" provided', function (t) {
   t.end()
 })
 
-test('BaseModel#get rejects with error if db returns no rows', function (t) {
+test('BaseModel#get rejects with error if db returns no rows', (t) => {
   t.plan(3)
 
   const db = {
@@ -204,7 +204,7 @@ test('BaseModel#get rejects with error if db returns no rows', function (t) {
   })
 })
 
-test('BaseModel#get returns row if got one off db', function (t) {
+test('BaseModel#get returns row if got one off db', (t) => {
   t.plan(3)
 
   const db = {}
@@ -228,14 +228,14 @@ class ModelForUpdate extends BaseModel {
   sqlIsRowExist () {}
 }
 
-test('BaseModel#update returns a Promise', function (t) {
+test('BaseModel#update returns a Promise', (t) => {
   const model = new ModelForUpdate(dbMock, 'name', {})
 
   t.ok(model.update(1, {name: 'new'}) instanceof Promise)
   t.end()
 })
 
-test('BaseModel#update throws error if sqlIsRowExist is not overridden', function (t) {
+test('BaseModel#update throws error if sqlIsRowExist is not overridden', (t) => {
   class ModelUpdateThrows extends BaseModel {
     // sqlIsRowExist () {} is not overridden
     sqlUpdate () {}
@@ -245,7 +245,7 @@ test('BaseModel#update throws error if sqlIsRowExist is not overridden', functio
   t.end()
 })
 
-test('BaseModel#update sends generated sql-query to db layer', function (t) {
+test('BaseModel#update sends generated sql-query to db layer', (t) => {
   t.plan(2) // two db.exec() calls
 
   const db = {
@@ -275,21 +275,21 @@ test('BaseModel#update sends generated sql-query to db layer', function (t) {
   .then(() => t.end())
 })
 
-test('BaseModel#update throws error if no "id" or "data" provided', function (t) {
+test('BaseModel#update throws error if no "id" or "data" provided', (t) => {
   const model = new ModelForUpdate(dbMock, 'name', {})
   t.throws(() => model.update(/* no id */), /no id has been provided/)
   t.throws(() => model.update(1 /* no data */), /no data has been provided/)
   t.end()
 })
 
-test('BaseModel#update throws error if no "id" or "data" provided', function (t) {
+test('BaseModel#update throws error if no "id" or "data" provided', (t) => {
   const model = new ModelForUpdate(dbMock, 'name', {})
   t.throws(() => model.update(/* no id */), /no id has been provided/)
   t.throws(() => model.update(1 /* no data */), /no data has been provided/)
   t.end()
 })
 
-test('BaseModel#update rejects with error if no row with "id" exists', function (t) {
+test('BaseModel#update rejects with error if no row with "id" exists', (t) => {
   t.plan(3)
 
   const db = {
@@ -318,7 +318,7 @@ test('BaseModel#update rejects with error if no row with "id" exists', function 
   })
 })
 
-test('BaseModel#update returns an updated model', function (t) {
+test('BaseModel#update returns an updated model', (t) => {
   t.plan(4)
 
   const db = {
@@ -360,7 +360,7 @@ test('BaseModel#update returns an updated model', function (t) {
  * #create(data)
  */
 //
-test('BaseModel#create returns saved model', function (t) {
+test('BaseModel#create returns saved model', (t) => {
   t.plan(3)
 
   const db = {
@@ -395,7 +395,7 @@ test('BaseModel#create returns saved model', function (t) {
 /**
  * Serializer
  */
-test('BaseModel#serialize(records) throws if "records" is undefined', function (t) {
+test('BaseModel#serialize(records) throws if "records" is undefined', (t) => {
   const model = new SomeModel(dbMock, 'name')
   const fn1 = function fn1 () {
     model.serialize(undefined)
@@ -410,7 +410,7 @@ test('BaseModel#serialize(records) throws if "records" is undefined', function (
   t.end()
 })
 
-test('BaseModel#serialize takes into account "belongsTo" relations', function (t) {
+test('BaseModel#serialize takes into account "belongsTo" relations', (t) => {
   const model = new SomeModel(dbMock, 'user', {
     name: 'string',
     group: {
@@ -433,7 +433,7 @@ test('BaseModel#serialize takes into account "belongsTo" relations', function (t
 /**
  * De-serializer
  */
-test('BaseModel deserializerOptions takes into account "belongsTo" relations', function (t) {
+test('BaseModel deserializerOptions takes into account "belongsTo" relations', (t) => {
   const model = new SomeModel(dbMock, 'user', {
     name: 'string',
     group: {
@@ -451,7 +451,7 @@ test('BaseModel deserializerOptions takes into account "belongsTo" relations', f
   t.end()
 })
 
-test('BaseModel#deserialize method', function (t) {
+test('BaseModel#deserialize method', (t) => {
   const model = new SomeModel(dbMock, 'user', {
     name: 'string',
     group: {
@@ -486,7 +486,7 @@ test('BaseModel#deserialize method', function (t) {
 /**
  * belongsTo
  */
-test('BaseModel#fetchAll uses all() method under the hood', function (t) {
+test('BaseModel#fetchAll uses all() method under the hood', (t) => {
   t.plan(1)
 
   class ModelForFetchAll extends BaseModel {
@@ -502,7 +502,7 @@ test('BaseModel#fetchAll uses all() method under the hood', function (t) {
   .then(() => t.end())
 })
 
-test('BaseModel#fetchAll returns cast and serialized data', function (t) {
+test('BaseModel#fetchAll returns cast and serialized data', (t) => {
   t.plan(2)
 
   class ModelForFetchAll extends BaseModel {
@@ -534,56 +534,45 @@ test('BaseModel#fetchAll returns cast and serialized data', function (t) {
   .then(() => t.end())
 })
 
-test.skip('BaseModel#fetchAll returns JSONApi-serialized data w/ included relations', function (t) {
-  t.plan(5)
-
-  const db = {
-    exec (sql) {
-      if (sql === 'userModel SQL') {
-        t.pass('userModel db.exec() called')
-
-        return Promise.resolve([
-          { id: '101', name: 'kengar', userGroupId: '2' },
-          { id: '102', name: 'john', userGroupId: '3' }
-        ])
-      } else if (sql === 'groupModel SQL') {
-        t.pass('groupModel db.exec() called')
-
-        return Promise.resolve([
-          { id: '3', name: 'Admins' },
-          { id: '2', name: 'Users' }
-        ])
-      } else {
-        t.fail('this should not be called')
-      }
-    }
-  }
-
-  class UserModel extends BaseModel {
-    sqlAll () { t.pass('UserModel.sqlAll() called'); return 'userModel SQL' }
-  }
+test('BaseModel#_fetchBelongsToRelations returns array of type-cast relations data', (t) => {
+  t.plan(4)
 
   class GroupModel extends BaseModel {
-    sqlAll () { t.pass('GroupModel.sqlAll() called'); return 'groupModel SQL' }
-  }
-
-  const groupModel = new GroupModel(db, 'user-group', {
-    name: 'string'
-  })
-
-  const userModel = new UserModel(db, 'user', {
-    name: 'string',
-    group: {
-      belongsTo: groupModel,
-      fkField: 'GrpID'
+    all () {
+      t.pass('GroupModel all() called')
+      return Promise.resolve([{name: 'Admins', enabled: '0'}])
     }
+  }
+  const groupModel = new GroupModel(dbMock, 'user-group', {
+    name: 'string',
+    enabled: 'boolean'
   })
 
-  userModel.fetchAll({withRelated: 'user-group'})
-  .then((data) => {
-    // t.equal(data[0].some, 'data', 'data returned')
-    t.pass('data returned') // TODO
+  class RightsModel extends BaseModel {
+    all () {
+      t.pass('RightsModel all() called')
+      return Promise.resolve([{name: 'Full', enabled: '1'}])
+    }
+  }
+  const rightsModel = new RightsModel(dbMock, 'rights', {
+    name: 'string',
+    enabled: 'boolean'
   })
-  .catch(() => t.fail('should not be called'))
+
+  class UserModel extends BaseModel {}
+  const userModel = new UserModel(dbMock, 'user', {
+    name: 'string',
+    group: { belongsTo: groupModel },
+    rights: { belongsTo: rightsModel }
+  })
+
+  userModel._fetchBelongsToRelations()
+  .then((results) => {
+    t.equal(results.length, 2)
+    t.deepEqual(results, [
+      [ { enabled: false, name: 'Admins' } ],
+      [ { enabled: true, name: 'Full' } ]
+    ])
+  })
   .then(() => t.end())
 })
