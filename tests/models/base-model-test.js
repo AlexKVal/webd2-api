@@ -534,29 +534,33 @@ test('BaseModel#fetchAll returns cast and serialized data', (t) => {
   .then(() => t.end())
 })
 
-test('BaseModel#_fetchBelongsToRelations returns array of type-cast relations data', (t) => {
-  t.plan(4)
+test('BaseModel#_fetchBelongsToRelations fetches relations data for every parent row', (t) => {
+  t.plan(1)
 
   class GroupModel extends BaseModel {
-    all () {
-      t.pass('GroupModel all() called')
-      return Promise.resolve([{name: 'Admins', enabled: '0'}])
+    get (id) {
+      const rows = {
+        101: {id: '101', name: 'Admins'},
+        102: {id: '102', name: 'Users'}
+      }
+      return Promise.resolve(rows[id])
     }
   }
   const groupModel = new GroupModel(dbMock, 'user-group', {
-    name: 'string',
-    enabled: 'boolean'
+    name: 'string'
   })
 
   class RightsModel extends BaseModel {
-    all () {
-      t.pass('RightsModel all() called')
-      return Promise.resolve([{name: 'Full', enabled: '1'}])
+    get (id) {
+      const rows = {
+        12: {id: '12', name: 'Full'},
+        13: {id: '13', name: 'Part'}
+      }
+      return Promise.resolve(rows[id])
     }
   }
   const rightsModel = new RightsModel(dbMock, 'rights', {
-    name: 'string',
-    enabled: 'boolean'
+    name: 'string'
   })
 
   class UserModel extends BaseModel {}
@@ -566,13 +570,88 @@ test('BaseModel#_fetchBelongsToRelations returns array of type-cast relations da
     rights: { belongsTo: rightsModel }
   })
 
-  userModel._fetchBelongsToRelations()
-  .then((results) => {
-    t.equal(results.length, 2)
-    t.deepEqual(results, [
-      [ { enabled: false, name: 'Admins' } ],
-      [ { enabled: true, name: 'Full' } ]
+  const parentRows = [
+    {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+    {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+  ]
+
+  userModel._fetchBelongsToRelations(parentRows)
+  .then((data) => {
+    t.deepEqual(data, [
+      {
+        id: '1', name: 'John',
+        group: {id: '101', name: 'Admins'},
+        rights: {id: '12', name: 'Full'}
+      },
+      {
+        id: '2', name: 'Smith',
+        group: {id: '102', name: 'Users'},
+        rights: {id: '13', name: 'Part'}
+      }
     ])
   })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
+
+test.skip('BaseModel#fetchAll returns rows with relations data embedded', (t) => {
+  t.plan(1)
+
+  class GroupModel extends BaseModel {
+    get (id) {
+      const rows = {
+        101: {id: '101', name: 'Admins'},
+        102: {id: '102', name: 'Users'}
+      }
+      return Promise.resolve(rows[id])
+    }
+  }
+  const groupModel = new GroupModel(dbMock, 'user-group', {
+    name: 'string'
+  })
+
+  class RightsModel extends BaseModel {
+    get (id) {
+      const rows = {
+        12: {id: '12', name: 'Full'},
+        13: {id: '13', name: 'Part'}
+      }
+      return Promise.resolve(rows[id])
+    }
+  }
+  const rightsModel = new RightsModel(dbMock, 'rights', {
+    name: 'string'
+  })
+
+  class UserModel extends BaseModel {
+    all () {
+      return Promise.resolve([
+        {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+        {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+      ])
+    }
+  }
+  const userModel = new UserModel(dbMock, 'user', {
+    name: 'string',
+    group: { belongsTo: groupModel },
+    rights: { belongsTo: rightsModel }
+  })
+
+  userModel.fetchAll()
+  .then((data) => {
+    t.deepEqual(data, [
+      {
+        id: '1', name: 'John',
+        group: {id: '101', name: 'Admins'},
+        rights: {id: '12', name: 'Full'}
+      },
+      {
+        id: '2', name: 'Smith',
+        group: {id: '102', name: 'Users'},
+        rights: {id: '13', name: 'Part'}
+      }
+    ])
+  })
+  .catch((e) => t.fail(e))
   .then(() => t.end())
 })
