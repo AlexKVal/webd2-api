@@ -411,10 +411,12 @@ test('BaseModel#serialize(records) throws if "records" is undefined', (t) => {
 })
 
 test('BaseModel#serialize takes into account "belongsTo" relations', (t) => {
+  class UserGroup extends BaseModel {}
+  const userGroup = new UserGroup(dbMock, 'user-group', {})
   const model = new SomeModel(dbMock, 'user', {
     name: 'string',
     group: {
-      belongsTo: { name: 'user-group' },
+      belongsTo: userGroup,
       fkField: 'GrpID'
     }
   })
@@ -434,10 +436,12 @@ test('BaseModel#serialize takes into account "belongsTo" relations', (t) => {
  * De-serializer
  */
 test('BaseModel deserializerOptions takes into account "belongsTo" relations', (t) => {
+  class UserGroup extends BaseModel {}
+  const userGroup = new UserGroup(dbMock, 'user-group', {})
   const model = new SomeModel(dbMock, 'user', {
     name: 'string',
     group: {
-      belongsTo: { name: 'user-group' },
+      belongsTo: userGroup,
       fkField: 'GrpID'
     }
   })
@@ -452,14 +456,19 @@ test('BaseModel deserializerOptions takes into account "belongsTo" relations', (
 })
 
 test('BaseModel#deserialize method', (t) => {
+  class UserGroup extends BaseModel {}
+  const userGroup = new UserGroup(dbMock, 'user-group', {})
+  class UserRights extends BaseModel {}
+  const userRights = new UserRights(dbMock, 'user-rights', {})
+
   const model = new SomeModel(dbMock, 'user', {
     name: 'string',
     group: {
-      belongsTo: { name: 'user-group' },
+      belongsTo: userGroup,
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: { name: 'user-rights' },
+      belongsTo: userRights,
       fkField: 'rights'
     }
   })
@@ -594,7 +603,7 @@ test('BaseModel#_fetchBelongsToRelations fetches relations data for every parent
   .then(() => t.end())
 })
 
-test.skip('BaseModel#fetchAll returns rows with relations data embedded', (t) => {
+test('BaseModel#fetchAll returns serialized rows with relations data included', (t) => {
   t.plan(1)
 
   class GroupModel extends BaseModel {
@@ -638,19 +647,43 @@ test.skip('BaseModel#fetchAll returns rows with relations data embedded', (t) =>
   })
 
   userModel.fetchAll()
-  .then((data) => {
-    t.deepEqual(data, [
-      {
-        id: '1', name: 'John',
-        group: {id: '101', name: 'Admins'},
-        rights: {id: '12', name: 'Full'}
-      },
-      {
-        id: '2', name: 'Smith',
-        group: {id: '102', name: 'Users'},
-        rights: {id: '13', name: 'Part'}
-      }
-    ])
+  .then((serialized) => {
+    t.deepEqual(serialized, {
+      data: [{
+        attributes: { name: 'John' },
+        id: '1',
+        relationships: {
+          group: { data: { id: '101', type: 'groups' } },
+          rights: { data: { id: '12', type: 'rights' } }
+        },
+        type: 'users'
+      }, {
+        attributes: { name: 'Smith' },
+        id: '2',
+        relationships: {
+          group: { data: { id: '102', type: 'groups' } },
+          rights: { data: { id: '13', type: 'rights' } }
+        },
+        type: 'users'
+      }],
+      included: [{
+        attributes: { name: 'Admins' },
+        id: '101',
+        type: 'groups'
+      }, {
+        attributes: { name: 'Full' },
+        id: '12',
+        type: 'rights'
+      }, {
+        attributes: { name: 'Users' },
+        id: '102',
+        type: 'groups'
+      }, {
+        attributes: { name: 'Part' },
+        id: '13',
+        type: 'rights'
+      }]
+    })
   })
   .catch((e) => t.fail(e))
   .then(() => t.end())
