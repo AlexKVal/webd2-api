@@ -74,7 +74,7 @@ test('Schema: belongsTo autogenerates "fkAs" if undefined', (t) => {
   t.end()
 })
 
-test('Schema: "attributes" is array of all "data" + "belongsTo.fkAs" fields', (t) => {
+test('Schema: "attributes" contains all dataSet keys', (t) => {
   const schema = new Schema({
     name: 'string',
     boolFlag: 'boolean',
@@ -91,8 +91,12 @@ test('Schema: "attributes" is array of all "data" + "belongsTo.fkAs" fields', (t
     }
   })
 
-  t.equal(schema.attributes.length, 5)
-  t.deepEqual(schema.attributes, ['name', 'boolFlag', 'someNumber', 'userGroupId', 'whatever'])
+  t.equal(schema.attributes.length, 7)
+  t.deepEqual(schema.attributes, [
+    'name', 'boolFlag',
+    'someNumber', 'userGroupId',
+    'group', 'whatever', 'rights'
+  ])
   t.end()
 })
 
