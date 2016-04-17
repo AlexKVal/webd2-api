@@ -603,7 +603,7 @@ test('BaseModel#_fetchBelongsToRelations fetches relations data for every parent
   .then(() => t.end())
 })
 
-test('BaseModel#fetchAll returns serialized rows with relations data included', (t) => {
+test('BaseModel#fetchAll({withRelated: true}) returns serialized rows with relations data included', (t) => {
   t.plan(1)
 
   class GroupModel extends BaseModel {
@@ -646,7 +646,7 @@ test('BaseModel#fetchAll returns serialized rows with relations data included', 
     rights: { belongsTo: rightsModel }
   })
 
-  userModel.fetchAll()
+  userModel.fetchAll({withRelated: true})
   .then((serialized) => {
     t.deepEqual(serialized, {
       data: [{
@@ -745,4 +745,73 @@ test('BaseModel#_transformRelIDsToRelations changes relations ids into empty rel
   ])
 
   t.end()
+})
+
+test('BaseModel#fetchAll({withRelated: false}) returns serialized rows without relations included', (t) => {
+  t.plan(1)
+
+  class GroupModel extends BaseModel {
+    get (id) {
+      const rows = {
+        101: {id: '101', name: 'Admins'},
+        102: {id: '102', name: 'Users'}
+      }
+      return Promise.resolve(rows[id])
+    }
+  }
+  const groupModel = new GroupModel(dbMock, 'user-group', {
+    name: 'string'
+  })
+
+  class RightsModel extends BaseModel {
+    get (id) {
+      const rows = {
+        12: {id: '12', name: 'Full'},
+        13: {id: '13', name: 'Part'}
+      }
+      return Promise.resolve(rows[id])
+    }
+  }
+  const rightsModel = new RightsModel(dbMock, 'rights', {
+    name: 'string'
+  })
+
+  class UserModel extends BaseModel {
+    all () {
+      return Promise.resolve([
+        {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+        {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+      ])
+    }
+  }
+  const userModel = new UserModel(dbMock, 'user', {
+    name: 'string',
+    group: { belongsTo: groupModel },
+    rights: { belongsTo: rightsModel }
+  })
+
+  userModel.fetchAll()
+  .then((serialized) => {
+    t.deepEqual(serialized, {
+      data: [{
+        attributes: { name: 'John' },
+        id: '1',
+        relationships: {
+          group: { data: { id: '101', type: 'groups' } },
+          rights: { data: { id: '12', type: 'rights' } }
+        },
+        type: 'users'
+      }, {
+        attributes: { name: 'Smith' },
+        id: '2',
+        relationships: {
+          group: { data: { id: '102', type: 'groups' } },
+          rights: { data: { id: '13', type: 'rights' } }
+        },
+        type: 'users'
+      }]
+    })
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
 })
