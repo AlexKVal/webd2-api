@@ -543,16 +543,15 @@ test('BaseModel#fetchAll returns cast and serialized data', (t) => {
   .then(() => t.end())
 })
 
-test('BaseModel#_fetchBelongsToRelations fetches relations data for every parent row', (t) => {
+test('BaseModel#_fetchBelongsToRelations fetches relations data', (t) => {
   t.plan(1)
 
   class GroupModel extends BaseModel {
-    get (id) {
-      const rows = {
-        101: {id: '101', name: 'Admins'},
-        102: {id: '102', name: 'Users'}
-      }
-      return Promise.resolve(rows[id])
+    all () {
+      return Promise.resolve([
+        {id: '101', name: 'Admins'},
+        {id: '102', name: 'Users'}
+      ])
     }
   }
   const groupModel = new GroupModel(dbMock, 'user-group', {
@@ -560,12 +559,11 @@ test('BaseModel#_fetchBelongsToRelations fetches relations data for every parent
   })
 
   class RightsModel extends BaseModel {
-    get (id) {
-      const rows = {
-        12: {id: '12', name: 'Full'},
-        13: {id: '13', name: 'Part'}
-      }
-      return Promise.resolve(rows[id])
+    all () {
+      return Promise.resolve([
+        {id: '12', name: 'Full'},
+        {id: '13', name: 'Part'}
+      ])
     }
   }
   const rightsModel = new RightsModel(dbMock, 'rights', {
@@ -607,12 +605,11 @@ test('BaseModel#fetchAll({withRelated: true}) returns serialized rows with relat
   t.plan(1)
 
   class GroupModel extends BaseModel {
-    get (id) {
-      const rows = {
-        101: {id: '101', name: 'Admins'},
-        102: {id: '102', name: 'Users'}
-      }
-      return Promise.resolve(rows[id])
+    all () {
+      return Promise.resolve([
+        {id: '101', name: 'Admins'},
+        {id: '102', name: 'Users'}
+      ])
     }
   }
   const groupModel = new GroupModel(dbMock, 'user-group', {
@@ -620,12 +617,11 @@ test('BaseModel#fetchAll({withRelated: true}) returns serialized rows with relat
   })
 
   class RightsModel extends BaseModel {
-    get (id) {
-      const rows = {
-        12: {id: '12', name: 'Full'},
-        13: {id: '13', name: 'Part'}
-      }
-      return Promise.resolve(rows[id])
+    all () {
+      return Promise.resolve([
+        {id: '12', name: 'Full'},
+        {id: '13', name: 'Part'}
+      ])
     }
   }
   const rightsModel = new RightsModel(dbMock, 'rights', {
