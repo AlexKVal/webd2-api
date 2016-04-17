@@ -688,3 +688,61 @@ test('BaseModel#fetchAll returns serialized rows with relations data included', 
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
+
+test('BaseModel#_transformRelIDsToRelations changes relations ids into empty relations with ids', (t) => {
+  t.plan(1)
+
+  class GroupModel extends BaseModel {
+    get (id) {
+      const rows = {
+        101: {id: '101', name: 'Admins'},
+        102: {id: '102', name: 'Users'}
+      }
+      return Promise.resolve(rows[id])
+    }
+  }
+  const groupModel = new GroupModel(dbMock, 'user-group', {
+    name: 'string'
+  })
+
+  class RightsModel extends BaseModel {
+    get (id) {
+      const rows = {
+        12: {id: '12', name: 'Full'},
+        13: {id: '13', name: 'Part'}
+      }
+      return Promise.resolve(rows[id])
+    }
+  }
+  const rightsModel = new RightsModel(dbMock, 'rights', {
+    name: 'string'
+  })
+
+  class UserModel extends BaseModel {}
+  const userModel = new UserModel(dbMock, 'user', {
+    name: 'string',
+    group: { belongsTo: groupModel },
+    rights: { belongsTo: rightsModel }
+  })
+
+  const parentRows = [
+    {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+    {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+  ]
+
+  const dataSet = userModel._transformRelIDsToRelations(parentRows)
+  t.deepEqual(dataSet, [
+    {
+      id: '1', name: 'John',
+      group: { id: '101' },
+      rights: {id: '12'}
+    },
+    {
+      id: '2', name: 'Smith',
+      group: {id: '102'},
+      rights: {id: '13'}
+    }
+  ])
+
+  t.end()
+})
