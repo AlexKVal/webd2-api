@@ -688,28 +688,12 @@ test('BaseModel#fetchAll({withRelated: true}) returns serialized rows with relat
 test('BaseModel#_transformRelIDsToRelations changes relations ids into empty relations with ids', (t) => {
   t.plan(1)
 
-  class GroupModel extends BaseModel {
-    get (id) {
-      const rows = {
-        101: {id: '101', name: 'Admins'},
-        102: {id: '102', name: 'Users'}
-      }
-      return Promise.resolve(rows[id])
-    }
-  }
+  class GroupModel extends BaseModel {}
   const groupModel = new GroupModel(dbMock, 'user-group', {
     name: 'string'
   })
 
-  class RightsModel extends BaseModel {
-    get (id) {
-      const rows = {
-        12: {id: '12', name: 'Full'},
-        13: {id: '13', name: 'Part'}
-      }
-      return Promise.resolve(rows[id])
-    }
-  }
+  class RightsModel extends BaseModel {}
   const rightsModel = new RightsModel(dbMock, 'rights', {
     name: 'string'
   })
@@ -746,28 +730,12 @@ test('BaseModel#_transformRelIDsToRelations changes relations ids into empty rel
 test('BaseModel#fetchAll({withRelated: false}) returns serialized rows without relations included', (t) => {
   t.plan(1)
 
-  class GroupModel extends BaseModel {
-    get (id) {
-      const rows = {
-        101: {id: '101', name: 'Admins'},
-        102: {id: '102', name: 'Users'}
-      }
-      return Promise.resolve(rows[id])
-    }
-  }
+  class GroupModel extends BaseModel {}
   const groupModel = new GroupModel(dbMock, 'user-group', {
     name: 'string'
   })
 
-  class RightsModel extends BaseModel {
-    get (id) {
-      const rows = {
-        12: {id: '12', name: 'Full'},
-        13: {id: '13', name: 'Part'}
-      }
-      return Promise.resolve(rows[id])
-    }
-  }
+  class RightsModel extends BaseModel {}
   const rightsModel = new RightsModel(dbMock, 'rights', {
     name: 'string'
   })
