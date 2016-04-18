@@ -779,3 +779,49 @@ test('BaseModel#fetchAll({withRelated: false}) returns serialized rows without r
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
+
+test('BaseModel#find(id) calls get(id) and serializes row without relations included', (t) => {
+  t.plan(1)
+
+  class GroupModel extends BaseModel {}
+  const groupModel = new GroupModel(dbMock, 'user-group', {
+    name: 'string'
+  })
+
+  class RightsModel extends BaseModel {}
+  const rightsModel = new RightsModel(dbMock, 'rights', {
+    name: 'string'
+  })
+
+  class UserModel extends BaseModel {
+    get (id) {
+      const rows = {
+        1: {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+        2: {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+      }
+      return Promise.resolve(rows[id])
+    }
+  }
+  const userModel = new UserModel(dbMock, 'user', {
+    name: 'string',
+    group: { belongsTo: groupModel },
+    rights: { belongsTo: rightsModel }
+  })
+
+  userModel.find(1)
+  .then((serialized) => {
+    t.deepEqual(serialized, {
+      data: {
+        attributes: { name: 'John' },
+        id: '1',
+        relationships: {
+          group: { data: { id: '101', type: 'groups' } },
+          rights: { data: { id: '12', type: 'rights' } }
+        },
+        type: 'users'
+      }
+    })
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
