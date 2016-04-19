@@ -780,7 +780,7 @@ test('BaseModel#fetchAll({withRelated: false}) returns serialized rows without r
   .then(() => t.end())
 })
 
-test('BaseModel#find(id) calls get(id) and serializes row without relations included', (t) => {
+test('BaseModel#apiFind(id) calls get(id) and serializes row without relations included', (t) => {
   t.plan(1)
 
   class GroupModel extends BaseModel {}
@@ -808,7 +808,7 @@ test('BaseModel#find(id) calls get(id) and serializes row without relations incl
     rights: { belongsTo: rightsModel }
   })
 
-  userModel.find(1)
+  userModel.apiFind(1)
   .then((serialized) => {
     t.deepEqual(serialized, {
       data: {
