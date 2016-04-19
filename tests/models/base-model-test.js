@@ -495,7 +495,7 @@ test('BaseModel#deserialize method', (t) => {
 /**
  * belongsTo
  */
-test('BaseModel#fetchAll uses all() method under the hood', (t) => {
+test('BaseModel#apiFetchAll uses all() method under the hood', (t) => {
   t.plan(1)
 
   class ModelForFetchAll extends BaseModel {
@@ -507,11 +507,11 @@ test('BaseModel#fetchAll uses all() method under the hood', (t) => {
 
   const model = new ModelForFetchAll(dbMock, 'user', {})
 
-  model.fetchAll()
+  model.apiFetchAll()
   .then(() => t.end())
 })
 
-test('BaseModel#fetchAll returns cast and serialized data', (t) => {
+test('BaseModel#apiFetchAll returns cast and serialized data', (t) => {
   t.plan(2)
 
   class ModelForFetchAll extends BaseModel {
@@ -530,7 +530,7 @@ test('BaseModel#fetchAll returns cast and serialized data', (t) => {
     enabled: 'boolean'
   })
 
-  model.fetchAll()
+  model.apiFetchAll()
   .then((data) => {
     t.deepEqual(data, {
       data: [
@@ -601,7 +601,7 @@ test('BaseModel#_fetchBelongsToRelations fetches relations data', (t) => {
   .then(() => t.end())
 })
 
-test('BaseModel#fetchAll({withRelated: true}) returns serialized rows with relations data included', (t) => {
+test('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with relations data included', (t) => {
   t.plan(1)
 
   class GroupModel extends BaseModel {
@@ -642,7 +642,7 @@ test('BaseModel#fetchAll({withRelated: true}) returns serialized rows with relat
     rights: { belongsTo: rightsModel }
   })
 
-  userModel.fetchAll({withRelated: true})
+  userModel.apiFetchAll({withRelated: true})
   .then((serialized) => {
     t.deepEqual(serialized, {
       data: [{
@@ -727,7 +727,7 @@ test('BaseModel#_transformRelIDsToRelations changes relations ids into empty rel
   t.end()
 })
 
-test('BaseModel#fetchAll({withRelated: false}) returns serialized rows without relations included', (t) => {
+test('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows without relations included', (t) => {
   t.plan(1)
 
   class GroupModel extends BaseModel {}
@@ -754,7 +754,7 @@ test('BaseModel#fetchAll({withRelated: false}) returns serialized rows without r
     rights: { belongsTo: rightsModel }
   })
 
-  userModel.fetchAll()
+  userModel.apiFetchAll()
   .then((serialized) => {
     t.deepEqual(serialized, {
       data: [{
