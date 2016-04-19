@@ -825,3 +825,111 @@ test('BaseModel#apiFind(id) calls get(id) and serializes row without relations i
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
+
+test('BaseModel#apiUpdate calls update() and returns updated serialized row without relations included', (t) => {
+  t.plan(3)
+
+  class GroupModel extends BaseModel {}
+  const groupModel = new GroupModel(dbMock, 'user-group', { name: 'string' })
+
+  class RightsModel extends BaseModel {}
+  const rightsModel = new RightsModel(dbMock, 'rights', { name: 'string' })
+
+  class UserModel extends BaseModel {
+    update (id, deserializedData) {
+      t.pass('update(id, data) has been called')
+
+      t.deepEqual(deserializedData, {
+        id: '1', name: 'John',
+        rights: { id: '12' },
+        userGroup: { id: '101' }
+      })
+      return Promise.resolve({
+        id: '1', name: 'John',
+        rightsId: '12',
+        userGroupId: '101'
+      })
+    }
+  }
+  const userModel = new UserModel(dbMock, 'user', {
+    name: 'string',
+    userGroup: { belongsTo: groupModel },
+    rights: { belongsTo: rightsModel }
+  })
+
+  const updatesData = {
+    data: {
+      attributes: { name: 'John' },
+      id: '1',
+      relationships: {
+        userGroup: { data: { id: '101', type: 'user-groups' } },
+        rights: { data: { id: '12', type: 'rights' } }
+      },
+      type: 'users'
+    }
+  }
+
+  userModel.apiUpdate(1, updatesData)
+  .then((updatedSerialized) => {
+    t.deepEqual(updatedSerialized, {
+      data: {
+        attributes: { name: 'John' },
+        id: '1',
+        relationships: {
+          'user-group': { data: { id: '101', type: 'userGroups' } },
+          rights: { data: { id: '12', type: 'rights' } }
+        },
+        type: 'users'
+      }
+    })
+  })
+  .catch((e) => t.fail(`should not be called. ${e}`))
+  .then(() => t.end())
+})
+
+test('BaseModel#apiUpdate returns error from "update"', (t) => {
+  t.plan(2)
+
+  class UserModel extends BaseModel {
+    update (id, deserializedData) {
+      t.pass('update(id, data) has been called')
+      return Promise.reject(new Error('some error'))
+    }
+  }
+  const userModel = new UserModel(dbMock, 'user', { name: 'string' })
+
+  const updatesData = {
+    data: {
+      attributes: { name: 'John' },
+      id: '1',
+      type: 'users'
+    }
+  }
+
+  userModel.apiUpdate(1, updatesData)
+  .then(() => t.fail('should not be called'))
+  .catch((e) => {
+    t.equal(e.message, 'some error')
+  })
+  .then(() => t.end())
+})
+
+test('BaseModel#apiUpdate returns error from "deserialize"', (t) => {
+  t.plan(2)
+
+  class UserModel extends BaseModel {
+    deserialize (_, cb) {
+      t.pass('deserialize() has been called')
+
+      cb(new Error('some deserialization error'))
+    }
+  }
+  const userModel = new UserModel(dbMock, 'user', { name: 'string' })
+
+  userModel.apiUpdate(1, {})
+  .then(() => t.fail('should not be called'))
+  .catch((e) => {
+    t.equal(e.message, 'some deserialization error')
+  })
+  .then(() => t.end())
+})
