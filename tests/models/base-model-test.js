@@ -91,6 +91,36 @@ test('BaseModel#all calls db#exec', (t) => {
   t.end()
 })
 
+test('BaseModel#all returns cast types', (t) => {
+  t.plan(1)
+
+  const db = {
+    exec () {
+      t.pass('db#exec call')
+      return Promise.resolve({
+        enabled: '0',
+        disabled: '1',
+        counter: '123'
+      })
+    }
+  }
+  const model = new ModelForAll(db, 'name', {
+    enabled: 'boolean',
+    disabled: 'boolean',
+    counter: 'integer'
+  })
+
+  model.all()
+  .then((castData) => {
+    t.deepEqual(castData, {
+      enabled: false,
+      disabled: true,
+      counter: 123
+    })
+  })
+  t.end()
+})
+
 test('BaseModel#all throws error if sqlAll is not overridden', (t) => {
   class ModelAllThrows extends BaseModel {
     // sqlAll () {} is not overridden
@@ -493,23 +523,7 @@ test('BaseModel#deserialize method returns Promise', (t) => {
 /**
  * belongsTo
  */
-test('BaseModel#apiFetchAll uses all() method under the hood', (t) => {
-  t.plan(1)
-
-  class ModelForFetchAll extends BaseModel {
-    all () {
-      t.pass('all() called')
-      return Promise.resolve()
-    }
-  }
-
-  const model = new ModelForFetchAll(dbMock, 'user', {})
-
-  model.apiFetchAll()
-  .then(() => t.end())
-})
-
-test('BaseModel#apiFetchAll returns cast and serialized data', (t) => {
+test('BaseModel#apiFetchAll calls all() and returns serialized data', (t) => {
   t.plan(2)
 
   class ModelForFetchAll extends BaseModel {
@@ -517,8 +531,8 @@ test('BaseModel#apiFetchAll returns cast and serialized data', (t) => {
       t.pass('all() called')
 
       return Promise.resolve([
-        {id: '1', name: 'Mathew', enabled: '0'},
-        {id: '2', name: 'John', enabled: '1'}
+        {id: '1', name: 'Mathew', enabled: false},
+        {id: '2', name: 'John', enabled: true}
       ])
     }
   }
