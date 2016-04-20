@@ -65,44 +65,23 @@ test('BaseModel throws if "schema" is not an object', (t) => {
 /**
  * #all
  */
-class ModelForAll extends BaseModel {
-  sqlAll () {}
-}
-
-test('BaseModel#all returns a Promise', (t) => {
-  const model = new ModelForAll(dbMock, 'name', {})
-
-  t.ok(model.all() instanceof Promise)
-  t.end()
-})
-
-test('BaseModel#all calls db#exec', (t) => {
-  t.plan(1)
+test('BaseModel#all calls db#exec and returns cast types', (t) => {
+  t.plan(4)
 
   const db = {
-    exec () {
+    exec (sql) {
       t.pass('db#exec call')
-      return Promise.resolve()
-    }
-  }
-  const model = new ModelForAll(db, 'name', {})
-
-  model.all()
-  t.end()
-})
-
-test('BaseModel#all returns cast types', (t) => {
-  t.plan(1)
-
-  const db = {
-    exec () {
-      t.pass('db#exec call')
-      return Promise.resolve({
+      t.equal(sql, 'SELECT * FROM table', 'sends sql-query to db layer')
+      return Promise.resolve([{
         enabled: '0',
         disabled: '1',
         counter: '123'
-      })
+      }])
     }
+  }
+
+  class ModelForAll extends BaseModel {
+    sqlAll () { return 'SELECT * FROM table' }
   }
   const model = new ModelForAll(db, 'name', {
     enabled: 'boolean',
@@ -111,14 +90,16 @@ test('BaseModel#all returns cast types', (t) => {
   })
 
   model.all()
+  .then((castData) => { t.pass('returns a Promise'); return castData })
   .then((castData) => {
-    t.deepEqual(castData, {
+    t.deepEqual(castData, [{
       enabled: false,
       disabled: true,
       counter: 123
-    })
+    }])
   })
-  t.end()
+  .catch((e) => t.fail(`should not be called ${e}`))
+  .then(() => t.end())
 })
 
 test('BaseModel#all throws error if sqlAll is not overridden', (t) => {
@@ -127,25 +108,6 @@ test('BaseModel#all throws error if sqlAll is not overridden', (t) => {
   }
   const model = new ModelAllThrows(dbMock, 'name', {})
   t.throws(() => model.all(), /you should override sqlAll/)
-  t.end()
-})
-
-test('BaseModel#all sends generated sql-query to db layer', (t) => {
-  t.plan(1)
-
-  const db = {
-    exec (sql) {
-      t.equal(sql, 'SELECT * FROM table')
-      return Promise.resolve()
-    }
-  }
-
-  class AModel extends BaseModel {
-    sqlAll () { return 'SELECT * FROM table' }
-  }
-
-  const model = new AModel(db, 'name', {})
-  model.all()
   t.end()
 })
 
