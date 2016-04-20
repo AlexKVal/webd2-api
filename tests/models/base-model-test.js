@@ -112,32 +112,43 @@ test('BaseModel#all throws error if sqlAll is not overridden', (t) => {
 })
 
 /**
- * #get(id)
+ * get(id)
  */
-class ModelForGet extends BaseModel {
-  sqlOne () {}
-}
-
-test('BaseModel#get returns a Promise', (t) => {
-  const model = new ModelForGet(dbMock, 'name', {})
-
-  t.ok(model.get(1) instanceof Promise)
-  t.end()
-})
-
-test('BaseModel#get calls db#exec', (t) => {
-  t.plan(1)
+test('BaseModel#get calls db#exec and returns cast data', (t) => {
+  t.plan(4)
 
   const db = {
-    exec () {
+    exec (sql) {
       t.pass('db#exec call')
-      return Promise.resolve()
+      t.equal(sql, 'SELECT * FROM tableGet', 'passes sql-query to db-layer')
+      return Promise.resolve([{
+        enabled: '0',
+        disabled: '1',
+        counter: '123'
+      }])
     }
   }
-  const model = new ModelForGet(db, 'name', {})
+
+  class ModelForGet extends BaseModel {
+    sqlOne () { return 'SELECT * FROM tableGet' }
+  }
+  const model = new ModelForGet(db, 'name', {
+    enabled: 'boolean',
+    disabled: 'boolean',
+    counter: 'integer'
+  })
 
   model.get(1)
-  t.end()
+  .then((castData) => {
+    t.pass('returns a Promise')
+    t.deepEqual(castData, [{
+      enabled: false,
+      disabled: true,
+      counter: 123
+    }])
+  })
+  .catch((e) => t.fail(`should not be called ${e}`))
+  .then(() => t.end())
 })
 
 test('BaseModel#get throws error if sqlOne is not overridden', (t) => {
@@ -149,29 +160,8 @@ test('BaseModel#get throws error if sqlOne is not overridden', (t) => {
   t.end()
 })
 
-test('BaseModel#get sends generated sql-query to db layer', (t) => {
-  t.plan(1)
-
-  const db = {
-    exec (sql) {
-      t.equal(sql, 'SELECT * FROM tableGet')
-      return Promise.resolve()
-    }
-  }
-
-  class AGetModel extends BaseModel {
-    sqlOne () { return 'SELECT * FROM tableGet' }
-  }
-
-  const model = new AGetModel(db, 'name', {})
-  model.get(1)
-  t.end()
-})
-
 test('BaseModel#get throws error if no "id" provided', (t) => {
-  class ModelForGetIdThrows extends BaseModel {
-    // sqlOne () {} is not overridden
-  }
+  class ModelForGetIdThrows extends BaseModel {}
   const model = new ModelForGetIdThrows(dbMock, 'name', {})
   t.throws(() => model.get(/* no id */), /no id has been provided/)
   t.end()
@@ -187,27 +177,15 @@ test('BaseModel#get rejects with error if db returns no rows', (t) => {
     }
   }
 
+  class ModelForGet extends BaseModel {
+    sqlOne () {}
+  }
   const model = new ModelForGet(db, 'name', {})
   model.get(1)
+  .then(() => t.fail('should not be called'))
   .catch((e) => {
     t.pass('catch db error')
     t.assert(/db returned no data/.test(e.message), 'assert error message')
-    t.end()
-  })
-})
-
-test('BaseModel#get returns row if got one off db', (t) => {
-  t.plan(3)
-
-  const db = {}
-  db.exec = () => Promise.resolve([{someData: 'some value'}])
-
-  const model = new ModelForGet(db, 'name', {})
-  model.get(1)
-  .then((row) => {
-    t.pass('get(id) resolves')
-    t.assert(row, 'some data has been returned')
-    t.equal(row.someData, 'some value')
     t.end()
   })
 })
@@ -834,7 +812,7 @@ test('BaseModel#apiFind(id) calls get(id) and serializes row without relations i
         1: {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
         2: {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
       }
-      return Promise.resolve(rows[id])
+      return Promise.resolve([rows[id]])
     }
   }
   const userModel = new UserModel(dbMock, 'user', {
