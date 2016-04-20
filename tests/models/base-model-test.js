@@ -977,10 +977,9 @@ test('BaseModel#apiUpdate returns error from "deserialize"', (t) => {
   t.plan(2)
 
   class UserModel extends BaseModel {
-    deserialize (_, cb) {
+    deserialize () {
       t.pass('deserialize() has been called')
-
-      cb(new Error('some deserialization error'))
+      return Promise.reject(new Error('some deserialization error'))
     }
   }
   const userModel = new UserModel(dbMock, 'user', { name: 'string' })
@@ -1087,10 +1086,9 @@ test('BaseModel#apiCreate returns error from "deserialize"', (t) => {
   t.plan(2)
 
   class UserModel extends BaseModel {
-    deserialize (_, cb) {
+    deserialize () {
       t.pass('deserialize() has been called')
-
-      cb(new Error('some deserialization error'))
+      return Promise.reject(new Error('some deserialization error'))
     }
   }
   const userModel = new UserModel(dbMock, 'user', { name: 'string' })
