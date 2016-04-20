@@ -455,7 +455,7 @@ test('BaseModel deserializerOptions takes into account "belongsTo" relations', (
   t.end()
 })
 
-test('BaseModel#deserialize method', (t) => {
+test('BaseModel#deserialize method returns Promise', (t) => {
   class UserGroup extends BaseModel {}
   const userGroup = new UserGroup(dbMock, 'user-group', {})
   class UserRights extends BaseModel {}
@@ -483,11 +483,9 @@ test('BaseModel#deserialize method', (t) => {
       id: '1',
       type: 'users'
     } ]
-  }, (_, data) => {
-    t.deepEqual(data, [
-      {id: '1', name: 'Admin', userGroupId: '1', userRightsId: '3'}
-    ])
-
+  })
+  .then((data) => {
+    t.deepEqual(data, [ {id: '1', name: 'Admin', userGroupId: '1', userRightsId: '3'} ])
     t.end()
   })
 })
