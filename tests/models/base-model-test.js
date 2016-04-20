@@ -933,3 +933,113 @@ test('BaseModel#apiUpdate returns error from "deserialize"', (t) => {
   })
   .then(() => t.end())
 })
+
+test('BaseModel#apiCreate calls create() and returns saved serialized row without relations included', (t) => {
+  t.plan(4)
+
+  class GroupModel extends BaseModel {}
+  const groupModel = new GroupModel(dbMock, 'user-group', { name: 'string' })
+
+  class RightsModel extends BaseModel {}
+  const rightsModel = new RightsModel(dbMock, 'rights', { name: 'string' })
+
+  class UserModel extends BaseModel {
+    create (deserializedNewData) {
+      t.pass('create(newData) has been called')
+
+      t.deepEqual(deserializedNewData, {
+        id: undefined, // it's added by deserializer
+        name: 'John',
+        rights: { id: '12' },
+        userGroup: { id: '101' }
+      })
+      return Promise.resolve({
+        id: '1', // sql assigns an ID
+        name: 'John',
+        rightsId: '12',
+        userGroupId: '101'
+      })
+    }
+  }
+  const userModel = new UserModel(dbMock, 'user', {
+    name: 'string',
+    userGroup: { belongsTo: groupModel },
+    rights: { belongsTo: rightsModel }
+  })
+
+  const newData = {
+    data: {
+      attributes: { name: 'John' },
+      relationships: {
+        userGroup: { data: { id: '101', type: 'user-groups' } },
+        rights: { data: { id: '12', type: 'rights' } }
+      },
+      type: 'users'
+    }
+  }
+
+  userModel.apiCreate(newData)
+  .then((savedSerialized) => {
+    t.equal(savedSerialized.data.id, '1', 'returns with ID')
+
+    t.deepEqual(savedSerialized, {
+      data: {
+        attributes: { name: 'John' },
+        id: '1',
+        relationships: {
+          'user-group': { data: { id: '101', type: 'userGroups' } },
+          rights: { data: { id: '12', type: 'rights' } }
+        },
+        type: 'users'
+      }
+    })
+  })
+  .catch((e) => t.fail(`should not be called. ${e}`))
+  .then(() => t.end())
+})
+
+test('BaseModel#apiCreate returns error from "update"', (t) => {
+  t.plan(2)
+
+  class UserModel extends BaseModel {
+    create (deserializedData) {
+      t.pass('create() has been called')
+      return Promise.reject(new Error('some error'))
+    }
+  }
+  const userModel = new UserModel(dbMock, 'user', { name: 'string' })
+
+  const newData = {
+    data: {
+      attributes: { name: 'John' },
+      type: 'users'
+    }
+  }
+
+  userModel.apiCreate(newData)
+  .then(() => t.fail('should not be called'))
+  .catch((e) => {
+    t.equal(e.message, 'some error')
+  })
+  .then(() => t.end())
+})
+
+test('BaseModel#apiCreate returns error from "deserialize"', (t) => {
+  t.plan(2)
+
+  class UserModel extends BaseModel {
+    deserialize (_, cb) {
+      t.pass('deserialize() has been called')
+
+      cb(new Error('some deserialization error'))
+    }
+  }
+  const userModel = new UserModel(dbMock, 'user', { name: 'string' })
+
+  userModel.apiCreate({})
+  .then(() => t.fail('should not be called'))
+  .catch((e) => {
+    t.equal(e.message, 'some deserialization error')
+  })
+  .then(() => t.end())
+})
