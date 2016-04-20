@@ -685,7 +685,7 @@ test('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with re
   .then(() => t.end())
 })
 
-test('BaseModel#_transformRelIDsToRelations changes relations ids into empty relations with ids', (t) => {
+test('BaseModel#_replaceRelIDsByRelations with no "relations" provided changes relations ids into empty relations with ids', (t) => {
   t.plan(1)
 
   class GroupModel extends BaseModel {}
@@ -710,7 +710,7 @@ test('BaseModel#_transformRelIDsToRelations changes relations ids into empty rel
     {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
   ]
 
-  const dataSet = userModel._transformRelIDsToRelations(parentRows)
+  const dataSet = userModel._replaceRelIDsByRelations(parentRows /*, no_relations_data */)
   t.deepEqual(dataSet, [
     {
       id: '1', name: 'John',
@@ -721,6 +721,67 @@ test('BaseModel#_transformRelIDsToRelations changes relations ids into empty rel
       id: '2', name: 'Smith',
       group: {id: '102'},
       rights: {id: '13'}
+    }
+  ])
+
+  t.end()
+})
+
+test('BaseModel#_replaceRelIDsByRelations with "relations" data provided joins in relations data', (t) => {
+  t.plan(1)
+
+  class GroupModel extends BaseModel {}
+  const groupModel = new GroupModel(dbMock, 'user-group', {
+    name: 'string'
+  })
+
+  class RightsModel extends BaseModel {}
+  const rightsModel = new RightsModel(dbMock, 'rights', {
+    name: 'string'
+  })
+
+  class UserModel extends BaseModel {}
+  const userModel = new UserModel(dbMock, 'user', {
+    name: 'string',
+    group: { belongsTo: groupModel },
+    rights: { belongsTo: rightsModel }
+  })
+
+  const parentRows = [
+    {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+    {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+  ]
+
+  const relationsData = [
+    {
+      name: 'group',
+      fkName: 'userGroupId',
+      rows: [
+        {id: '101', name: 'Admins'},
+        {id: '102', name: 'Users'}
+      ]
+    },
+    {
+      name: 'rights',
+      fkName: 'rightsId',
+      rows: [
+        {id: '12', name: 'Full'},
+        {id: '13', name: 'Part'}
+      ]
+    }
+  ]
+
+  const dataSet = userModel._replaceRelIDsByRelations(parentRows, relationsData)
+  t.deepEqual(dataSet, [
+    {
+      id: '1', name: 'John',
+      group: { id: '101', name: 'Admins' },
+      rights: {id: '12', name: 'Full'}
+    },
+    {
+      id: '2', name: 'Smith',
+      group: {id: '102', name: 'Users'},
+      rights: {id: '13', name: 'Part'}
     }
   ])
 
