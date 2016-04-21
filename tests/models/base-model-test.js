@@ -402,6 +402,133 @@ test('BaseModel#serialize takes into account "belongsTo" relations', (t) => {
   t.end()
 })
 
+test('BaseModel#serializerWithoutRelated does not include relations data', (t) => {
+  class UserGroup extends BaseModel {}
+  const userGroup = new UserGroup(dbMock, 'user-group', { name: 'string' })
+
+  class Rights extends BaseModel {}
+  const rights = new Rights(dbMock, 'rights', { name: 'string' })
+
+  const model = new SomeModel(dbMock, 'user', {
+    name: 'string',
+    group: {
+      belongsTo: userGroup,
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: rights,
+      fkField: 'GrpID'
+    }
+  })
+
+  const serializedModel = model.serializerWithoutRelated.serialize([
+    {
+      id: '1', name: 'John',
+      group: { id: '101', name: 'Admins' },
+      rights: {id: '12', name: 'Full'}
+    },
+    {
+      id: '2', name: 'Smith',
+      group: {id: '102', name: 'Users'},
+      rights: {id: '13', name: 'Part'}
+    }
+  ])
+
+  t.deepEqual(serializedModel, {
+    data: [{
+      attributes: { name: 'John' },
+      id: '1',
+      relationships: {
+        group: { data: { id: '101', type: 'groups' } },
+        rights: { data: { id: '12', type: 'rights' } }
+      },
+      type: 'users'
+    }, {
+      attributes: { name: 'Smith' },
+      id: '2',
+      relationships: {
+        group: { data: { id: '102', type: 'groups' } },
+        rights: { data: { id: '13', type: 'rights' } }
+      },
+      type: 'users'
+    }]
+  })
+
+  t.end()
+})
+
+test('BaseModel#serializerWithRelated includes relations data', (t) => {
+  class UserGroup extends BaseModel {}
+  const userGroup = new UserGroup(dbMock, 'user-group', { name: 'string' })
+
+  class Rights extends BaseModel {}
+  const rights = new Rights(dbMock, 'rights', { name: 'string' })
+
+  const model = new SomeModel(dbMock, 'user', {
+    name: 'string',
+    group: {
+      belongsTo: userGroup,
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: rights,
+      fkField: 'GrpID'
+    }
+  })
+
+  const serializedModel = model.serializerWithRelated.serialize([
+    {
+      id: '1', name: 'John',
+      group: { id: '101', name: 'Admins' },
+      rights: {id: '12', name: 'Full'}
+    },
+    {
+      id: '2', name: 'Smith',
+      group: {id: '102', name: 'Users'},
+      rights: {id: '13', name: 'Part'}
+    }
+  ])
+
+  t.deepEqual(serializedModel, {
+    data: [{
+      attributes: { name: 'John' },
+      id: '1',
+      relationships: {
+        group: { data: { id: '101', type: 'groups' } },
+        rights: { data: { id: '12', type: 'rights' } }
+      },
+      type: 'users'
+    }, {
+      attributes: { name: 'Smith' },
+      id: '2',
+      relationships: {
+        group: { data: { id: '102', type: 'groups' } },
+        rights: { data: { id: '13', type: 'rights' } }
+      },
+      type: 'users'
+    }],
+    included: [{
+      attributes: { name: 'Admins' },
+      id: '101',
+      type: 'groups'
+    }, {
+      attributes: { name: 'Full' },
+      id: '12',
+      type: 'rights'
+    }, {
+      attributes: { name: 'Users' },
+      id: '102',
+      type: 'groups'
+    }, {
+      attributes: { name: 'Part' },
+      id: '13',
+      type: 'rights'
+    }]
+  })
+
+  t.end()
+})
+
 /**
  * De-serializer
  */
