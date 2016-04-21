@@ -191,20 +191,8 @@ test('BaseModel#get rejects with error if db returns no rows', (t) => {
 })
 
 /**
- * #update(id, data)
+ * update(id, data)
  */
-class ModelForUpdate extends BaseModel {
-  sqlUpdate () {}
-  sqlIsRowExist () {}
-}
-
-test('BaseModel#update returns a Promise', (t) => {
-  const model = new ModelForUpdate(dbMock, 'name', {})
-
-  t.ok(model.update(1, {name: 'new'}) instanceof Promise)
-  t.end()
-})
-
 test('BaseModel#update throws error if sqlIsRowExist is not overridden', (t) => {
   class ModelUpdateThrows extends BaseModel {
     // sqlIsRowExist () {} is not overridden
@@ -215,44 +203,12 @@ test('BaseModel#update throws error if sqlIsRowExist is not overridden', (t) => 
   t.end()
 })
 
-test('BaseModel#update sends generated sql-query to db layer', (t) => {
-  t.plan(2) // two db.exec() calls
-
-  const db = {
-    sqlQueryCounter: 0,
-    exec (sql) {
-      if (this.sqlQueryCounter === 0) {
-        t.equal(sql, 'SELECT id FROM tableUpdate WHERE id=1', '1st query is sqlIsRowExist')
-        this.sqlQueryCounter += 1
-        return Promise.resolve([{some: 'row'}])
-      } else if (this.sqlQueryCounter === 1) {
-        t.equal(sql, 'SELECT * FROM tableUpdate', '2nd query is sqlUpdate')
-        this.sqlQueryCounter += 1
-        return Promise.resolve()
-      } else {
-        t.fail('more than two db.exec() calls')
-      }
-    }
+test('BaseModel#update throws error if no "id" or "data" provided', (t) => {
+  class ModelForUpdate extends BaseModel {
+    sqlUpdate () {}
+    sqlIsRowExist () {}
   }
 
-  class AnUpdateModel extends BaseModel {
-    sqlIsRowExist (id) { return `SELECT id FROM tableUpdate WHERE id=${id}` }
-    sqlUpdate () { return 'SELECT * FROM tableUpdate' }
-  }
-
-  const model = new AnUpdateModel(db, 'name', {})
-  model.update(1, {name: 'new'})
-  .then(() => t.end())
-})
-
-test('BaseModel#update throws error if no "id" or "data" provided', (t) => {
-  const model = new ModelForUpdate(dbMock, 'name', {})
-  t.throws(() => model.update(/* no id */), /no id has been provided/)
-  t.throws(() => model.update(1 /* no data */), /no data has been provided/)
-  t.end()
-})
-
-test('BaseModel#update throws error if no "id" or "data" provided', (t) => {
   const model = new ModelForUpdate(dbMock, 'name', {})
   t.throws(() => model.update(/* no id */), /no id has been provided/)
   t.throws(() => model.update(1 /* no data */), /no data has been provided/)
@@ -279,6 +235,11 @@ test('BaseModel#update rejects with error if no row with "id" exists', (t) => {
     }
   }
 
+  class ModelForUpdate extends BaseModel {
+    sqlUpdate () {}
+    sqlIsRowExist () {}
+  }
+
   const model = new ModelForUpdate(db, 'name', {})
   model.update(1, {name: 'new'})
   .catch((e) => {
@@ -288,18 +249,18 @@ test('BaseModel#update rejects with error if no row with "id" exists', (t) => {
   })
 })
 
-test('BaseModel#update returns an updated model', (t) => {
-  t.plan(4)
+test('BaseModel#update calls db.exec, calls get(id), and returns a result from it', (t) => {
+  t.plan(5)
 
   const db = {
     sqlQueryCounter: 0,
     exec (sql) {
       if (this.sqlQueryCounter === 0) {
-        t.pass('1st query is sqlIsRowExist')
+        t.equal(sql, '1st query is sqlIsRowExist', 'sends sql-query to db layer')
         this.sqlQueryCounter += 1
         return Promise.resolve([{some: 'data exists'}])
       } else if (this.sqlQueryCounter === 1) {
-        t.pass('2nd sqlUpdate')
+        t.equal(sql, '2nd sqlUpdate', 'sends sql-query to db layer')
         this.sqlQueryCounter += 1
         return Promise.resolve() // successful update
       } else {
@@ -309,21 +270,36 @@ test('BaseModel#update returns an updated model', (t) => {
   }
 
   class ModelForFullUpdate extends BaseModel {
-    sqlIsRowExist (id) {}
-    sqlUpdate () {}
+    sqlIsRowExist (id) { return '1st query is sqlIsRowExist' }
+    sqlUpdate () { return '2nd sqlUpdate' }
 
     get () {
       // overriden for the test
       t.pass('get(id) has been called')
-      return Promise.resolve({some: 'updated data'})
+      return Promise.resolve([{
+        enabled: false,
+        disabled: true,
+        counter: 0
+      }])
     }
   }
-  const model = new ModelForFullUpdate(db, 'name', {})
-  model.update(1, {name: 'new'})
-  .then((row) => {
-    t.equal(row.some, 'updated data', 'updated model has been returned')
-    t.end()
+  const model = new ModelForFullUpdate(db, 'name', {
+    enabled: 'boolean',
+    disabled: 'boolean',
+    counter: 'integer'
   })
+
+  model.update(1, {counter: 0})
+  .then((castData) => {
+    t.pass('returns a Promise')
+    t.deepEqual(castData, [{
+      enabled: false,
+      disabled: true,
+      counter: 0
+    }])
+  })
+  .catch((e) => t.fail(`should not be called ${e}`))
+  .then(() => t.end())
 })
 
 /**
