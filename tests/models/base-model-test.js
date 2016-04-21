@@ -303,23 +303,27 @@ test('BaseModel#update calls db.exec, calls get(id), and returns a result from i
 })
 
 /**
- * #create(data)
+ * create(data)
  */
-//
-test('BaseModel#create returns saved model', (t) => {
-  t.plan(3)
+test('BaseModel#create calls db.exec and returns saved model with cast types', (t) => {
+  t.plan(4)
 
   const db = {
     sqlQueryCounter: 0,
     exec (sql) {
       if (this.sqlQueryCounter === 0) {
-        t.pass('1st query is sqlCreate') // successful insert
+        t.equal(sql, '1st query is sqlCreate', 'sends sql-query to db layer')
         this.sqlQueryCounter += 1
-        return Promise.resolve()
+        return Promise.resolve(/* OK */)
       } else if (this.sqlQueryCounter === 1) {
-        t.pass('2nd sqlGet')
+        t.equal(sql, '2nd sqlGet', 'sends sql-query to db layer')
         this.sqlQueryCounter += 1
-        return Promise.resolve([{saved: 'new data'}])
+        return Promise.resolve([{
+          id: '1', // db-layer generates ID
+          enabled: '0',
+          disabled: '1',
+          counter: '123'
+        }])
       } else {
         t.fail('more db.exec() calls')
       }
@@ -327,15 +331,31 @@ test('BaseModel#create returns saved model', (t) => {
   }
 
   class ModelForFullCreate extends BaseModel {
-    sqlCreate () {}
-    sqlDataWithID () {}
+    sqlCreate () { return '1st query is sqlCreate' }
+    sqlDataWithID () { return '2nd sqlGet' }
   }
-  const model = new ModelForFullCreate(db, 'name', {})
-  model.create({name: 'new'})
-  .then((row) => {
-    t.equal(row.saved, 'new data', 'saved model has been returned')
-    t.end()
+  const model = new ModelForFullCreate(db, 'name', {
+    enabled: 'boolean',
+    disabled: 'boolean',
+    counter: 'integer'
   })
+
+  model.create({
+    enabled: false,
+    disabled: true,
+    counter: 0
+  })
+  .then((castData) => {
+    t.pass('returns a Promise')
+    t.deepEqual(castData, [{
+      id: '1',
+      enabled: false,
+      disabled: true,
+      counter: 123
+    }])
+  })
+  .catch((e) => t.fail(`should not be called ${e}`))
+  .then(() => t.end())
 })
 
 /**
