@@ -1088,12 +1088,12 @@ test('BaseModel#apiCreate calls create() and returns saved serialized row withou
         rights: { id: '12' },
         userGroup: { id: '101' }
       })
-      return Promise.resolve({
+      return Promise.resolve([{
         id: '1', // sql assigns an ID
         name: 'John',
         rightsId: '12',
         userGroupId: '101'
-      })
+      }])
     }
   }
   const userModel = new UserModel(dbMock, 'user', {
