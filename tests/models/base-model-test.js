@@ -960,11 +960,11 @@ test('BaseModel#apiUpdate calls update() and returns updated serialized row with
         rights: { id: '12' },
         userGroup: { id: '101' }
       })
-      return Promise.resolve({
+      return Promise.resolve([{
         id: '1', name: 'John',
         rightsId: '12',
         userGroupId: '101'
-      })
+      }])
     }
   }
   const userModel = new UserModel(dbMock, 'user', {
