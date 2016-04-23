@@ -114,7 +114,7 @@ test('Schema: throws if "belongsTo" is not a model', (t) => {
   t.end()
 })
 
-test('Schema.belongsToRelations is array of all "belongsTo" relations', (t) => {
+test.only('Schema#getBelongsToRelations() returns array of "belongsTo" relations', (t) => {
   const userGroupModel = { name: 'user-group' }
   const rightsModel = { name: 'rights' }
 
@@ -128,8 +128,9 @@ test('Schema.belongsToRelations is array of all "belongsTo" relations', (t) => {
     }
   })
 
-  t.equal(schema.belongsToRelations.length, 2)
-  t.deepEqual(schema.belongsToRelations, [
+  const relations = schema.getBelongsToRelations()
+  t.equal(relations.length, 2)
+  t.deepEqual(relations, [
     {
       name: 'group',
       relationModel: userGroupModel,
