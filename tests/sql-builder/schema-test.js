@@ -24,7 +24,7 @@ test('Schema.columns contains only columns` descriptors', (t) => {
   t.end()
 })
 
-test('Schema.dataFieldsNames contains array of columns names', (t) => {
+test('Schema.columnsNames contains array of columns names', (t) => {
   const schema = new Schema({
     name: 'string',
     hide: 'boolean',
@@ -33,9 +33,9 @@ test('Schema.dataFieldsNames contains array of columns names', (t) => {
     }
   })
 
-  t.equal(schema.dataFieldsNames.length, 2)
-  t.equal(schema.dataFieldsNames[0], 'name')
-  t.equal(schema.dataFieldsNames[1], 'hide')
+  t.equal(schema.columnsNames.length, 2)
+  t.equal(schema.columnsNames[0], 'name')
+  t.equal(schema.columnsNames[1], 'hide')
   t.end()
 })
 
