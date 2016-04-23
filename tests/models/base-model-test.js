@@ -618,7 +618,7 @@ test('BaseModel#apiFetchAll calls all() and returns serialized data', (t) => {
   .then(() => t.end())
 })
 
-test('BaseModel#_fetchBelongsToRelations fetches relations data', (t) => {
+test('BaseModel#_fetchRelations fetches relations data', (t) => {
   t.plan(1)
 
   class GroupModel extends BaseModel {
@@ -657,7 +657,7 @@ test('BaseModel#_fetchBelongsToRelations fetches relations data', (t) => {
     {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
   ]
 
-  userModel._fetchBelongsToRelations(parentRows)
+  userModel._fetchRelations(parentRows)
   .then((data) => {
     t.deepEqual(data, [
       {
@@ -760,7 +760,7 @@ test('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with re
   .then(() => t.end())
 })
 
-test('BaseModel#_replaceRelIDsByRelations with no "relations" provided changes relations ids into empty relations with ids', (t) => {
+test('BaseModel#_joinRelations with no "relations" provided changes relations ids into empty relations with ids', (t) => {
   t.plan(1)
 
   class GroupModel extends BaseModel {}
@@ -785,7 +785,7 @@ test('BaseModel#_replaceRelIDsByRelations with no "relations" provided changes r
     {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
   ]
 
-  const dataSet = userModel._replaceRelIDsByRelations(parentRows /*, no_relations_data */)
+  const dataSet = userModel._joinRelations(parentRows /*, no_relations_data */)
   t.deepEqual(dataSet, [
     {
       id: '1', name: 'John',
@@ -802,7 +802,7 @@ test('BaseModel#_replaceRelIDsByRelations with no "relations" provided changes r
   t.end()
 })
 
-test('BaseModel#_replaceRelIDsByRelations with "relations" data provided joins in relations data', (t) => {
+test('BaseModel#_joinRelations with "relations" data provided joins in relations data', (t) => {
   t.plan(1)
 
   class GroupModel extends BaseModel {}
@@ -846,7 +846,7 @@ test('BaseModel#_replaceRelIDsByRelations with "relations" data provided joins i
     }
   ]
 
-  const dataSet = userModel._replaceRelIDsByRelations(parentRows, relationsData)
+  const dataSet = userModel._joinRelations(parentRows, relationsData)
   t.deepEqual(dataSet, [
     {
       id: '1', name: 'John',
