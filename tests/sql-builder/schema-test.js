@@ -9,7 +9,7 @@ test('Schema: allows "new Schema()" and just "Schema()"', (t) => {
   t.end()
 })
 
-test('Schema.dataFields describes only dataFields', (t) => {
+test('Schema.columns contains only columns` descriptors', (t) => {
   const schema = new Schema({
     name: 'string',
     hide: 'boolean',
@@ -18,13 +18,13 @@ test('Schema.dataFields describes only dataFields', (t) => {
     }
   })
 
-  t.equal(Object.keys(schema.dataFields).length, 2)
-  t.equal(schema.dataFields.name, 'string')
-  t.equal(schema.dataFields.hide, 'boolean')
+  t.equal(Object.keys(schema.columns).length, 2)
+  t.equal(schema.columns.name, 'string')
+  t.equal(schema.columns.hide, 'boolean')
   t.end()
 })
 
-test('Schema.dataFieldsNames contains array of dataFields names', (t) => {
+test('Schema.dataFieldsNames contains array of columns names', (t) => {
   const schema = new Schema({
     name: 'string',
     hide: 'boolean',
