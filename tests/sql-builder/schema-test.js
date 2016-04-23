@@ -9,36 +9,6 @@ test('Schema: allows "new Schema()" and just "Schema()"', (t) => {
   t.end()
 })
 
-test('Schema.columns contains only columns` descriptors', (t) => {
-  const schema = new Schema({
-    name: 'string',
-    hide: 'boolean',
-    group: {
-      belongsTo: { name: 'user-group' }
-    }
-  })
-
-  t.equal(Object.keys(schema.columns).length, 2)
-  t.equal(schema.columns.name, 'string')
-  t.equal(schema.columns.hide, 'boolean')
-  t.end()
-})
-
-test('Schema.columnsNames contains array of columns names', (t) => {
-  const schema = new Schema({
-    name: 'string',
-    hide: 'boolean',
-    group: {
-      belongsTo: { name: 'user-group' }
-    }
-  })
-
-  t.equal(schema.columnsNames.length, 2)
-  t.equal(schema.columnsNames[0], 'name')
-  t.equal(schema.columnsNames[1], 'hide')
-  t.end()
-})
-
 test('Schema.relations is object which contains descriptions of relations', (t) => {
   const schema = new Schema({
     name: 'string',
