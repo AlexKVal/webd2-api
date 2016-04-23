@@ -114,7 +114,7 @@ test('Schema: throws if "belongsTo" is not a model', (t) => {
   t.end()
 })
 
-test.only('Schema#getBelongsToRelations() returns array of "belongsTo" relations', (t) => {
+test('Schema#getBelongsToRelations() returns array of "belongsTo" relations', (t) => {
   const userGroupModel = { name: 'user-group' }
   const rightsModel = { name: 'rights' }
 
