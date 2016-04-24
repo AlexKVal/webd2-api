@@ -139,3 +139,23 @@ test('sqlBuilder._generateForeignKeysLines', (t) => {
   t.equal(lines[1], 'rights as rightsId')
   t.end()
 })
+
+test('sqlBuilder.generateSelectFieldsPart', (t) => {
+  const sqlBuilder = new SqlBuilder(new Schema({
+    name: 'string',
+    cardcode: 'string',
+    hide: 'boolean',
+    group: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' },
+      fkField: 'rights'
+    }
+  }))
+
+  const fields = sqlBuilder.generateSelectFieldsPart()
+  t.equal(fields, 'name, cardcode, hide, GrpID as userGroupId, rights as rightsId')
+  t.end()
+})
