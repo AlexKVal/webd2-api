@@ -120,3 +120,22 @@ test('sqlBuilder.generateUpdateSetPart(): other data types are converted to stri
   t.equal(setLines[1], "shouldBeString2='false'", 'boolean')
   t.end()
 })
+
+test('sqlBuilder._generateForeignKeysLines', (t) => {
+  const sqlBuilder = new SqlBuilder(new Schema({
+    group: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' },
+      fkField: 'rights'
+    }
+  }))
+
+  const lines = sqlBuilder._generateForeignKeysLines()
+  t.equal(lines.length, 2)
+  t.equal(lines[0], 'GrpID as userGroupId')
+  t.equal(lines[1], 'rights as rightsId')
+  t.end()
+})
