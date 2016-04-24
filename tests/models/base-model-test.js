@@ -361,43 +361,6 @@ test('BaseModel#create calls db.exec and returns saved model with cast types', (
 /**
  * Serializer
  */
-test('BaseModel#serialize(records) throws if "records" is undefined', (t) => {
-  const model = new SomeModel(dbMock, 'name')
-  const fn1 = function fn1 () {
-    model.serialize(undefined)
-  }
-  t.throws(fn1, /records cannot be undefined/)
-
-  const fn2 = function fn2 () {
-    model.serialize([])
-  }
-  t.doesNotThrow(fn2, /records cannot be undefined/)
-
-  t.end()
-})
-
-test('BaseModel#serialize takes into account "belongsTo" relations', (t) => {
-  class UserGroup extends BaseModel {}
-  const userGroup = new UserGroup(dbMock, 'user-group', {})
-  const model = new SomeModel(dbMock, 'user', {
-    name: 'string',
-    group: {
-      belongsTo: userGroup,
-      fkField: 'GrpID'
-    }
-  })
-
-  const serializedModel = model.serialize([
-    {id: 1, name: 'Admin', userGroupId: 1}
-  ])
-
-  t.deepEqual(serializedModel, {
-    data: [ { attributes: { name: 'Admin', 'user-group-id': 1 }, id: '1', type: 'users' } ]
-  })
-
-  t.end()
-})
-
 test('BaseModel#serializerWithoutRelated does not include relations data', (t) => {
   class UserGroup extends BaseModel {}
   const userGroup = new UserGroup(dbMock, 'user-group', { name: 'string' })
