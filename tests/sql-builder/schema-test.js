@@ -84,7 +84,7 @@ test('Schema: throws if "belongsTo" is not a model', (t) => {
   t.end()
 })
 
-test('Schema#getBelongsToRelations() returns array of "belongsTo" relations', (t) => {
+test('schema.getBelongsToRelations() returns array of "belongsTo" relations', (t) => {
   const userGroupModel = { name: 'user-group' }
   const rightsModel = { name: 'rights' }
 
@@ -94,7 +94,8 @@ test('Schema#getBelongsToRelations() returns array of "belongsTo" relations', (t
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: rightsModel
+      belongsTo: rightsModel,
+      fkField: 'rights'
     }
   })
 
@@ -104,11 +105,13 @@ test('Schema#getBelongsToRelations() returns array of "belongsTo" relations', (t
     {
       name: 'group',
       relationModel: userGroupModel,
+      fkField: 'GrpID',
       fkName: 'userGroupId'
     },
     {
       name: 'rights',
       relationModel: rightsModel,
+      fkField: 'rights',
       fkName: 'rightsId'
     }
   ])
