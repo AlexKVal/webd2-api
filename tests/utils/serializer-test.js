@@ -7,7 +7,7 @@ const Serializer = require('../../lib/utils/serializer')
 
 const dbMock = { exec () { return Promise.resolve() } }
 
-test('serializer.serializeWithoutRelated() does not include relations data', (t) => {
+test('serializer.withoutRelated() does not include relations data', (t) => {
   class UserGroup extends BaseModel {}
   const userGroup = new UserGroup(dbMock, 'user-group', { name: 'string' })
 
@@ -26,7 +26,7 @@ test('serializer.serializeWithoutRelated() does not include relations data', (t)
     }
   }))
 
-  const serializedModel = serializer.serializeWithoutRelated([
+  const serializedModel = serializer.withoutRelated([
     {
       id: '1', name: 'John',
       group: { id: '101', name: 'Admins' },
@@ -62,7 +62,7 @@ test('serializer.serializeWithoutRelated() does not include relations data', (t)
   t.end()
 })
 
-test('serializer.serializerWithRelated() includes relations data', (t) => {
+test('serializer.withRelated() includes relations data', (t) => {
   class UserGroup extends BaseModel {}
   const userGroup = new UserGroup(dbMock, 'user-group', { name: 'string' })
 
@@ -81,7 +81,7 @@ test('serializer.serializerWithRelated() includes relations data', (t) => {
     }
   }))
 
-  const serializedModel = serializer.serializeWithRelated([
+  const serializedModel = serializer.withRelated([
     {
       id: '1', name: 'John',
       group: { id: '101', name: 'Admins' },
