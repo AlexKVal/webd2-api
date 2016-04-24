@@ -35,20 +35,6 @@ test('Schema: "attributes" contains all dataSet keys', (t) => {
   t.end()
 })
 
-test('Schema: throws if "belongsTo" is not a model', (t) => {
-  function fn1 () {
-    Schema({
-      group: {
-        belongsTo: 'model-name', // not a model
-        fkField: 'GrpID'
-      }
-    })
-  }
-
-  t.throws(fn1, /belongsTo should be a model/)
-  t.end()
-})
-
 test('schema.getBelongsToRelations() returns array of "belongsTo" relations', (t) => {
   const userGroupModel = { name: 'user-group' }
   const rightsModel = { name: 'rights' }
