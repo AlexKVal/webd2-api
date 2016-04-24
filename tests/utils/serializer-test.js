@@ -26,7 +26,7 @@ test('serializer.serializeWithoutRelated() does not include relations data', (t)
     }
   }))
 
-  const serializedModel = serializer.serializeWithourRelated([
+  const serializedModel = serializer.serializeWithoutRelated([
     {
       id: '1', name: 'John',
       group: { id: '101', name: 'Admins' },

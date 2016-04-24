@@ -828,13 +828,12 @@ test('BaseModel#apiUpdate returns error from "update"', (t) => {
 test('BaseModel#apiUpdate returns error from "deserialize"', (t) => {
   t.plan(2)
 
-  class UserModel extends BaseModel {
-    deserialize () {
-      t.pass('deserialize() has been called')
-      return Promise.reject(new Error('some deserialization error'))
-    }
-  }
+  class UserModel extends BaseModel {}
   const userModel = new UserModel(dbMock, 'user', { name: 'string' })
+  userModel.serializer.deserialize = () => {
+    t.pass('deserialize() has been called')
+    return Promise.reject(new Error('some deserialization error'))
+  }
 
   userModel.apiUpdate(1, {})
   .then(() => t.fail('should not be called'))
@@ -937,13 +936,12 @@ test('BaseModel#apiCreate returns error from "update"', (t) => {
 test('BaseModel#apiCreate returns error from "deserialize"', (t) => {
   t.plan(2)
 
-  class UserModel extends BaseModel {
-    deserialize () {
-      t.pass('deserialize() has been called')
-      return Promise.reject(new Error('some deserialization error'))
-    }
-  }
+  class UserModel extends BaseModel {}
   const userModel = new UserModel(dbMock, 'user', { name: 'string' })
+  userModel.serializer.deserialize = () => {
+    t.pass('deserialize() has been called')
+    return Promise.reject(new Error('some deserialization error'))
+  }
 
   userModel.apiCreate({})
   .then(() => t.fail('should not be called'))
