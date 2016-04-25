@@ -52,12 +52,12 @@ test('BaseModel throws if "schema" is not an object', (t) => {
   const fn0 = function fn0 () {
     return new SomeModel(dbMock, 'name', 'any non object')
   }
-  t.throws(fn0, /schema attribute should be an object/, 'throws with not an object')
+  t.throws(fn0, /descriptors attribute should be an object/, 'throws with not an object')
 
   const fn1 = function fn1 () {
     return new SomeModel(dbMock, 'name', {})
   }
-  t.doesNotThrow(fn1, /schema attribute should be an object/, 'does not throw with object')
+  t.doesNotThrow(fn1, /descriptors attribute should be an object/, 'does not throw with object')
 
   t.end()
 })
