@@ -90,3 +90,12 @@ test('schema.tableName', (t) => {
   t.equal(schema2.tableName, undefined)
   t.end()
 })
+
+test('schema.id', (t) => {
+  const schema1 = new Schema({ id: 'whatever' })
+  t.equal(schema1.id, 'whatever')
+
+  const schema2 = new Schema({})
+  t.equal(schema2.id, undefined)
+  t.end()
+})
