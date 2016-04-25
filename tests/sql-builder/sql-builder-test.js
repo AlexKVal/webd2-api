@@ -140,7 +140,7 @@ test('sqlBuilder._generateForeignKeysLines', (t) => {
   t.end()
 })
 
-test('sqlBuilder.generateSelectFieldsPart', (t) => {
+test('sqlBuilder.generateSelectFieldsPart with a default "id" field', (t) => {
   const sqlBuilder = new SqlBuilder(new Schema({
     name: 'string',
     cardcode: 'string',
@@ -156,6 +156,22 @@ test('sqlBuilder.generateSelectFieldsPart', (t) => {
   }))
 
   const fields = sqlBuilder.generateSelectFieldsPart()
-  t.equal(fields, 'name, cardcode, hide, GrpID as userGroupId, rights as rightsId')
+  t.equal(fields, 'id, name, cardcode, hide, GrpID as userGroupId, rights as rightsId')
+  t.end()
+})
+
+test('sqlBuilder.generateSelectFieldsPart with a custom "id" field', (t) => {
+  const sqlBuilder = new SqlBuilder(new Schema({
+    id: 'UserID',
+    name: 'string',
+    hide: 'boolean',
+    group: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    }
+  }))
+
+  const fields = sqlBuilder.generateSelectFieldsPart()
+  t.equal(fields, 'UserID as id, name, hide, GrpID as userGroupId')
   t.end()
 })
