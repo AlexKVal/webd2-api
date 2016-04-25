@@ -175,3 +175,22 @@ test('sqlBuilder.generateSelectFieldsPart with a custom "id" field', (t) => {
   t.equal(fields, 'UserID as id, name, hide, GrpID as userGroupId')
   t.end()
 })
+
+test('sqlBuilder.getIdFieldLine() with a default "id" field', (t) => {
+  const sqlBuilder = new SqlBuilder(new Schema({
+    name: 'string'
+  }))
+
+  t.equal(sqlBuilder.getIdFieldLine(), 'id')
+  t.end()
+})
+
+test('sqlBuilder.getIdFieldLine() with a custom "id" field', (t) => {
+  const sqlBuilder = new SqlBuilder(new Schema({
+    id: 'UserID',
+    name: 'string'
+  }))
+
+  t.equal(sqlBuilder.getIdFieldLine(), 'UserID as id')
+  t.end()
+})
