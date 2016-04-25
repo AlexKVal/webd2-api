@@ -1,17 +1,16 @@
 'use strict'
 const test = require('tape')
 
-const Schema = require('../../lib/sql-builder/schema')
 const SqlBuilder = require('../../lib/sql-builder/sql-builder')
 
 test('sqlBuilder.columns holds only columns` descriptors', (t) => {
-  const sqlBuilder = new SqlBuilder(new Schema({
+  const sqlBuilder = new SqlBuilder({
     name: 'string',
     hide: 'boolean',
     group: {
       belongsTo: { name: 'user-group' }
     }
-  }))
+  })
 
   t.equal(Object.keys(sqlBuilder.columns).length, 2)
   t.equal(sqlBuilder.columns.name, 'string')
@@ -20,13 +19,13 @@ test('sqlBuilder.columns holds only columns` descriptors', (t) => {
 })
 
 test('sqlBuilder.columnsNames holds columns` names', (t) => {
-  const sqlBuilder = new SqlBuilder(new Schema({
+  const sqlBuilder = new SqlBuilder({
     name: 'string',
     hide: 'boolean',
     group: {
       belongsTo: { name: 'user-group' }
     }
-  }))
+  })
 
   t.equal(sqlBuilder.columnsNames.length, 2)
   t.equal(sqlBuilder.columnsNames[0], 'name')
@@ -34,14 +33,14 @@ test('sqlBuilder.columnsNames holds columns` names', (t) => {
   t.end()
 })
 
-test('sqlBuilder.generateUpdateSetPart() returns empty when Schema is empty', (t) => {
+test('sqlBuilder.generateUpdateSetPart() returns empty', (t) => {
   const data = {
     name: 'some name',
     hide: false,
     someNumber: 33
   }
 
-  const sqlBuilder = new SqlBuilder(new Schema({}))
+  const sqlBuilder = new SqlBuilder({})
   const setLines = sqlBuilder.generateUpdateSetPart(data)
 
   t.ok(Array.isArray(setLines), 'returns array')
@@ -54,10 +53,10 @@ test('sqlBuilder.generateUpdateSetPart() handles properly "boolean" and "integer
     hide: false,
     someNumber: 33
   }
-  const sqlBuilder = new SqlBuilder(new Schema({
+  const sqlBuilder = new SqlBuilder({
     hide: 'boolean',
     someNumber: 'integer'
-  }))
+  })
 
   const setLines = sqlBuilder.generateUpdateSetPart(data)
 
@@ -72,10 +71,10 @@ test('sqlBuilder.generateUpdateSetPart(): strings are escaped and single-quoted'
     name: 'some name',
     quetedString: 'input with \'quotes\''
   }
-  const sqlBuilder = new SqlBuilder(new Schema({
+  const sqlBuilder = new SqlBuilder({
     name: 'string',
     quetedString: 'string'
-  }))
+  })
 
   const setLines = sqlBuilder.generateUpdateSetPart(data)
 
@@ -90,10 +89,10 @@ test('sqlBuilder.generateUpdateSetPart(): "null" and "undefined" => empty string
     nullString: null,
     undefinedString: undefined
   }
-  const sqlBuilder = new SqlBuilder(new Schema({
+  const sqlBuilder = new SqlBuilder({
     nullString: 'string',
     undefinedString: 'string'
-  }))
+  })
 
   const setLines = sqlBuilder.generateUpdateSetPart(data)
 
@@ -108,10 +107,10 @@ test('sqlBuilder.generateUpdateSetPart(): other data types are converted to stri
     shouldBeString: 123,
     shouldBeString2: false
   }
-  const sqlBuilder = new SqlBuilder(new Schema({
+  const sqlBuilder = new SqlBuilder({
     shouldBeString: 'string',
     shouldBeString2: 'string'
-  }))
+  })
 
   const setLines = sqlBuilder.generateUpdateSetPart(data)
 
@@ -122,7 +121,7 @@ test('sqlBuilder.generateUpdateSetPart(): other data types are converted to stri
 })
 
 test('sqlBuilder._generateForeignKeysLines', (t) => {
-  const sqlBuilder = new SqlBuilder(new Schema({
+  const sqlBuilder = new SqlBuilder({
     group: {
       belongsTo: { name: 'user-group' },
       fkField: 'GrpID'
@@ -131,7 +130,7 @@ test('sqlBuilder._generateForeignKeysLines', (t) => {
       belongsTo: { name: 'rights' },
       fkField: 'rights'
     }
-  }))
+  })
 
   const lines = sqlBuilder._generateForeignKeysLines()
   t.equal(lines.length, 2)
@@ -141,7 +140,7 @@ test('sqlBuilder._generateForeignKeysLines', (t) => {
 })
 
 test('sqlBuilder.generateSelectFieldsPart with a default "id" field', (t) => {
-  const sqlBuilder = new SqlBuilder(new Schema({
+  const sqlBuilder = new SqlBuilder({
     name: 'string',
     cardcode: 'string',
     hide: 'boolean',
@@ -153,7 +152,7 @@ test('sqlBuilder.generateSelectFieldsPart with a default "id" field', (t) => {
       belongsTo: { name: 'rights' },
       fkField: 'rights'
     }
-  }))
+  })
 
   const fields = sqlBuilder.generateSelectFieldsPart()
   t.equal(fields, 'id, name, cardcode, hide, GrpID as userGroupId, rights as rightsId')
@@ -161,7 +160,7 @@ test('sqlBuilder.generateSelectFieldsPart with a default "id" field', (t) => {
 })
 
 test('sqlBuilder.generateSelectFieldsPart with a custom "id" field', (t) => {
-  const sqlBuilder = new SqlBuilder(new Schema({
+  const sqlBuilder = new SqlBuilder({
     id: 'UserID',
     name: 'string',
     hide: 'boolean',
@@ -169,7 +168,7 @@ test('sqlBuilder.generateSelectFieldsPart with a custom "id" field', (t) => {
       belongsTo: { name: 'user-group' },
       fkField: 'GrpID'
     }
-  }))
+  })
 
   const fields = sqlBuilder.generateSelectFieldsPart()
   t.equal(fields, 'UserID as id, name, hide, GrpID as userGroupId')
@@ -177,48 +176,48 @@ test('sqlBuilder.generateSelectFieldsPart with a custom "id" field', (t) => {
 })
 
 test('sqlBuilder.getIdFieldLine() with a default "id" field', (t) => {
-  const sqlBuilder = new SqlBuilder(new Schema({
+  const sqlBuilder = new SqlBuilder({
     name: 'string'
-  }))
+  })
 
   t.equal(sqlBuilder.getIdFieldLine(), 'id')
   t.end()
 })
 
 test('sqlBuilder.getIdFieldLine() with a custom "id" field', (t) => {
-  const sqlBuilder = new SqlBuilder(new Schema({
+  const sqlBuilder = new SqlBuilder({
     id: 'UserID',
     name: 'string'
-  }))
+  })
 
   t.equal(sqlBuilder.getIdFieldLine(), 'UserID as id')
   t.end()
 })
 
 test('sqlBuilder.getIdFieldName() with a custom "id" field', (t) => {
-  const sqlBuilder = new SqlBuilder(new Schema({
+  const sqlBuilder = new SqlBuilder({
     id: 'UserID',
     name: 'string'
-  }))
+  })
 
   t.equal(sqlBuilder.getIdFieldName(), 'UserID')
   t.end()
 })
 
 test('sqlBuilder.getIdFieldName() with a default "id" field', (t) => {
-  const sqlBuilder = new SqlBuilder(new Schema({
+  const sqlBuilder = new SqlBuilder({
     name: 'string'
-  }))
+  })
 
   t.equal(sqlBuilder.getIdFieldName(), 'id')
   t.end()
 })
 
 test('sqlBuilder.getTableName() throws if no tableName provided', (t) => {
-  const sqlBuilder = new SqlBuilder(new Schema({
+  const sqlBuilder = new SqlBuilder({
     /* tableName: 'is not provided', */
     name: 'string'
-  }))
+  })
 
   const fn0 = function () {
     sqlBuilder.getTableName()
@@ -229,11 +228,47 @@ test('sqlBuilder.getTableName() throws if no tableName provided', (t) => {
 })
 
 test('sqlBuilder.getTableName() returns tableName', (t) => {
-  const sqlBuilder = new SqlBuilder(new Schema({
+  const sqlBuilder = new SqlBuilder({
     tableName: 'whatever',
     name: 'string'
-  }))
+  })
 
   t.equal(sqlBuilder.getTableName(), 'whatever')
+  t.end()
+})
+
+test('sqlBuilder.descriptors contains all fields but "tableName" and "id"', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    tableName: 'whatever',
+    id: 'customId',
+    name: 'string',
+    boolFlag: 'boolean',
+    someNumber: 'integer'
+  })
+
+  t.equal(Object.keys(sqlBuilder.descriptors).length, 3)
+  t.deepEqual(sqlBuilder.descriptors, {
+    name: 'string',
+    boolFlag: 'boolean',
+    someNumber: 'integer'
+  })
+  t.end()
+})
+
+test('sqlBuilder.tableName', (t) => {
+  const sqlBuilder1 = new SqlBuilder({ tableName: 'whatever' })
+  t.equal(sqlBuilder1.tableName, 'whatever')
+
+  const sqlBuilder2 = new SqlBuilder({})
+  t.equal(sqlBuilder2.tableName, undefined)
+  t.end()
+})
+
+test('sqlBuilder.id', (t) => {
+  const sqlBuilder1 = new SqlBuilder({ id: 'whatever' })
+  t.equal(sqlBuilder1.id, 'whatever')
+
+  const sqlBuilder2 = new SqlBuilder({})
+  t.equal(sqlBuilder2.id, undefined)
   t.end()
 })
