@@ -213,3 +213,27 @@ test('sqlBuilder.getIdFieldName() with a default "id" field', (t) => {
   t.equal(sqlBuilder.getIdFieldName(), 'id')
   t.end()
 })
+
+test('sqlBuilder.getTableName() throws if no tableName provided', (t) => {
+  const sqlBuilder = new SqlBuilder(new Schema({
+    /* tableName: 'is not provided', */
+    name: 'string'
+  }))
+
+  const fn0 = function () {
+    sqlBuilder.getTableName()
+  }
+
+  t.throws(fn0, /tableName is not provided/)
+  t.end()
+})
+
+test('sqlBuilder.getTableName() returns tableName', (t) => {
+  const sqlBuilder = new SqlBuilder(new Schema({
+    tableName: 'whatever',
+    name: 'string'
+  }))
+
+  t.equal(sqlBuilder.getTableName(), 'whatever')
+  t.end()
+})
