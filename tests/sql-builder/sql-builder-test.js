@@ -194,3 +194,22 @@ test('sqlBuilder.getIdFieldLine() with a custom "id" field', (t) => {
   t.equal(sqlBuilder.getIdFieldLine(), 'UserID as id')
   t.end()
 })
+
+test('sqlBuilder.getIdFieldName() with a custom "id" field', (t) => {
+  const sqlBuilder = new SqlBuilder(new Schema({
+    id: 'UserID',
+    name: 'string'
+  }))
+
+  t.equal(sqlBuilder.getIdFieldName(), 'UserID')
+  t.end()
+})
+
+test('sqlBuilder.getIdFieldName() with a default "id" field', (t) => {
+  const sqlBuilder = new SqlBuilder(new Schema({
+    name: 'string'
+  }))
+
+  t.equal(sqlBuilder.getIdFieldName(), 'id')
+  t.end()
+})
