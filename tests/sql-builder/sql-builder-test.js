@@ -33,7 +33,7 @@ test('sqlBuilder.columnsNames holds columns` names', (t) => {
   t.end()
 })
 
-test('sqlBuilder.generateUpdateFieldsPart() returns empty', (t) => {
+test('sqlBuilder.generateFieldEqualsDataLines() returns empty', (t) => {
   const data = {
     name: 'some name',
     hide: false,
@@ -41,13 +41,14 @@ test('sqlBuilder.generateUpdateFieldsPart() returns empty', (t) => {
   }
 
   const sqlBuilder = new SqlBuilder({})
-  const setLines = sqlBuilder.generateUpdateFieldsPart(data)
+  const lines = sqlBuilder.generateFieldEqualsDataLines(data)
 
-  t.equal(setLines, '', 'empty')
+  t.ok(Array.isArray(lines))
+  t.equal(lines.length, 0, 'empty')
   t.end()
 })
 
-test('sqlBuilder.generateUpdateFieldsPart() handles properly "boolean" and "integer" types', (t) => {
+test('sqlBuilder.generateFieldEqualsDataLines() handles properly "boolean" and "integer" types', (t) => {
   const data = {
     hide: false,
     someNumber: 33
@@ -57,11 +58,13 @@ test('sqlBuilder.generateUpdateFieldsPart() handles properly "boolean" and "inte
     someNumber: 'integer'
   })
 
-  t.equal(sqlBuilder.generateUpdateFieldsPart(data), 'hide=false, someNumber=33')
+  const lines = sqlBuilder.generateFieldEqualsDataLines(data)
+  t.equal(lines[0], 'hide=false')
+  t.equal(lines[1], 'someNumber=33')
   t.end()
 })
 
-test('sqlBuilder.generateUpdateFieldsPart(): strings are escaped and single-quoted', (t) => {
+test('sqlBuilder.generateFieldEqualsDataLines(): strings are escaped and single-quoted', (t) => {
   const data = {
     name: 'some name',
     quetedString: 'input with \'quotes\''
@@ -71,14 +74,13 @@ test('sqlBuilder.generateUpdateFieldsPart(): strings are escaped and single-quot
     quetedString: 'string'
   })
 
-  t.equal(
-    sqlBuilder.generateUpdateFieldsPart(data),
-    "name='some name', quetedString='input with  quotes '"
-  )
+  const lines = sqlBuilder.generateFieldEqualsDataLines(data)
+  t.equal(lines[0], "name='some name'")
+  t.equal(lines[1], "quetedString='input with  quotes '")
   t.end()
 })
 
-test('sqlBuilder.generateUpdateFieldsPart(): "null" and "undefined" => empty string', (t) => {
+test('sqlBuilder.generateFieldEqualsDataLines(): "null" and "undefined" => empty string', (t) => {
   const data = {
     nullString: null,
     undefinedString: undefined
@@ -88,14 +90,13 @@ test('sqlBuilder.generateUpdateFieldsPart(): "null" and "undefined" => empty str
     undefinedString: 'string'
   })
 
-  t.equal(
-    sqlBuilder.generateUpdateFieldsPart(data),
-    "nullString='', undefinedString=''"
-  )
+  const lines = sqlBuilder.generateFieldEqualsDataLines(data)
+  t.equal(lines[0], "nullString=''")
+  t.equal(lines[1], "undefinedString=''")
   t.end()
 })
 
-test('sqlBuilder.generateUpdateFieldsPart(): other data types are converted to strings', (t) => {
+test('sqlBuilder.generateFieldEqualsDataLines(): other data types are converted to strings', (t) => {
   const data = {
     shouldBeString: 123,
     shouldBeString2: false
@@ -105,14 +106,13 @@ test('sqlBuilder.generateUpdateFieldsPart(): other data types are converted to s
     shouldBeString2: 'string'
   })
 
-  t.equal(
-    sqlBuilder.generateUpdateFieldsPart(data),
-    "shouldBeString='123', shouldBeString2='false'"
-  )
+  const lines = sqlBuilder.generateFieldEqualsDataLines(data)
+  t.equal(lines[0], "shouldBeString='123'")
+  t.equal(lines[1], "shouldBeString2='false'")
   t.end()
 })
 
-test('sqlBuilder.generateUpdateFieldsPart(): relations lines too', (t) => {
+test('sqlBuilder.generateFieldEqualsDataLines(): relations lines too', (t) => {
   const sqlBuilder = new SqlBuilder({
     name: 'string',
     hide: 'boolean',
@@ -132,10 +132,11 @@ test('sqlBuilder.generateUpdateFieldsPart(): relations lines too', (t) => {
     rights: {id: '101'}
   }
 
-  t.equal(
-    sqlBuilder.generateUpdateFieldsPart(data),
-    "name='some', hide=false, GrpID=13, rights=101"
-  )
+  const lines = sqlBuilder.generateFieldEqualsDataLines(data)
+  t.equal(lines[0], "name='some'")
+  t.equal(lines[1], 'hide=false')
+  t.equal(lines[2], 'GrpID=13')
+  t.equal(lines[3], 'rights=101')
   t.end()
 })
 
