@@ -391,3 +391,44 @@ test('sqlBuilder._getRelationsLinesForUpdate()', (t) => {
   ])
   t.end()
 })
+
+test('sqlBuilder.sqlUpdate(id, data) returns sql query for updating row', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    tableName: 'sPersonal',
+    id: 'PersID',
+
+    name: 'string',
+    hide: 'boolean',
+    counter: 'integer',
+
+    group: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' }
+    },
+    post: {
+      belongsTo: { name: 'post' },
+      fkField: 'PostID'
+    }
+  })
+
+  const updateData = {
+    id: '33',
+    name: 'new one',
+    hide: false,
+    counter: '445',
+    group: {id: '12'},
+    rights: {id: '101'},
+    post: {id: '23'}
+  }
+
+  t.equal(
+    sqlBuilder.sqlUpdate('33', updateData),
+    'UPDATE sPersonal' +
+    " SET name='new one', hide=false, counter=445, GrpID=12, rights=101, PostID=23" +
+    ' WHERE PersID=33'
+  )
+  t.end()
+})
