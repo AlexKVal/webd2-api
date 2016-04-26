@@ -2,6 +2,7 @@
 const test = require('tape')
 
 const SqlBuilder = require('../../lib/sql-builder/sql-builder')
+const quoteValueIfString = SqlBuilder.quoteValueIfString
 
 test('sqlBuilder.columns holds only columns` descriptors', (t) => {
   const sqlBuilder = new SqlBuilder({
@@ -543,5 +544,29 @@ test('sqlBuilder._fieldsNamesForInsert(data) only names that are present in data
     ['name', 'hide', 'counter', 'GrpID', 'rights', 'PostID'],
     'extra data fields got cut'
   )
+  t.end()
+})
+
+test('quoteValueIfString() returns as is "boolean" and "integer" types', (t) => {
+  t.equal(quoteValueIfString('boolean', false), false)
+  t.equal(quoteValueIfString('integer', 3), 3)
+  t.end()
+})
+
+test('quoteValueIfString() strings are escaped and single-quoted', (t) => {
+  t.equal(quoteValueIfString('string', 'some name'), "'some name'")
+  t.equal(quoteValueIfString('string', 'input with \'quotes\''), "'input with  quotes '")
+  t.end()
+})
+
+test('quoteValueIfString() "null" and "undefined" => empty string', (t) => {
+  t.equal(quoteValueIfString('string', null), "''")
+  t.equal(quoteValueIfString('string', undefined), "''")
+  t.end()
+})
+
+test('quoteValueIfString() other data types are converted to strings', (t) => {
+  t.equal(quoteValueIfString('string', 123), "'123'")
+  t.equal(quoteValueIfString('string', false), "'false'")
   t.end()
 })
