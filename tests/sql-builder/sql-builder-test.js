@@ -127,15 +127,18 @@ test('sqlBuilder._generateForeignKeysLines', (t) => {
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: { name: 'rights' },
-      fkField: 'rights'
+      belongsTo: { name: 'rights' }
+    },
+    posts: {
+      belongsTo: { name: 'user-post' }
     }
   })
 
   const lines = sqlBuilder._generateForeignKeysLines()
-  t.equal(lines.length, 2)
+  t.equal(lines.length, 3)
   t.equal(lines[0], 'GrpID as userGroupId')
-  t.equal(lines[1], 'rights as rightsId')
+  t.equal(lines[1], 'rights as rightsId', 'uses foreign table name if no fkField provided')
+  t.equal(lines[2], 'userPost as userPostId', 'uses camelCased foreign table name')
   t.end()
 })
 
