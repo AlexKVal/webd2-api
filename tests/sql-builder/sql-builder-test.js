@@ -129,16 +129,24 @@ test('sqlBuilder._getRelations()', (t) => {
     rights: {
       belongsTo: { name: 'rights' }
     },
-    posts: {
+    post: {
       belongsTo: { name: 'user-post' }
     }
   })
 
   const lines = sqlBuilder._getRelations()
   t.equal(lines.length, 3)
-  t.deepEqual(lines[0], {fkField: 'GrpID', fkAs: 'userGroupId'})
-  t.deepEqual(lines[1], {fkField: 'rights', fkAs: 'rightsId'}, 'uses foreign table name if no fkField provided')
-  t.deepEqual(lines[2], {fkField: 'userPost', fkAs: 'userPostId'}, 'uses camelCased foreign table name')
+  t.deepEqual(lines[0], {fkField: 'GrpID', fkAs: 'userGroupId', modelFieldName: 'group'})
+  t.deepEqual(
+    lines[1],
+    {fkField: 'rights', fkAs: 'rightsId', modelFieldName: 'rights'},
+    'uses foreign table name if no fkField provided'
+  )
+  t.deepEqual(
+    lines[2],
+    {fkField: 'userPost', fkAs: 'userPostId', modelFieldName: 'post'},
+    'uses camelCased foreign table name'
+  )
   t.end()
 })
 
@@ -335,5 +343,32 @@ test('sqlBuilder.sqlIsRowExist(id) returns sql query for checking row existence 
     sqlBuilderForSql.sqlIsRowExist(202),
     'SELECT PersID as id FROM sPersonal WHERE PersID=202'
   )
+  t.end()
+})
+
+test('sqlBuilder._getRelationsLinesForUpdate()', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    userGroup: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' }
+    }
+  })
+
+  const data = {
+    name: 'some',
+    hide: false,
+    userGroup: {id: '13'},
+    rights: {id: '101'}
+  }
+
+  const relationsLines = sqlBuilder._getRelationsLinesForUpdate(data)
+  t.equal(relationsLines.length, 2)
+  t.deepEqual(relationsLines, [
+    'GrpID=13',
+    'rights=101'
+  ])
   t.end()
 })
