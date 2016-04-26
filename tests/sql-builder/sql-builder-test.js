@@ -474,3 +474,74 @@ test('sqlBuilder.sqlOneByData(data) returns sql query for retrieving ID for row'
   )
   t.end()
 })
+
+test('sqlBuilder._fieldsNamesForInsert(data) only names that are present in data and schema', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    tableName: 'sPersonal',
+    id: 'PersID',
+
+    name: 'string',
+    hide: 'boolean',
+    counter: 'integer',
+
+    group: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' }
+    },
+    post: {
+      belongsTo: { name: 'post' },
+      fkField: 'PostID'
+    }
+  })
+
+  const fullData = {
+    /* no id because the row is new */
+    name: 'new one',
+    hide: false,
+    counter: '445',
+    group: {id: '12'},
+    rights: {id: '101'},
+    post: {id: '23'}
+  }
+
+  t.deepEqual(
+    sqlBuilder._fieldsNamesForInsert(fullData),
+    ['name', 'hide', 'counter', 'GrpID', 'rights', 'PostID'],
+    'full data'
+  )
+
+  const partialData = {
+    /* no id because the row is new */
+    name: 'new one',
+    group: {id: '12'},
+    post: {id: '23'}
+  }
+
+  t.deepEqual(
+    sqlBuilder._fieldsNamesForInsert(partialData),
+    ['name', 'GrpID', 'PostID'],
+    'partial data'
+  )
+
+  const extraDataFields = {
+    /* no id because the row is new */
+    name: 'new one',
+    extraField1: 'extra-data',
+    hide: false,
+    counter: '445',
+    group: {id: '12'},
+    rights: {id: '101'},
+    post: {id: '23'},
+    extraField2: 'extra-data'
+  }
+
+  t.deepEqual(
+    sqlBuilder._fieldsNamesForInsert(extraDataFields),
+    ['name', 'hide', 'counter', 'GrpID', 'rights', 'PostID'],
+    'extra data fields got cut'
+  )
+  t.end()
+})
