@@ -518,3 +518,75 @@ test('quoteValueIfString() other data types are converted to strings', (t) => {
   t.equal(quoteValueIfString('string', false), "'false'")
   t.end()
 })
+
+test('sqlBuilder._fieldsValuesForInsert(data)', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    tableName: 'sPersonal',
+    id: 'PersID',
+
+    name: 'string',
+    hide: 'boolean',
+    counter: 'integer',
+
+    group: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' }
+    },
+    post: {
+      belongsTo: { name: 'post' },
+      fkField: 'PostID'
+    }
+  })
+
+  const fullData = {
+    /* no id because the row is new */
+    name: 'new one',
+    hide: false,
+    counter: 445,
+    group: {id: '12'},
+    rights: {id: '101'},
+    post: {id: '23'}
+  }
+
+  t.deepEqual(
+    sqlBuilder._fieldsValuesForInsert(fullData),
+    ["'new one'", false, 445, '12', '101', '23'],
+    'full data'
+  )
+
+  const partialData = {
+    /* no id because the row is new */
+    name: 'new one',
+    group: {id: '12'},
+    post: {id: '23'}
+  }
+
+  t.deepEqual(
+    sqlBuilder._fieldsValuesForInsert(partialData),
+    ["'new one'", '12', '23'],
+    'partial data'
+  )
+
+  const extraDataFields = {
+    /* no id because the row is new */
+    name: 'new one',
+    extraField1: 'extra-data',
+    hide: false,
+    counter: 445,
+    group: {id: '12'},
+    rights: {id: '101'},
+    post: {id: '23'},
+    extraField2: 'extra-data'
+  }
+
+  t.deepEqual(
+    sqlBuilder._fieldsValuesForInsert(extraDataFields),
+    ["'new one'", false, 445, '12', '101', '23'],
+    'extra data fields got cut'
+  )
+
+  t.end()
+})
