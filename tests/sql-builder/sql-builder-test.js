@@ -120,7 +120,29 @@ test('sqlBuilder.generateUpdateSetPart(): other data types are converted to stri
   t.end()
 })
 
-test('sqlBuilder._generateForeignKeysLines', (t) => {
+test('sqlBuilder._getRelations()', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    group: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' }
+    },
+    posts: {
+      belongsTo: { name: 'user-post' }
+    }
+  })
+
+  const lines = sqlBuilder._getRelations()
+  t.equal(lines.length, 3)
+  t.deepEqual(lines[0], {fkField: 'GrpID', fkAs: 'userGroupId'})
+  t.deepEqual(lines[1], {fkField: 'rights', fkAs: 'rightsId'}, 'uses foreign table name if no fkField provided')
+  t.deepEqual(lines[2], {fkField: 'userPost', fkAs: 'userPostId'}, 'uses camelCased foreign table name')
+  t.end()
+})
+
+test('sqlBuilder._generateForeignKeysLines()', (t) => {
   const sqlBuilder = new SqlBuilder({
     group: {
       belongsTo: { name: 'user-group' },
