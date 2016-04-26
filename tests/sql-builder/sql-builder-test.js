@@ -33,7 +33,7 @@ test('sqlBuilder.columnsNames holds columns` names', (t) => {
   t.end()
 })
 
-test('sqlBuilder.generateUpdateSetPart() returns empty', (t) => {
+test('sqlBuilder.generateUpdateFieldsPart() returns empty', (t) => {
   const data = {
     name: 'some name',
     hide: false,
@@ -41,14 +41,13 @@ test('sqlBuilder.generateUpdateSetPart() returns empty', (t) => {
   }
 
   const sqlBuilder = new SqlBuilder({})
-  const setLines = sqlBuilder.generateUpdateSetPart(data)
+  const setLines = sqlBuilder.generateUpdateFieldsPart(data)
 
-  t.ok(Array.isArray(setLines), 'returns array')
-  t.equal(setLines.length, 0, 'empty')
+  t.equal(setLines, '', 'empty')
   t.end()
 })
 
-test('sqlBuilder.generateUpdateSetPart() handles properly "boolean" and "integer" types', (t) => {
+test('sqlBuilder.generateUpdateFieldsPart() handles properly "boolean" and "integer" types', (t) => {
   const data = {
     hide: false,
     someNumber: 33
@@ -58,15 +57,11 @@ test('sqlBuilder.generateUpdateSetPart() handles properly "boolean" and "integer
     someNumber: 'integer'
   })
 
-  const setLines = sqlBuilder.generateUpdateSetPart(data)
-
-  t.equal(setLines.length, 2, 'returns two lines')
-  t.equal(setLines[0], 'hide=false', 'for boolean')
-  t.equal(setLines[1], 'someNumber=33', 'for integer')
+  t.equal(sqlBuilder.generateUpdateFieldsPart(data), 'hide=false, someNumber=33')
   t.end()
 })
 
-test('sqlBuilder.generateUpdateSetPart(): strings are escaped and single-quoted', (t) => {
+test('sqlBuilder.generateUpdateFieldsPart(): strings are escaped and single-quoted', (t) => {
   const data = {
     name: 'some name',
     quetedString: 'input with \'quotes\''
@@ -76,15 +71,14 @@ test('sqlBuilder.generateUpdateSetPart(): strings are escaped and single-quoted'
     quetedString: 'string'
   })
 
-  const setLines = sqlBuilder.generateUpdateSetPart(data)
-
-  t.equal(setLines.length, 2, 'returns two lines')
-  t.equal(setLines[0], "name='some name'", 'string w/o quotes')
-  t.equal(setLines[1], "quetedString='input with  quotes '", 'string w/ quotes')
+  t.equal(
+    sqlBuilder.generateUpdateFieldsPart(data),
+    "name='some name', quetedString='input with  quotes '"
+  )
   t.end()
 })
 
-test('sqlBuilder.generateUpdateSetPart(): "null" and "undefined" => empty string', (t) => {
+test('sqlBuilder.generateUpdateFieldsPart(): "null" and "undefined" => empty string', (t) => {
   const data = {
     nullString: null,
     undefinedString: undefined
@@ -94,15 +88,14 @@ test('sqlBuilder.generateUpdateSetPart(): "null" and "undefined" => empty string
     undefinedString: 'string'
   })
 
-  const setLines = sqlBuilder.generateUpdateSetPart(data)
-
-  t.equal(setLines.length, 2, 'returns two lines')
-  t.equal(setLines[0], "nullString=''", 'null')
-  t.equal(setLines[1], "undefinedString=''", 'undefined')
+  t.equal(
+    sqlBuilder.generateUpdateFieldsPart(data),
+    "nullString='', undefinedString=''"
+  )
   t.end()
 })
 
-test('sqlBuilder.generateUpdateSetPart(): other data types are converted to strings', (t) => {
+test('sqlBuilder.generateUpdateFieldsPart(): other data types are converted to strings', (t) => {
   const data = {
     shouldBeString: 123,
     shouldBeString2: false
@@ -112,15 +105,14 @@ test('sqlBuilder.generateUpdateSetPart(): other data types are converted to stri
     shouldBeString2: 'string'
   })
 
-  const setLines = sqlBuilder.generateUpdateSetPart(data)
-
-  t.equal(setLines.length, 2, 'returns two lines')
-  t.equal(setLines[0], "shouldBeString='123'", 'number')
-  t.equal(setLines[1], "shouldBeString2='false'", 'boolean')
+  t.equal(
+    sqlBuilder.generateUpdateFieldsPart(data),
+    "shouldBeString='123', shouldBeString2='false'"
+  )
   t.end()
 })
 
-test('sqlBuilder.generateUpdateSetPart(): relations lines too', (t) => {
+test('sqlBuilder.generateUpdateFieldsPart(): relations lines too', (t) => {
   const sqlBuilder = new SqlBuilder({
     name: 'string',
     hide: 'boolean',
@@ -140,13 +132,10 @@ test('sqlBuilder.generateUpdateSetPart(): relations lines too', (t) => {
     rights: {id: '101'}
   }
 
-  const setLines = sqlBuilder.generateUpdateSetPart(data)
-
-  t.equal(setLines.length, 4)
-  t.equal(setLines[0], "name='some'")
-  t.equal(setLines[1], 'hide=false')
-  t.equal(setLines[2], 'GrpID=13')
-  t.equal(setLines[3], 'rights=101')
+  t.equal(
+    sqlBuilder.generateUpdateFieldsPart(data),
+    "name='some', hide=false, GrpID=13, rights=101"
+  )
   t.end()
 })
 
