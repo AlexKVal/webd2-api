@@ -34,89 +34,30 @@ test('sqlBuilder.columnsNames holds columns` names', (t) => {
   t.end()
 })
 
-test('sqlBuilder.generateFieldEqualsDataLines() returns empty', (t) => {
-  const data = {
-    name: 'some name',
-    hide: false,
-    someNumber: 33
-  }
-
-  const sqlBuilder = new SqlBuilder({})
-  const lines = sqlBuilder.generateFieldEqualsDataLines(data)
-
-  t.ok(Array.isArray(lines))
-  t.equal(lines.length, 0, 'empty')
-  t.end()
-})
-
-test('sqlBuilder.generateFieldEqualsDataLines() handles properly "boolean" and "integer" types', (t) => {
+test('sqlBuilder.generateFieldEqualsDataLines()', (t) => {
   const data = {
     hide: false,
-    someNumber: 33
-  }
-  const sqlBuilder = new SqlBuilder({
-    hide: 'boolean',
-    someNumber: 'integer'
-  })
-
-  const lines = sqlBuilder.generateFieldEqualsDataLines(data)
-  t.equal(lines[0], 'hide=false')
-  t.equal(lines[1], 'someNumber=33')
-  t.end()
-})
-
-test('sqlBuilder.generateFieldEqualsDataLines(): strings are escaped and single-quoted', (t) => {
-  const data = {
+    someNumber: 33,
     name: 'some name',
-    quetedString: 'input with \'quotes\''
-  }
-  const sqlBuilder = new SqlBuilder({
-    name: 'string',
-    quetedString: 'string'
-  })
-
-  const lines = sqlBuilder.generateFieldEqualsDataLines(data)
-  t.equal(lines[0], "name='some name'")
-  t.equal(lines[1], "quetedString='input with  quotes '")
-  t.end()
-})
-
-test('sqlBuilder.generateFieldEqualsDataLines(): "null" and "undefined" => empty string', (t) => {
-  const data = {
+    quotedString: 'input with \'quotes\'',
     nullString: null,
-    undefinedString: undefined
-  }
-  const sqlBuilder = new SqlBuilder({
-    nullString: 'string',
-    undefinedString: 'string'
-  })
-
-  const lines = sqlBuilder.generateFieldEqualsDataLines(data)
-  t.equal(lines[0], "nullString=''")
-  t.equal(lines[1], "undefinedString=''")
-  t.end()
-})
-
-test('sqlBuilder.generateFieldEqualsDataLines(): other data types are converted to strings', (t) => {
-  const data = {
+    undefinedString: undefined,
     shouldBeString: 123,
-    shouldBeString2: false
+    shouldBeString2: false,
+
+    userGroup: {id: '13'},
+    rights: {id: '101'}
   }
   const sqlBuilder = new SqlBuilder({
-    shouldBeString: 'string',
-    shouldBeString2: 'string'
-  })
-
-  const lines = sqlBuilder.generateFieldEqualsDataLines(data)
-  t.equal(lines[0], "shouldBeString='123'")
-  t.equal(lines[1], "shouldBeString2='false'")
-  t.end()
-})
-
-test('sqlBuilder.generateFieldEqualsDataLines(): relations lines too', (t) => {
-  const sqlBuilder = new SqlBuilder({
-    name: 'string',
     hide: 'boolean',
+    someNumber: 'integer',
+    name: 'string',
+    quotedString: 'string',
+    nullString: 'string',
+    undefinedString: 'string',
+    shouldBeString: 'string',
+    shouldBeString2: 'string',
+
     userGroup: {
       belongsTo: { name: 'user-group' },
       fkField: 'GrpID'
@@ -126,18 +67,25 @@ test('sqlBuilder.generateFieldEqualsDataLines(): relations lines too', (t) => {
     }
   })
 
-  const data = {
-    name: 'some',
-    hide: false,
-    userGroup: {id: '13'},
-    rights: {id: '101'}
-  }
-
   const lines = sqlBuilder.generateFieldEqualsDataLines(data)
-  t.equal(lines[0], "name='some'")
-  t.equal(lines[1], 'hide=false')
-  t.equal(lines[2], 'GrpID=13')
-  t.equal(lines[3], 'rights=101')
+  t.equal(lines[0], 'hide=false', 'boolean values')
+  t.equal(lines[1], 'someNumber=33', 'integer values')
+  t.equal(lines[2], "name='some name'", 'quotes strings')
+  t.equal(lines[3], "quotedString='input with  quotes '", 'strips single quotes off strings')
+  t.equal(lines[4], "nullString=''")
+  t.equal(lines[5], "undefinedString=''")
+  t.equal(lines[6], "shouldBeString='123'", 'quotes as string other data types')
+  t.equal(lines[7], "shouldBeString2='false'", 'quotes as string other data types')
+
+  t.equal(lines[8], 'GrpID=13', 'handles relations too')
+  t.equal(lines[9], 'rights=101', 'handles relations too')
+
+  const emptrySqlBuilder = new SqlBuilder({})
+  const emptryLines = emptrySqlBuilder.generateFieldEqualsDataLines(data)
+
+  t.ok(Array.isArray(emptryLines))
+  t.equal(emptryLines.length, 0, 'empty result with empty schema')
+
   t.end()
 })
 
