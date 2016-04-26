@@ -120,6 +120,36 @@ test('sqlBuilder.generateUpdateSetPart(): other data types are converted to stri
   t.end()
 })
 
+test('sqlBuilder.generateUpdateSetPart(): relations lines too', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    name: 'string',
+    hide: 'boolean',
+    userGroup: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' }
+    }
+  })
+
+  const data = {
+    name: 'some',
+    hide: false,
+    userGroup: {id: '13'},
+    rights: {id: '101'}
+  }
+
+  const setLines = sqlBuilder.generateUpdateSetPart(data)
+
+  t.equal(setLines.length, 4)
+  t.equal(setLines[0], "name='some'")
+  t.equal(setLines[1], 'hide=false')
+  t.equal(setLines[2], 'GrpID=13')
+  t.equal(setLines[3], 'rights=101')
+  t.end()
+})
+
 test('sqlBuilder._getRelations()', (t) => {
   const sqlBuilder = new SqlBuilder({
     group: {
