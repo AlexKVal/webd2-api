@@ -433,3 +433,44 @@ test('sqlBuilder.sqlUpdate(id, data) returns sql query for updating row', (t) =>
   )
   t.end()
 })
+
+test('sqlBuilder.sqlOneByData(data) returns sql query for retrieving ID for row', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    tableName: 'sPersonal',
+    id: 'PersID',
+
+    name: 'string',
+    hide: 'boolean',
+    counter: 'integer',
+
+    group: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' }
+    },
+    post: {
+      belongsTo: { name: 'post' },
+      fkField: 'PostID'
+    }
+  })
+
+  const newData = {
+    /* no id because the row is just INSERTed and we want to know it's new ID */
+    name: 'new one',
+    hide: false,
+    counter: '445',
+    group: {id: '12'},
+    rights: {id: '101'},
+    post: {id: '23'}
+  }
+
+  t.equal(
+    sqlBuilder.sqlOneByData(newData),
+    'SELECT PersID as id, name, hide, counter, GrpID as userGroupId, rights as rightsId, PostID as postId' +
+    ' FROM sPersonal' +
+    " WHERE name='new one' AND hide=false AND counter=445 AND GrpID=12 AND rights=101 AND PostID=23"
+  )
+  t.end()
+})
