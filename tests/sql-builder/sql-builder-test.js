@@ -208,6 +208,31 @@ test('sqlBuilder.generateSelectFieldsPart with a custom "id" field', (t) => {
   t.end()
 })
 
+test.only('sqlBuilder.generateSelectFieldsPart with `fieldsOnly` option', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    id: 'UserID',
+    name: 'string',
+    hide: 'boolean',
+    counter: 'integer',
+    group: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    }
+  })
+
+  t.equal(
+    sqlBuilder.generateSelectFieldsPart(/* w/o fieldsOnly */),
+    'UserID as id, name, hide, counter, GrpID as userGroupId'
+  )
+
+  t.equal(
+    sqlBuilder.generateSelectFieldsPart(['hide', 'counter']),
+    'UserID as id, hide, counter, GrpID as userGroupId'
+  )
+
+  t.end()
+})
+
 test('sqlBuilder.getIdFieldLine() with a default "id" field', (t) => {
   const sqlBuilder = new SqlBuilder({
     name: 'string'
