@@ -3,21 +3,17 @@ const test = require('tape')
 
 const BaseModel = require('../../lib/models/base-model')
 
-const dbMock = {
-  exec () {
-    return Promise.resolve()
-  }
-}
+const dbMock = { exec () { return Promise.resolve() } }
 class SomeModel extends BaseModel {}
 
 test('BaseModel is abstract class', (t) => {
   const fn1 = function fn1 () {
-    return new BaseModel(dbMock, 'name')
+    return new BaseModel(dbMock, 'name', {})
   }
   t.throws(fn1, /is abstract class/)
 
   const fn2 = function fn2 () {
-    return new SomeModel(dbMock, 'name')
+    return new SomeModel(dbMock, 'name', {})
   }
   t.doesNotThrow(fn2, /is abstract class/)
 
@@ -32,19 +28,17 @@ test('BaseModel needs database layer', (t) => {
   t.end()
 })
 
-test('BaseModel constructor gets name and optionally schema', (t) => {
-  const fn = function fn () {
-    return new SomeModel(dbMock)
+test('BaseModel constructor gets name and schema', (t) => {
+  const fn0 = function fn0 () {
+    return new SomeModel(dbMock /* no name provided */)
   }
-  t.throws(fn, /name is undefined/, 'throws when no "name" provided')
-  t.end()
-})
+  t.throws(fn0, /name is undefined/, 'throws when no "name" provided')
 
-test('BaseModel if schema is not provided, then default one is created', (t) => {
-  const model = new SomeModel(dbMock, 'some-name')
+  const fn1 = function fn1 () {
+    return new SomeModel(dbMock, 'model-name' /* no schema provided */)
+  }
+  t.throws(fn1, /schema is not provided/, 'throws when no "scheme" provided')
 
-  t.equal(model.name, 'some-name')
-  t.ok((model.schema instanceof Object))
   t.end()
 })
 
@@ -65,13 +59,13 @@ test('BaseModel throws if "schema" is not an object', (t) => {
 /**
  * #all
  */
-test('BaseModel#all calls db#exec and returns cast types', (t) => {
+test('BaseModel#all calls db.exec() and returns cast types', (t) => {
   t.plan(4)
 
   const db = {
     exec (sql) {
-      t.pass('db#exec call')
-      t.equal(sql, 'SELECT * FROM table', 'sends sql-query to db layer')
+      t.pass('db.exec() called')
+      t.equal(sql, 'SELECT id, enabled, disabled, counter FROM some')
       return Promise.resolve([{
         enabled: '0',
         disabled: '1',
@@ -80,10 +74,9 @@ test('BaseModel#all calls db#exec and returns cast types', (t) => {
     }
   }
 
-  class ModelForAll extends BaseModel {
-    sqlAll () { return 'SELECT * FROM table' }
-  }
+  class ModelForAll extends BaseModel {}
   const model = new ModelForAll(db, 'name', {
+    tableName: 'some',
     enabled: 'boolean',
     disabled: 'boolean',
     counter: 'integer'
@@ -102,25 +95,20 @@ test('BaseModel#all calls db#exec and returns cast types', (t) => {
   .then(() => t.end())
 })
 
-test('BaseModel#all throws error if sqlAll is not overridden', (t) => {
-  class ModelAllThrows extends BaseModel {
-    // sqlAll () {} is not overridden
-  }
-  const model = new ModelAllThrows(dbMock, 'name', {})
-  t.throws(() => model.all(), /you should override sqlAll/)
-  t.end()
-})
-
 /**
  * get(id)
  */
-test('BaseModel#get calls db#exec and returns cast data', (t) => {
+test('BaseModel#get calls db.exec and returns cast data', (t) => {
   t.plan(4)
 
   const db = {
     exec (sql) {
-      t.pass('db#exec call')
-      t.equal(sql, 'SELECT * FROM tableGet', 'passes sql-query to db-layer')
+      t.pass('db.exec() called')
+      t.equal(
+        sql,
+        'SELECT id, enabled, disabled, counter FROM some WHERE id=1',
+        'passes sql-query to db-layer'
+      )
       return Promise.resolve([{
         enabled: '0',
         disabled: '1',
@@ -129,10 +117,9 @@ test('BaseModel#get calls db#exec and returns cast data', (t) => {
     }
   }
 
-  class ModelForGet extends BaseModel {
-    sqlOne () { return 'SELECT * FROM tableGet' }
-  }
+  class ModelForGet extends BaseModel {}
   const model = new ModelForGet(db, 'name', {
+    tableName: 'some',
     enabled: 'boolean',
     disabled: 'boolean',
     counter: 'integer'
@@ -149,15 +136,6 @@ test('BaseModel#get calls db#exec and returns cast data', (t) => {
   })
   .catch((e) => t.fail(`should not be called ${e}`))
   .then(() => t.end())
-})
-
-test('BaseModel#get throws error if sqlOne is not overridden', (t) => {
-  class ModelGetThrows extends BaseModel {
-    // sqlOne () {} is not overridden
-  }
-  const model = new ModelGetThrows(dbMock, 'name', {})
-  t.throws(() => model.get(1), /you should override sqlOne/)
-  t.end()
 })
 
 test('BaseModel#get throws error if no "id" provided', (t) => {
@@ -177,10 +155,8 @@ test('BaseModel#get rejects with error if db returns no rows', (t) => {
     }
   }
 
-  class ModelForGet extends BaseModel {
-    sqlOne () {}
-  }
-  const model = new ModelForGet(db, 'name', {})
+  class ModelForGet extends BaseModel {}
+  const model = new ModelForGet(db, 'name', {tableName: 'some'})
   model.get(1)
   .then(() => t.fail('should not be called'))
   .catch((e) => {
@@ -193,22 +169,8 @@ test('BaseModel#get rejects with error if db returns no rows', (t) => {
 /**
  * update(id, data)
  */
-test('BaseModel#update throws error if sqlIsRowExist is not overridden', (t) => {
-  class ModelUpdateThrows extends BaseModel {
-    // sqlIsRowExist () {} is not overridden
-    sqlUpdate () {}
-  }
-  const model = new ModelUpdateThrows(dbMock, 'name', {})
-  t.throws(() => model.update(1, {name: 'new'}), /you should override sqlIsRowExist/)
-  t.end()
-})
-
 test('BaseModel#update throws error if no "id" or "data" provided', (t) => {
-  class ModelForUpdate extends BaseModel {
-    sqlUpdate () {}
-    sqlIsRowExist () {}
-  }
-
+  class ModelForUpdate extends BaseModel {}
   const model = new ModelForUpdate(dbMock, 'name', {})
   t.throws(() => model.update(/* no id */), /no id has been provided/)
   t.throws(() => model.update(1 /* no data */), /no data has been provided/)
@@ -235,12 +197,8 @@ test('BaseModel#update rejects with error if no row with "id" exists', (t) => {
     }
   }
 
-  class ModelForUpdate extends BaseModel {
-    sqlUpdate () {}
-    sqlIsRowExist () {}
-  }
-
-  const model = new ModelForUpdate(db, 'name', {})
+  class ModelForUpdate extends BaseModel {}
+  const model = new ModelForUpdate(db, 'name', {tableName: 'some'})
   model.update(1, {name: 'new'})
   .catch((e) => {
     t.pass('catch error')
@@ -256,11 +214,11 @@ test('BaseModel#update calls db.exec, calls get(id), and returns a result from i
     sqlQueryCounter: 0,
     exec (sql) {
       if (this.sqlQueryCounter === 0) {
-        t.equal(sql, '1st query is sqlIsRowExist', 'sends sql-query to db layer')
+        t.equal(sql, 'SELECT id FROM some WHERE id=1', 'sends sql-query to db layer')
         this.sqlQueryCounter += 1
         return Promise.resolve([{some: 'data exists'}])
       } else if (this.sqlQueryCounter === 1) {
-        t.equal(sql, '2nd sqlUpdate', 'sends sql-query to db layer')
+        t.equal(sql, 'UPDATE some SET counter=0 WHERE id=1', 'sends sql-query to db layer')
         this.sqlQueryCounter += 1
         return Promise.resolve() // successful update
       } else {
@@ -270,9 +228,6 @@ test('BaseModel#update calls db.exec, calls get(id), and returns a result from i
   }
 
   class ModelForFullUpdate extends BaseModel {
-    sqlIsRowExist (id) { return '1st query is sqlIsRowExist' }
-    sqlUpdate () { return '2nd sqlUpdate' }
-
     get () {
       // overriden for the test
       t.pass('get(id) has been called')
@@ -284,6 +239,7 @@ test('BaseModel#update calls db.exec, calls get(id), and returns a result from i
     }
   }
   const model = new ModelForFullUpdate(db, 'name', {
+    tableName: 'some',
     enabled: 'boolean',
     disabled: 'boolean',
     counter: 'integer'
@@ -312,11 +268,20 @@ test('BaseModel#create calls db.exec and returns saved model with cast types', (
     sqlQueryCounter: 0,
     exec (sql) {
       if (this.sqlQueryCounter === 0) {
-        t.equal(sql, '1st query is sqlCreate', 'sends sql-query to db layer')
+        t.equal(
+          sql,
+          'INSERT INTO some (enabled, disabled, counter) VALUES (false, true, 0)',
+          'sends sql-query to db layer'
+        )
         this.sqlQueryCounter += 1
         return Promise.resolve(/* OK */)
       } else if (this.sqlQueryCounter === 1) {
-        t.equal(sql, '2nd sqlGet', 'sends sql-query to db layer')
+        t.equal(
+          sql,
+          'SELECT id, enabled, disabled, counter FROM some WHERE enabled=false' +
+          ' AND disabled=true AND counter=0',
+          'sends sql-query to db layer'
+        )
         this.sqlQueryCounter += 1
         return Promise.resolve([{
           id: '1', // db-layer generates ID
@@ -330,11 +295,9 @@ test('BaseModel#create calls db.exec and returns saved model with cast types', (
     }
   }
 
-  class ModelForFullCreate extends BaseModel {
-    sqlCreate () { return '1st query is sqlCreate' }
-    sqlDataWithID () { return '2nd sqlGet' }
-  }
+  class ModelForFullCreate extends BaseModel {}
   const model = new ModelForFullCreate(db, 'name', {
+    tableName: 'some',
     enabled: 'boolean',
     disabled: 'boolean',
     counter: 'integer'
