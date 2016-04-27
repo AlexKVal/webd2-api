@@ -310,7 +310,7 @@ test('sqlBuilder.sqlIsRowExist(id) returns sql query for checking row existence 
   t.end()
 })
 
-test('sqlBuilder._getRelationsLinesForUpdate()', (t) => {
+test('sqlBuilder._getRelationsLinesForUpdate() with full data', (t) => {
   const sqlBuilder = new SqlBuilder({
     userGroup: {
       belongsTo: { name: 'user-group' },
@@ -329,11 +329,36 @@ test('sqlBuilder._getRelationsLinesForUpdate()', (t) => {
   }
 
   const relationsLines = sqlBuilder._getRelationsLinesForUpdate(data)
-  t.equal(relationsLines.length, 2)
   t.deepEqual(relationsLines, [
     'GrpID=13',
     'rights=101'
   ])
+  t.end()
+})
+
+test('sqlBuilder._getRelationsLinesForUpdate() with partial data', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    userGroup: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' }
+    },
+    post: {
+      belongsTo: { name: 'user-post' },
+      fkField: 'PostID'
+    }
+  })
+
+  const data = {
+    post: {id: '2'},
+    name: 'some',
+    userGroup: {id: '13'}
+  }
+
+  const relationsLines = sqlBuilder._getRelationsLinesForUpdate(data)
+  t.deepEqual(relationsLines, [ 'GrpID=13', 'PostID=2' ])
   t.end()
 })
 
