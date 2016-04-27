@@ -926,3 +926,79 @@ test('sqlBuilder.selectMany() generates SELECT query for fetching many rows', (t
 
   t.end()
 })
+
+test('sqlBuilder.selectOne() generates SELECT query for fetching one row', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    tableName: 'sPersonal',
+    id: 'PersID',
+    name: 'string',
+    hide: 'boolean',
+    group: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' }
+    }
+  })
+
+  t.throws(
+    () => sqlBuilder.selectOne(/* no options at all */),
+    /either `id` or `data` option should be provided/
+  )
+
+  t.throws(
+    () => sqlBuilder.selectOne({id: '1', data: {name: 'new'}}),
+    /both `id` and `data` options are provided/
+  )
+
+  t.equal(
+    sqlBuilder.selectOne({id: '134'}),
+    'SELECT PersID as id, name, hide, GrpID as userGroupId, rights as rightsId' +
+    ' FROM sPersonal' +
+    ' WHERE PersID=134',
+    'with `id` option selects all described by schema fields'
+  )
+
+  const fullNewData = {
+    /* no id because the row is just INSERTed and we want to know it's new ID */
+    name: 'new one',
+    hide: false,
+    counter: '445', // extra data field. should be ignored
+    group: {id: '12'},
+    rights: {id: '101'},
+    post: {id: '23'} // extra relation field. should be ignored
+  }
+
+  t.equal(
+    sqlBuilder.selectOne({data: fullNewData}),
+    'SELECT PersID as id, name, hide, GrpID as userGroupId, rights as rightsId' +
+    ' FROM sPersonal' +
+    " WHERE name='new one' AND hide=false AND GrpID=12 AND rights=101",
+    'uses `data` option for constraint clauses'
+  )
+
+  const partialNewData = {
+    /* no id because the row is just INSERTed and we want to know it's new ID */
+    name: 'new one',
+    group: {id: '12'}
+  }
+
+  t.equal(
+    sqlBuilder.selectOne({data: partialNewData}),
+    'SELECT PersID as id, name, hide, GrpID as userGroupId, rights as rightsId' +
+    ' FROM sPersonal' +
+    " WHERE name='new one' AND GrpID=12",
+    'can work with partial `data`'
+  )
+
+  t.equal(
+    sqlBuilder.selectOne({id: '134', fieldsOnly: ['name']}),
+    'SELECT PersID as id, name, GrpID as userGroupId, rights as rightsId' +
+    ' FROM sPersonal' +
+    ' WHERE PersID=134',
+    'fieldsOnly filters out only data fields. id and relations are returned always'
+  )
+
+  t.end()
+})
