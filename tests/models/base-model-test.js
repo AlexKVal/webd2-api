@@ -57,7 +57,7 @@ test('BaseModel throws if "schema" is not an object', (t) => {
 })
 
 /**
- * #all
+ * all(options)
  */
 test('BaseModel#all calls db.exec() and returns cast types', (t) => {
   t.plan(4)
@@ -83,14 +83,43 @@ test('BaseModel#all calls db.exec() and returns cast types', (t) => {
   })
 
   model.all()
-  .then((castData) => { t.pass('returns a Promise'); return castData })
   .then((castData) => {
+    t.pass('returns a Promise')
     t.deepEqual(castData, [{
       enabled: false,
       disabled: true,
       counter: 123
     }])
   })
+  .catch((e) => t.fail(`should not be called ${e}`))
+  .then(() => t.end())
+})
+
+test('BaseModel#all(options) accepts `options` for selectMany()', (t) => {
+  t.plan(3)
+
+  const db = {
+    exec (sql) {
+      t.pass('db.exec() called')
+      t.equal(
+        sql,
+        'SELECT id, name, hide, counter FROM sPersonal WHERE hide=false ORDER BY name',
+        'sql query with regards to `options`'
+      )
+      return Promise.resolve([])
+    }
+  }
+
+  class User extends BaseModel {}
+  const model = new User(db, 'user', {
+    tableName: 'sPersonal',
+    name: 'string',
+    hide: 'boolean',
+    counter: 'integer'
+  })
+
+  model.all({where: {hide: false}, orderBy: 'name'})
+  .then(() => t.pass('returns a Promise'))
   .catch((e) => t.fail(`should not be called ${e}`))
   .then(() => t.end())
 })
