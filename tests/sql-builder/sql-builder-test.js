@@ -321,28 +321,6 @@ test('sqlBuilder.id', (t) => {
   t.end()
 })
 
-test('sqlBuilder.sqlOne(id) returns sql query for fetching particular row by "id"', (t) => {
-  const sqlBuilder = new SqlBuilder({
-    tableName: 'sPersonal',
-    id: 'PersID',
-    name: 'string',
-    groups: {
-      belongsTo: { name: 'user-group' },
-      fkField: 'GrpID'
-    },
-    rights: {
-      belongsTo: { name: 'rights' }
-    }
-  })
-
-  t.equal(
-    sqlBuilder.sqlOne(11),
-    'SELECT PersID as id, name, GrpID as userGroupId, rights as rightsId' +
-    ' FROM sPersonal WHERE PersID=11'
-  )
-  t.end()
-})
-
 test('sqlBuilder.sqlIsRowExist(id) returns sql query for checking row existence by "id"', (t) => {
   const sqlBuilder = new SqlBuilder({
     tableName: 'sPersonal',
