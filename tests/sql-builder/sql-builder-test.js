@@ -84,6 +84,42 @@ test('sqlBuilder.generateFieldEqualsDataLines() with full data', (t) => {
   t.end()
 })
 
+test('sqlBuilder.generateFieldEqualsDataLines() with partial data', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    hide: 'boolean',
+    someNumber: 'integer',
+    name: 'string',
+    quotedString: 'string',
+    shouldBeString: 'string',
+    shouldBeString2: 'string',
+
+    userGroup: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' }
+    }
+  })
+
+  const partialData = {
+    shouldBeString: 123,
+    hide: false,
+    rights: {id: '101'},
+    quotedString: 'input with \'quotes\''
+  }
+
+  const partialDataLines = sqlBuilder.generateFieldEqualsDataLines(partialData)
+  t.deepEqual(partialDataLines, [
+    'hide=false',
+    "quotedString='input with  quotes '",
+    "shouldBeString='123'",
+    'rights=101'
+  ])
+
+  t.end()
+})
+
 test('sqlBuilder._getRelations()', (t) => {
   const sqlBuilder = new SqlBuilder({
     group: {
