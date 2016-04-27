@@ -518,6 +518,44 @@ test('sqlBuilder.sqlOneByData(data) returns sql query for retrieving ID for row'
   t.end()
 })
 
+test('sqlBuilder.sqlOneByData(data) can work with partial data', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    tableName: 'sPersonal',
+    id: 'PersID',
+
+    name: 'string',
+    hide: 'boolean',
+    counter: 'integer',
+
+    group: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' }
+    },
+    post: {
+      belongsTo: { name: 'post' },
+      fkField: 'PostID'
+    }
+  })
+
+  const partialNewData = {
+    /* no id because the row is just INSERTed and we want to know it's new ID */
+    hide: false,
+    group: {id: '12'},
+    post: {id: '23'}
+  }
+
+  t.equal(
+    sqlBuilder.sqlOneByData(partialNewData),
+    'SELECT PersID as id, name, hide, counter, GrpID as userGroupId, rights as rightsId, PostID as postId' +
+    ' FROM sPersonal' +
+    ' WHERE hide=false AND GrpID=12 AND PostID=23'
+  )
+  t.end()
+})
+
 test('sqlBuilder._fieldsNamesForInsert(data) only names that are present in data and schema', (t) => {
   const sqlBuilder = new SqlBuilder({
     tableName: 'sPersonal',
