@@ -227,16 +227,6 @@ test('sqlBuilder.getIdFieldLine() with a custom "id" field', (t) => {
   t.end()
 })
 
-test('sqlBuilder.getIdFieldName() with a custom "id" field', (t) => {
-  const sqlBuilder = new SqlBuilder({
-    id: 'UserID',
-    name: 'string'
-  })
-
-  t.equal(sqlBuilder.getIdFieldName(), 'UserID')
-  t.end()
-})
-
 test('sqlBuilder.getIdFieldName() with a default "id" field', (t) => {
   const sqlBuilder = new SqlBuilder({
     name: 'string'
@@ -306,41 +296,60 @@ test('sqlBuilder.id', (t) => {
   t.end()
 })
 
-const sqlBuilderForSql = new SqlBuilder({
-  tableName: 'sPersonal',
-  id: 'PersID',
-  name: 'string',
-  hide: 'boolean',
-  groups: {
-    belongsTo: { name: 'user-group' },
-    fkField: 'GrpID'
-  },
-  rights: {
-    belongsTo: { name: 'rights' }
-  }
-})
-
 test('sqlBuilder.sqlAll() returns sql query for fetching all rows', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    tableName: 'sPersonal',
+    id: 'PersID',
+    name: 'string',
+    groups: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' }
+    }
+  })
+
   t.equal(
-    sqlBuilderForSql.sqlAll(),
-    'SELECT PersID as id, name, hide, GrpID as userGroupId, rights as rightsId' +
+    sqlBuilder.sqlAll(),
+    'SELECT PersID as id, name, GrpID as userGroupId, rights as rightsId' +
     ' FROM sPersonal'
   )
   t.end()
 })
 
 test('sqlBuilder.sqlOne(id) returns sql query for fetching particular row by "id"', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    tableName: 'sPersonal',
+    id: 'PersID',
+    name: 'string',
+    groups: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' }
+    }
+  })
+
   t.equal(
-    sqlBuilderForSql.sqlOne(11),
-    'SELECT PersID as id, name, hide, GrpID as userGroupId, rights as rightsId' +
+    sqlBuilder.sqlOne(11),
+    'SELECT PersID as id, name, GrpID as userGroupId, rights as rightsId' +
     ' FROM sPersonal WHERE PersID=11'
   )
   t.end()
 })
 
 test('sqlBuilder.sqlIsRowExist(id) returns sql query for checking row existence by "id"', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    tableName: 'sPersonal',
+    id: 'PersID',
+    name: 'string',
+    rights: { belongsTo: { name: 'rights' } }
+  })
+
   t.equal(
-    sqlBuilderForSql.sqlIsRowExist(202),
+    sqlBuilder.sqlIsRowExist(202),
     'SELECT PersID as id FROM sPersonal WHERE PersID=202'
   )
   t.end()
