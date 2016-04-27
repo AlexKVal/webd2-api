@@ -507,15 +507,23 @@ test('quoteValueIfString() strings are escaped and single-quoted', (t) => {
   t.end()
 })
 
-test('quoteValueIfString() "null" and "undefined" => empty string', (t) => {
-  t.equal(quoteValueIfString('string', null), "''")
-  t.equal(quoteValueIfString('string', undefined), "''")
-  t.end()
-})
-
 test('quoteValueIfString() other data types are converted to strings', (t) => {
   t.equal(quoteValueIfString('string', 123), "'123'")
   t.equal(quoteValueIfString('string', false), "'false'")
+  t.end()
+})
+
+test('quoteValueIfString() throws if value is "null" or "undefined"', (t) => {
+  const fn0 = function () {
+    quoteValueIfString('string', null)
+  }
+
+  const fn1 = function () {
+    quoteValueIfString('string', undefined)
+  }
+
+  t.throws(fn0, /value for SQL query cannot be null or undefined/)
+  t.throws(fn1, /value for SQL query cannot be null or undefined/)
   t.end()
 })
 
