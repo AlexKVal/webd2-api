@@ -385,6 +385,46 @@ test('BaseModel#apiFetchAll calls all() and returns serialized data', (t) => {
   .then(() => t.end())
 })
 
+test('BaseModel#apiFetchAll childModel can override all() to provide own `options`', (t) => {
+  t.plan(4)
+
+  const db = {
+    exec (sql) {
+      t.pass('db.exec() called')
+      t.equal(
+        sql,
+        'SELECT id, name, hide FROM sPersonal WHERE hide=false ORDER BY name',
+        'sql query with regards to `options`'
+      )
+      return Promise.resolve([])
+    }
+  }
+
+  class User extends BaseModel {
+    all () {
+      t.pass('all() called')
+
+      const customOptionsForUser = {
+        where: {hide: false},
+        orderBy: 'name'
+      }
+
+      return super.all(customOptionsForUser)
+    }
+  }
+
+  const model = new User(db, 'user', {
+    tableName: 'sPersonal',
+    name: 'string',
+    hide: 'boolean'
+  })
+
+  model.apiFetchAll()
+  .then(() => t.pass('success'))
+  .catch(() => t.fail('should not be called'))
+  .then(() => t.end())
+})
+
 test('BaseModel#_fetchRelations fetches relations data', (t) => {
   t.plan(1)
 
