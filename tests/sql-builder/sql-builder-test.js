@@ -902,6 +902,19 @@ test('sqlBuilder.selectMany() generates SELECT query for fetching many rows', (t
     'where options with some constraints'
   )
 
+  t.equal(
+    sqlBuilder.selectMany({
+      fieldsOnly: ['name'],
+      where: {hide: false, name: 'Vasya'},
+      orderBy: 'name DESC'
+    }),
+    'SELECT PersID as id, name, GrpID as userGroupId, rights as rightsId' +
+    ' FROM sPersonal' +
+    " WHERE hide=false AND name='Vasya'" +
+    ' ORDER BY name DESC',
+    'kinda integration test for options'
+  )
+
   t.end()
 })
 
