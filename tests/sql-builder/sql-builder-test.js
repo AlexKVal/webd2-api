@@ -439,6 +439,44 @@ test('sqlBuilder.sqlUpdate(id, data) returns sql query for updating row', (t) =>
   t.end()
 })
 
+test('sqlBuilder.sqlUpdate(id, data) can generate sql query with partial data', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    tableName: 'sPersonal',
+    id: 'PersID',
+
+    name: 'string',
+    hide: 'boolean',
+    counter: 'integer',
+
+    group: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' }
+    },
+    post: {
+      belongsTo: { name: 'post' },
+      fkField: 'PostID'
+    }
+  })
+
+  const partialUpdateData = {
+    id: '33',
+    hide: false,
+    rights: {id: '101'}
+  }
+
+  t.equal(
+    sqlBuilder.sqlUpdate('33', partialUpdateData),
+    'UPDATE sPersonal' +
+    ' SET hide=false, rights=101' +
+    ' WHERE PersID=33',
+    'query for partial update'
+  )
+  t.end()
+})
+
 test('sqlBuilder.sqlOneByData(data) returns sql query for retrieving ID for row', (t) => {
   const sqlBuilder = new SqlBuilder({
     tableName: 'sPersonal',
