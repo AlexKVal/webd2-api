@@ -261,6 +261,16 @@ test('sqlBuilder.getIdFieldName() with a default "id" field', (t) => {
   t.end()
 })
 
+test('sqlBuilder.getIdFieldName() with a custom "id" field', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    id: 'PersID',
+    name: 'string'
+  })
+
+  t.equal(sqlBuilder.getIdFieldName(), 'PersID')
+  t.end()
+})
+
 test('sqlBuilder.getTableName() throws if no tableName provided', (t) => {
   const sqlBuilder = new SqlBuilder({
     /* tableName: 'is not provided', */
