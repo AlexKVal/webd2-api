@@ -208,7 +208,7 @@ test('sqlBuilder.generateSelectFieldsPart with a custom "id" field', (t) => {
   t.end()
 })
 
-test.only('sqlBuilder.generateSelectFieldsPart with `fieldsOnly` option', (t) => {
+test('sqlBuilder.generateSelectFieldsPart with `fieldsOnly` option', (t) => {
   const sqlBuilder = new SqlBuilder({
     id: 'UserID',
     name: 'string',
@@ -841,6 +841,87 @@ test('sqlBuilder.sqlCreate(data) returns sql query for INSERT-ing new row', (t) 
     " VALUES ('new one', false, 445, 12, 101, 23)",
     'generates INSERT with all data fields provided',
     'extra data fields got cut'
+  )
+
+  t.end()
+})
+
+/**
+ * customizable generators
+ * instead of sqlAll sqlOne etc
+ */
+test('sqlBuilder.selectMany() generates SELECT query for fetching many rows', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    tableName: 'sPersonal',
+    id: 'PersID',
+    name: 'string',
+    hide: 'boolean',
+    groups: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' }
+    }
+  })
+
+  t.equal(
+    sqlBuilder.selectMany(/* no options */),
+    'SELECT PersID as id, name, hide, GrpID as userGroupId, rights as rightsId' +
+    ' FROM sPersonal',
+    'with empty options'
+  )
+
+  t.throws(
+    () => sqlBuilder.selectMany({id: '1'}),
+    /it is wrong to pass the `id` option to selectMany/
+  )
+
+  t.equal(
+    sqlBuilder.selectMany({orderBy: 'name DESC'}),
+    'SELECT PersID as id, name, hide, GrpID as userGroupId, rights as rightsId' +
+    ' FROM sPersonal' +
+    ' ORDER BY name DESC',
+    'orderBy with a single string value'
+  )
+
+  t.equal(
+    sqlBuilder.selectMany({orderBy: 'name, rights DESC'}),
+    'SELECT PersID as id, name, hide, GrpID as userGroupId, rights as rightsId' +
+    ' FROM sPersonal' +
+    ' ORDER BY name, rights DESC',
+    'orderBy with some fields as a string'
+  )
+
+  t.equal(
+    sqlBuilder.selectMany({orderBy: ['name', 'rights DESC']}),
+    'SELECT PersID as id, name, hide, GrpID as userGroupId, rights as rightsId' +
+    ' FROM sPersonal' +
+    ' ORDER BY name, rights DESC',
+    'orderBy with some fields as an Array'
+  )
+
+  t.equal(
+    sqlBuilder.selectMany({fieldsOnly: ['name']}),
+    'SELECT PersID as id, name, GrpID as userGroupId, rights as rightsId' +
+    ' FROM sPersonal',
+    'fieldsOnly filters out only data fields. id and relations are returned always'
+  )
+
+  t.equal(
+    sqlBuilder.selectMany({where: {hide: false}}),
+    'SELECT PersID as id, name, hide, GrpID as userGroupId, rights as rightsId' +
+    ' FROM sPersonal' +
+    ' WHERE hide=false',
+    'where option with one constraint'
+  )
+
+  t.equal(
+    sqlBuilder.selectMany({where: {hide: false, name: 'Vasya'}}),
+    'SELECT PersID as id, name, hide, GrpID as userGroupId, rights as rightsId' +
+    ' FROM sPersonal' +
+    " WHERE hide=false AND name='Vasya'",
+    'where options with some constraints'
   )
 
   t.end()
