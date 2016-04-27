@@ -321,28 +321,6 @@ test('sqlBuilder.id', (t) => {
   t.end()
 })
 
-test('sqlBuilder.sqlAll() returns sql query for fetching all rows', (t) => {
-  const sqlBuilder = new SqlBuilder({
-    tableName: 'sPersonal',
-    id: 'PersID',
-    name: 'string',
-    groups: {
-      belongsTo: { name: 'user-group' },
-      fkField: 'GrpID'
-    },
-    rights: {
-      belongsTo: { name: 'rights' }
-    }
-  })
-
-  t.equal(
-    sqlBuilder.sqlAll(),
-    'SELECT PersID as id, name, GrpID as userGroupId, rights as rightsId' +
-    ' FROM sPersonal'
-  )
-  t.end()
-})
-
 test('sqlBuilder.sqlOne(id) returns sql query for fetching particular row by "id"', (t) => {
   const sqlBuilder = new SqlBuilder({
     tableName: 'sPersonal',
