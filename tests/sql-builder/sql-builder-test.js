@@ -233,41 +233,33 @@ test('sqlBuilder.generateSelectFieldsPart with `fieldsOnly` option', (t) => {
   t.end()
 })
 
-test('sqlBuilder.getIdFieldLine() with a default "id" field', (t) => {
-  const sqlBuilder = new SqlBuilder({
+test('sqlBuilder.idFieldClause', (t) => {
+  const sqlBuilderDefaultId = new SqlBuilder({
     name: 'string'
   })
+  t.equal(sqlBuilderDefaultId.idFieldClause, 'id', 'default "id"')
 
-  t.equal(sqlBuilder.getIdFieldLine(), 'id')
-  t.end()
-})
-
-test('sqlBuilder.getIdFieldLine() with a custom "id" field', (t) => {
-  const sqlBuilder = new SqlBuilder({
+  const sqlBuilderCustomId = new SqlBuilder({
     id: 'UserID',
     name: 'string'
   })
+  t.equal(sqlBuilderCustomId.idFieldClause, 'UserID as id', 'custom "id"')
 
-  t.equal(sqlBuilder.getIdFieldLine(), 'UserID as id')
   t.end()
 })
 
-test('sqlBuilder.getIdFieldName() with a default "id" field', (t) => {
-  const sqlBuilder = new SqlBuilder({
+test('sqlBuilder.idFieldName', (t) => {
+  const sqlBuilderDefaultId = new SqlBuilder({
     name: 'string'
   })
+  t.equal(sqlBuilderDefaultId.idFieldName, 'id', 'default "id"')
 
-  t.equal(sqlBuilder.getIdFieldName(), 'id')
-  t.end()
-})
-
-test('sqlBuilder.getIdFieldName() with a custom "id" field', (t) => {
-  const sqlBuilder = new SqlBuilder({
+  const sqlBuilderCustomId = new SqlBuilder({
     id: 'PersID',
     name: 'string'
   })
+  t.equal(sqlBuilderCustomId.idFieldName, 'PersID', 'custom "id"')
 
-  t.equal(sqlBuilder.getIdFieldName(), 'PersID')
   t.end()
 })
 
@@ -319,15 +311,6 @@ test('sqlBuilder.tableName', (t) => {
 
   const sqlBuilder2 = new SqlBuilder({})
   t.equal(sqlBuilder2.tableName, undefined)
-  t.end()
-})
-
-test('sqlBuilder.id', (t) => {
-  const sqlBuilder1 = new SqlBuilder({ id: 'whatever' })
-  t.equal(sqlBuilder1.id, 'whatever')
-
-  const sqlBuilder2 = new SqlBuilder({})
-  t.equal(sqlBuilder2.id, undefined)
   t.end()
 })
 
