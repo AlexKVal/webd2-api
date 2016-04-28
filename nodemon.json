@@ -7,7 +7,6 @@
     "tests"
   ],
   "env": {
-    "NODE_ENV": "development",
-    "DEBUG": "webd2-api:*"
+    "NODE_ENV": "development"
   }
 }

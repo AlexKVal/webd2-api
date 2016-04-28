@@ -14,7 +14,7 @@
     "test-win": "node --harmony_destructuring node_modules/tape/bin/tape tests/**/*-test-win.js",
     "test": "node --harmony_destructuring node_modules/tape/bin/tape tests/**/*-test.js | faucet",
     "tdd": "nodemon -q -x 'node --harmony_destructuring node_modules/tape/bin/tape tests/**/*-test.js | faucet'",
-    "start": "node node_modules/nodemon/bin/nodemon bin/webd2-server"
+    "start": "set DEBUG=webd2-api:* && node node_modules/nodemon/bin/nodemon bin/webd2-server"
   },
   "engines": {
     "node": "^4.3.1"
