@@ -125,9 +125,9 @@ test('BaseModel#all(options) accepts `options` for selectMany()', (t) => {
 })
 
 /**
- * get(options)
+ * selectOne(options)
  */
-test('BaseModel#get(options) accepts `options` for selectOne()', (t) => {
+test('BaseModel#selectOne(options) accepts `options` for sqlBuilder.selectOne()', (t) => {
   t.plan(5)
 
   const db = {
@@ -154,9 +154,9 @@ test('BaseModel#get(options) accepts `options` for selectOne()', (t) => {
     counter: 'integer'
   })
 
-  t.throws(() => model.get(/* no id */), /either `id` or `data` option should be provided/)
+  t.throws(() => model.selectOne(/* no id */), /either `id` or `data` option should be provided/)
 
-  model.get({id: 1, fieldsOnly: ['enabled']})
+  model.selectOne({id: 1, fieldsOnly: ['enabled']})
   .then((castData) => {
     t.pass('returns a Promise')
     t.deepEqual(
@@ -173,7 +173,7 @@ test('BaseModel#get(options) accepts `options` for selectOne()', (t) => {
   .then(() => t.end())
 })
 
-test('BaseModel#get rejects with error if db returns no rows', (t) => {
+test('BaseModel#selectOne rejects with error if db returns no rows', (t) => {
   t.plan(3)
 
   const db = {
@@ -185,7 +185,7 @@ test('BaseModel#get rejects with error if db returns no rows', (t) => {
 
   class ModelForGet extends BaseModel {}
   const model = new ModelForGet(db, 'name', {tableName: 'some'})
-  model.get({id: 1})
+  model.selectOne({id: 1})
   .then(() => t.fail('should not be called'))
   .catch((e) => {
     t.pass('catch db error')
@@ -235,7 +235,7 @@ test('BaseModel#update rejects with error if no row with "id" exists', (t) => {
   })
 })
 
-test('BaseModel#update calls db.exec, calls get(), and returns a result from it', (t) => {
+test('BaseModel#update calls db.exec, calls selectOne(), and returns a result from it', (t) => {
   t.plan(6)
 
   const db = {
@@ -256,9 +256,9 @@ test('BaseModel#update calls db.exec, calls get(), and returns a result from it'
   }
 
   class ModelForFullUpdate extends BaseModel {
-    get (options) {
+    selectOne (options) {
       // overriden for the test
-      t.pass('get() has been called')
+      t.pass('selectOne() has been called')
       t.equal(options.id, 12)
       return Promise.resolve([{
         enabled: false,
@@ -723,7 +723,7 @@ test('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows withou
   .then(() => t.end())
 })
 
-test('BaseModel#apiFind(id) calls get() and serializes row without relations included', (t) => {
+test('BaseModel#apiFind(id) calls selectOne() and serializes row without relations included', (t) => {
   t.plan(1)
 
   class GroupModel extends BaseModel {}
@@ -737,7 +737,7 @@ test('BaseModel#apiFind(id) calls get() and serializes row without relations inc
   })
 
   class UserModel extends BaseModel {
-    get (options) {
+    selectOne (options) {
       const rows = {
         1: {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
         2: {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
@@ -787,11 +787,11 @@ test('BaseModel#apiUpdate calls update() and returns updated serialized row with
         rights: { id: '12' },
         userGroup: { id: '101' }
       })
-      return Promise.resolve([{
+      return Promise.resolve({
         id: '1', name: 'John',
         rightsId: '12',
         userGroupId: '101'
-      }])
+      })
     }
   }
   const userModel = new UserModel(dbMock, 'user', {
