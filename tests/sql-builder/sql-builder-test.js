@@ -398,7 +398,7 @@ test('sqlBuilder._getRelationsLinesForUpdate() with partial data', (t) => {
   t.end()
 })
 
-test('sqlBuilder.sqlUpdate(id, data) returns sql query for updating row', (t) => {
+test('sqlBuilder.update(id, data) returns sql query for updating row', (t) => {
   const sqlBuilder = new SqlBuilder({
     tableName: 'sPersonal',
     id: 'PersID',
@@ -431,7 +431,7 @@ test('sqlBuilder.sqlUpdate(id, data) returns sql query for updating row', (t) =>
   }
 
   t.equal(
-    sqlBuilder.sqlUpdate('33', updateData),
+    sqlBuilder.update('33', updateData),
     'UPDATE sPersonal' +
     " SET name='new one', hide=false, counter=445, GrpID=12, rights=101, PostID=23" +
     ' WHERE PersID=33'
@@ -439,7 +439,7 @@ test('sqlBuilder.sqlUpdate(id, data) returns sql query for updating row', (t) =>
   t.end()
 })
 
-test('sqlBuilder.sqlUpdate(id, data) can generate sql query with partial data', (t) => {
+test('sqlBuilder.update(id, data) can generate sql query with partial data', (t) => {
   const sqlBuilder = new SqlBuilder({
     tableName: 'sPersonal',
     id: 'PersID',
@@ -468,7 +468,7 @@ test('sqlBuilder.sqlUpdate(id, data) can generate sql query with partial data', 
   }
 
   t.equal(
-    sqlBuilder.sqlUpdate('33', partialUpdateData),
+    sqlBuilder.update('33', partialUpdateData),
     'UPDATE sPersonal' +
     ' SET hide=false, rights=101' +
     ' WHERE PersID=33',
