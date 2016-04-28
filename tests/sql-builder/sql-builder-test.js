@@ -847,6 +847,11 @@ test('sqlBuilder.selectOne() generates SELECT query for fetching one row', (t) =
     /both `id` and `data` options are provided/
   )
 
+  t.throws(
+    () => sqlBuilder.selectOne({data: {name: 'new'}, where: {hide: false}}),
+    /`where` can be used only with `id` option/
+  )
+
   t.equal(
     sqlBuilder.selectOne({id: '134'}),
     'SELECT PersID as id, name, hide, GrpID as userGroupId, rights as rightsId' +
@@ -901,6 +906,14 @@ test('sqlBuilder.selectOne() generates SELECT query for fetching one row', (t) =
     ' FROM sPersonal' +
     ' WHERE PersID=134',
     'fieldsOnly: `id` special case'
+  )
+
+  t.equal(
+    sqlBuilder.selectOne({id: '134', where: {hide: false, password: '123'}}),
+    'SELECT PersID as id, name, hide, GrpID as userGroupId, rights as rightsId' +
+    ' FROM sPersonal' +
+    " WHERE PersID=134 AND hide=false AND password='123'",
+    'accepts `where` option for custom checks by sql-engine. e.g. passwords'
   )
 
   t.end()
