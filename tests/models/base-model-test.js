@@ -339,12 +339,12 @@ test('BaseModel#create calls db.exec and returns saved model with cast types', (
   })
   .then((castData) => {
     t.pass('returns a Promise')
-    t.deepEqual(castData, [{
+    t.deepEqual(castData, {
       id: '1',
       enabled: false,
       disabled: true,
       counter: 123
-    }])
+    })
   })
   .catch((e) => t.fail(`should not be called ${e}`))
   .then(() => t.end())
@@ -894,12 +894,12 @@ test('BaseModel#apiCreate calls create() and returns saved serialized row withou
         rights: { id: '12' },
         userGroup: { id: '101' }
       })
-      return Promise.resolve([{
+      return Promise.resolve({
         id: '1', // sql assigns an ID
         name: 'John',
         rightsId: '12',
         userGroupId: '101'
-      }])
+      })
     }
   }
   const userModel = new UserModel(dbMock, 'user', {
