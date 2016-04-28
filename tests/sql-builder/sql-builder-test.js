@@ -212,8 +212,20 @@ test('sqlBuilder.generateSelectFieldsPart()', (t) => {
 
   t.equal(
     sbFieldsOnly.generateSelectFieldsPart(['hide', 'counter']),
-    'UserID as id, hide, counter, GrpID as userGroupId',
+    'UserID as id, hide, counter',
     'with `fieldsOnly` provided'
+  )
+
+  t.equal(
+    sbFieldsOnly.generateSelectFieldsPart('hide'),
+    'UserID as id, hide',
+    'fieldsOnly as a string option'
+  )
+
+  t.equal(
+    sbFieldsOnly.generateSelectFieldsPart('id'),
+    'UserID as id',
+    'only `id`'
   )
 
   t.end()
@@ -759,9 +771,16 @@ test('sqlBuilder.selectMany() generates SELECT query for fetching many rows', (t
 
   t.equal(
     sqlBuilder.selectMany({fieldsOnly: ['name']}),
-    'SELECT PersID as id, name, GrpID as userGroupId, rights as rightsId' +
+    'SELECT PersID as id, name' +
     ' FROM sPersonal',
-    'fieldsOnly filters out only data fields. id and relations are returned always'
+    'fieldsOnly filters out data fields. `id` is returned always'
+  )
+
+  t.equal(
+    sqlBuilder.selectMany({fieldsOnly: 'id'}),
+    'SELECT PersID as id' +
+    ' FROM sPersonal',
+    'fieldsOnly: `id` special case'
   )
 
   t.equal(
@@ -786,7 +805,7 @@ test('sqlBuilder.selectMany() generates SELECT query for fetching many rows', (t
       where: {hide: false, name: 'Vasya'},
       orderBy: 'name DESC'
     }),
-    'SELECT PersID as id, name, GrpID as userGroupId, rights as rightsId' +
+    'SELECT PersID as id, name' +
     ' FROM sPersonal' +
     " WHERE hide=false AND name='Vasya'" +
     ' ORDER BY name DESC',
@@ -862,11 +881,19 @@ test('sqlBuilder.selectOne() generates SELECT query for fetching one row', (t) =
   )
 
   t.equal(
-    sqlBuilder.selectOne({id: '134', fieldsOnly: ['name']}),
-    'SELECT PersID as id, name, GrpID as userGroupId, rights as rightsId' +
+    sqlBuilder.selectOne({id: '134', fieldsOnly: 'name'}),
+    'SELECT PersID as id, name' +
     ' FROM sPersonal' +
     ' WHERE PersID=134',
-    'fieldsOnly filters out only data fields. id and relations are returned always'
+    'fieldsOnly filters out data fields. `id` is returned always'
+  )
+
+  t.equal(
+    sqlBuilder.selectOne({id: '134', fieldsOnly: 'id'}),
+    'SELECT PersID as id' +
+    ' FROM sPersonal' +
+    ' WHERE PersID=134',
+    'fieldsOnly: `id` special case'
   )
 
   t.end()
