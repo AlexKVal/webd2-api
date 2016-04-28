@@ -125,18 +125,18 @@ test('BaseModel#all(options) accepts `options` for selectMany()', (t) => {
 })
 
 /**
- * get(id)
+ * get(options)
  */
-test('BaseModel#get calls db.exec and returns cast data', (t) => {
-  t.plan(4)
+test('BaseModel#get(options) accepts `options` for selectOne()', (t) => {
+  t.plan(5)
 
   const db = {
     exec (sql) {
       t.pass('db.exec() called')
       t.equal(
         sql,
-        'SELECT id, enabled, disabled, counter FROM some WHERE id=1',
-        'passes sql-query to db-layer'
+        'SELECT id, enabled FROM some WHERE id=1',
+        'passes `options` to the underlying sqlBuilder'
       )
       return Promise.resolve([{
         enabled: '0',
@@ -154,24 +154,23 @@ test('BaseModel#get calls db.exec and returns cast data', (t) => {
     counter: 'integer'
   })
 
-  model.get(1)
+  t.throws(() => model.get(/* no id */), /either `id` or `data` option should be provided/)
+
+  model.get({id: 1, fieldsOnly: ['enabled']})
   .then((castData) => {
     t.pass('returns a Promise')
-    t.deepEqual(castData, [{
-      enabled: false,
-      disabled: true,
-      counter: 123
-    }])
+    t.deepEqual(
+      castData,
+      [{
+        enabled: false,
+        disabled: true,
+        counter: 123
+      }],
+      'returns cast data'
+    )
   })
   .catch((e) => t.fail(`should not be called ${e}`))
   .then(() => t.end())
-})
-
-test('BaseModel#get throws error if no "id" provided', (t) => {
-  class ModelForGetIdThrows extends BaseModel {}
-  const model = new ModelForGetIdThrows(dbMock, 'name', {})
-  t.throws(() => model.get(/* no id */), /no id has been provided/)
-  t.end()
 })
 
 test('BaseModel#get rejects with error if db returns no rows', (t) => {
@@ -179,14 +178,14 @@ test('BaseModel#get rejects with error if db returns no rows', (t) => {
 
   const db = {
     exec () {
-      t.pass('db#exec call')
+      t.pass('db.exec call')
       return Promise.resolve([/* no rows */])
     }
   }
 
   class ModelForGet extends BaseModel {}
   const model = new ModelForGet(db, 'name', {tableName: 'some'})
-  model.get(1)
+  model.get({id: 1})
   .then(() => t.fail('should not be called'))
   .catch((e) => {
     t.pass('catch db error')
@@ -236,18 +235,18 @@ test('BaseModel#update rejects with error if no row with "id" exists', (t) => {
   })
 })
 
-test('BaseModel#update calls db.exec, calls get(id), and returns a result from it', (t) => {
-  t.plan(5)
+test('BaseModel#update calls db.exec, calls get(), and returns a result from it', (t) => {
+  t.plan(6)
 
   const db = {
     sqlQueryCounter: 0,
     exec (sql) {
       if (this.sqlQueryCounter === 0) {
-        t.equal(sql, 'SELECT id FROM some WHERE id=1', 'sends sql-query to db layer')
+        t.equal(sql, 'SELECT id FROM some WHERE id=12', 'sends sql-query to db layer')
         this.sqlQueryCounter += 1
         return Promise.resolve([{some: 'data exists'}])
       } else if (this.sqlQueryCounter === 1) {
-        t.equal(sql, 'UPDATE some SET counter=0 WHERE id=1', 'sends sql-query to db layer')
+        t.equal(sql, 'UPDATE some SET counter=0 WHERE id=12', 'sends sql-query to db layer')
         this.sqlQueryCounter += 1
         return Promise.resolve() // successful update
       } else {
@@ -257,9 +256,10 @@ test('BaseModel#update calls db.exec, calls get(id), and returns a result from i
   }
 
   class ModelForFullUpdate extends BaseModel {
-    get () {
+    get (options) {
       // overriden for the test
-      t.pass('get(id) has been called')
+      t.pass('get() has been called')
+      t.equal(options.id, 12)
       return Promise.resolve([{
         enabled: false,
         disabled: true,
@@ -274,7 +274,7 @@ test('BaseModel#update calls db.exec, calls get(id), and returns a result from i
     counter: 'integer'
   })
 
-  model.update(1, {counter: 0})
+  model.update(12, {counter: 0})
   .then((castData) => {
     t.pass('returns a Promise')
     t.deepEqual(castData, [{
@@ -723,7 +723,7 @@ test('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows withou
   .then(() => t.end())
 })
 
-test('BaseModel#apiFind(id) calls get(id) and serializes row without relations included', (t) => {
+test('BaseModel#apiFind(id) calls get() and serializes row without relations included', (t) => {
   t.plan(1)
 
   class GroupModel extends BaseModel {}
@@ -737,12 +737,12 @@ test('BaseModel#apiFind(id) calls get(id) and serializes row without relations i
   })
 
   class UserModel extends BaseModel {
-    get (id) {
+    get (options) {
       const rows = {
         1: {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
         2: {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
       }
-      return Promise.resolve([rows[id]])
+      return Promise.resolve([rows[options.id]])
     }
   }
   const userModel = new UserModel(dbMock, 'user', {
