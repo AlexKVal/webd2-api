@@ -721,6 +721,37 @@ test('sqlBuilder.create(data) returns sql query for INSERT-ing new row', (t) => 
   t.end()
 })
 
+test('sqlBuilder._wherePart() generates clauses for WHERE part', (t) => {
+  const sqlBuilder = new SqlBuilder({
+    tableName: 'sPersonal',
+    id: 'PersID',
+    name: 'string',
+    hide: 'boolean',
+    /* password field is not described in the schema to prevent accidental leaking */
+    group: {
+      belongsTo: { name: 'user-group' },
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: { name: 'rights' }
+    }
+  })
+
+  const options = {
+    where: {hide: false, password: '123'}
+  }
+
+  t.deepEqual(
+    sqlBuilder._wherePart(options.where),
+    [
+      'hide=false',
+      "password='123'"
+    ]
+  )
+
+  t.end()
+})
+
 /**
  * customizable generators
  * instead of sqlAll sqlOne etc
