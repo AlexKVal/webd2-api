@@ -547,6 +547,13 @@ test('quoteValueIfString() other data types are converted to strings', (t) => {
   t.end()
 })
 
+test('quoteValueIfString() treats unknown data as strings', (t) => {
+  t.equal(quoteValueIfString(undefined, 123), "'123'")
+  t.equal(quoteValueIfString(undefined, false), "'false'")
+  t.equal(quoteValueIfString(undefined, 'some string'), "'some string'")
+  t.end()
+})
+
 test('quoteValueIfString() throws if value is "null" or "undefined"', (t) => {
   const fn0 = function () {
     quoteValueIfString('string', null)
@@ -796,7 +803,7 @@ test('sqlBuilder.selectMany() generates SELECT query for fetching many rows', (t
     'SELECT PersID as id, name, hide, GrpID as userGroupId, rights as rightsId' +
     ' FROM sPersonal' +
     " WHERE hide=false AND name='Vasya'",
-    'where options with some constraints'
+    'where option with some constraints'
   )
 
   t.equal(
