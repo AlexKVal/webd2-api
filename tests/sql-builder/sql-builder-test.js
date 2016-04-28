@@ -172,44 +172,28 @@ test('sqlBuilder._generateForeignKeysLines()', (t) => {
   t.end()
 })
 
-test('sqlBuilder.generateSelectFieldsPart with a default "id" field', (t) => {
-  const sqlBuilder = new SqlBuilder({
-    name: 'string',
-    cardcode: 'string',
-    hide: 'boolean',
-    group: {
-      belongsTo: { name: 'user-group' },
-      fkField: 'GrpID'
-    },
-    rights: {
-      belongsTo: { name: 'rights' },
-      fkField: 'rights'
-    }
+test('sqlBuilder.generateSelectFieldsPart()', (t) => {
+  const sbDefaultId = new SqlBuilder({
+    /* no custom id provided */
+    name: 'string'
   })
+  t.equal(
+    sbDefaultId.generateSelectFieldsPart(),
+    'id, name',
+    'default `id`'
+  )
 
-  const fields = sqlBuilder.generateSelectFieldsPart()
-  t.equal(fields, 'id, name, cardcode, hide, GrpID as userGroupId, rights as rightsId')
-  t.end()
-})
-
-test('sqlBuilder.generateSelectFieldsPart with a custom "id" field', (t) => {
-  const sqlBuilder = new SqlBuilder({
+  const sbCustomId = new SqlBuilder({
     id: 'UserID',
-    name: 'string',
-    hide: 'boolean',
-    group: {
-      belongsTo: { name: 'user-group' },
-      fkField: 'GrpID'
-    }
+    name: 'string'
   })
+  t.equal(
+    sbCustomId.generateSelectFieldsPart(),
+    'UserID as id, name',
+    'custom `id`'
+  )
 
-  const fields = sqlBuilder.generateSelectFieldsPart()
-  t.equal(fields, 'UserID as id, name, hide, GrpID as userGroupId')
-  t.end()
-})
-
-test('sqlBuilder.generateSelectFieldsPart with `fieldsOnly` option', (t) => {
-  const sqlBuilder = new SqlBuilder({
+  const sbFieldsOnly = new SqlBuilder({
     id: 'UserID',
     name: 'string',
     hide: 'boolean',
@@ -221,13 +205,15 @@ test('sqlBuilder.generateSelectFieldsPart with `fieldsOnly` option', (t) => {
   })
 
   t.equal(
-    sqlBuilder.generateSelectFieldsPart(/* w/o fieldsOnly */),
-    'UserID as id, name, hide, counter, GrpID as userGroupId'
+    sbFieldsOnly.generateSelectFieldsPart(/* w/o fieldsOnly */),
+    'UserID as id, name, hide, counter, GrpID as userGroupId',
+    'without `fieldsOnly`'
   )
 
   t.equal(
-    sqlBuilder.generateSelectFieldsPart(['hide', 'counter']),
-    'UserID as id, hide, counter, GrpID as userGroupId'
+    sbFieldsOnly.generateSelectFieldsPart(['hide', 'counter']),
+    'UserID as id, hide, counter, GrpID as userGroupId',
+    'with `fieldsOnly` provided'
   )
 
   t.end()
