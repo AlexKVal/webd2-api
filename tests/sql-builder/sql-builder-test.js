@@ -652,7 +652,7 @@ test('sqlBuilder._fieldsValuesForInsert(data)', (t) => {
   t.end()
 })
 
-test('sqlBuilder.sqlCreate(data) returns sql query for INSERT-ing new row', (t) => {
+test('sqlBuilder.create(data) returns sql query for INSERT-ing new row', (t) => {
   const sqlBuilder = new SqlBuilder({
     tableName: 'sPersonal',
     id: 'PersID',
@@ -685,7 +685,7 @@ test('sqlBuilder.sqlCreate(data) returns sql query for INSERT-ing new row', (t) 
   }
 
   t.equal(
-    sqlBuilder.sqlCreate(fullData),
+    sqlBuilder.create(fullData),
     'INSERT INTO sPersonal' +
     ' (name, hide, counter, GrpID, rights, PostID)' +
     " VALUES ('new one', false, 445, 12, 101, 23)",
@@ -701,7 +701,7 @@ test('sqlBuilder.sqlCreate(data) returns sql query for INSERT-ing new row', (t) 
   }
 
   t.deepEqual(
-    sqlBuilder.sqlCreate(partialData),
+    sqlBuilder.create(partialData),
     'INSERT INTO sPersonal' +
     ' (name, GrpID, PostID)' +
     " VALUES ('new one', 12, 23)",
@@ -722,7 +722,7 @@ test('sqlBuilder.sqlCreate(data) returns sql query for INSERT-ing new row', (t) 
   }
 
   t.deepEqual(
-    sqlBuilder.sqlCreate(extraDataFields),
+    sqlBuilder.create(extraDataFields),
     'INSERT INTO sPersonal' +
     ' (name, hide, counter, GrpID, rights, PostID)' +
     " VALUES ('new one', false, 445, 12, 101, 23)",
