@@ -161,12 +161,12 @@ test('BaseModel#get(options) accepts `options` for selectOne()', (t) => {
     t.pass('returns a Promise')
     t.deepEqual(
       castData,
-      [{
+      {
         enabled: false,
         disabled: true,
         counter: 123
-      }],
-      'returns cast data'
+      },
+      'returns one row with cast-type values'
     )
   })
   .catch((e) => t.fail(`should not be called ${e}`))
@@ -742,7 +742,7 @@ test('BaseModel#apiFind(id) calls get() and serializes row without relations inc
         1: {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
         2: {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
       }
-      return Promise.resolve([rows[options.id]])
+      return Promise.resolve(rows[options.id])
     }
   }
   const userModel = new UserModel(dbMock, 'user', {
