@@ -213,7 +213,7 @@ test('BaseModel#update rejects with error if no row with "id" exists', (t) => {
     sqlQueryCounter: 0,
     exec (sql) {
       if (this.sqlQueryCounter === 0) {
-        t.pass('1st query is sqlIsRowExist')
+        t.equal(sql, 'SELECT id FROM some WHERE id=1', '"is row exists" query')
         this.sqlQueryCounter += 1
         return Promise.resolve([/* no row with id has been found */])
       } else if (this.sqlQueryCounter === 1) {
