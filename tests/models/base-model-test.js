@@ -57,9 +57,9 @@ test('BaseModel throws if "schema" is not an object', (t) => {
 })
 
 /**
- * all(options)
+ * selectMany(options)
  */
-test('BaseModel#all calls db.exec() and returns cast types', (t) => {
+test('BaseModel#selectMany calls db.exec() and returns cast types', (t) => {
   t.plan(4)
 
   const db = {
@@ -82,7 +82,7 @@ test('BaseModel#all calls db.exec() and returns cast types', (t) => {
     counter: 'integer'
   })
 
-  model.all()
+  model.selectMany()
   .then((castData) => {
     t.pass('returns a Promise')
     t.deepEqual(castData, [{
@@ -95,7 +95,7 @@ test('BaseModel#all calls db.exec() and returns cast types', (t) => {
   .then(() => t.end())
 })
 
-test('BaseModel#all(options) accepts `options` for selectMany()', (t) => {
+test('BaseModel#selectMany(options) accepts `options` for sqlBuilder.selectMany()', (t) => {
   t.plan(3)
 
   const db = {
@@ -118,7 +118,7 @@ test('BaseModel#all(options) accepts `options` for selectMany()', (t) => {
     counter: 'integer'
   })
 
-  model.all({where: {hide: false}, orderBy: 'name'})
+  model.selectMany({where: {hide: false}, orderBy: 'name'})
   .then(() => t.pass('returns a Promise'))
   .catch((e) => t.fail(`should not be called ${e}`))
   .then(() => t.end())
@@ -353,12 +353,12 @@ test('BaseModel#create calls db.exec and returns saved model with cast types', (
 /**
  * belongsTo
  */
-test('BaseModel#apiFetchAll calls all() and returns serialized data', (t) => {
+test('BaseModel#apiFetchAll calls selectMany() and returns serialized data', (t) => {
   t.plan(2)
 
   class ModelForFetchAll extends BaseModel {
-    all () {
-      t.pass('all() called')
+    selectMany () {
+      t.pass('selectMany() called')
 
       return Promise.resolve([
         {id: '1', name: 'Mathew', enabled: false},
@@ -385,7 +385,7 @@ test('BaseModel#apiFetchAll calls all() and returns serialized data', (t) => {
   .then(() => t.end())
 })
 
-test('BaseModel#apiFetchAll childModel can override all() to provide own `options`', (t) => {
+test('BaseModel#apiFetchAll childModel can override selectMany() to provide own `options`', (t) => {
   t.plan(4)
 
   const db = {
@@ -401,15 +401,15 @@ test('BaseModel#apiFetchAll childModel can override all() to provide own `option
   }
 
   class User extends BaseModel {
-    all () {
-      t.pass('all() called')
+    selectMany () {
+      t.pass('selectMany() called')
 
       const customOptionsForUser = {
         where: {hide: false},
         orderBy: 'name'
       }
 
-      return super.all(customOptionsForUser)
+      return super.selectMany(customOptionsForUser)
     }
   }
 
@@ -429,7 +429,7 @@ test('BaseModel#_fetchRelations fetches relations data', (t) => {
   t.plan(1)
 
   class GroupModel extends BaseModel {
-    all () {
+    selectMany () {
       return Promise.resolve([
         {id: '101', name: 'Admins'},
         {id: '102', name: 'Users'}
@@ -441,7 +441,7 @@ test('BaseModel#_fetchRelations fetches relations data', (t) => {
   })
 
   class RightsModel extends BaseModel {
-    all () {
+    selectMany () {
       return Promise.resolve([
         {id: '12', name: 'Full'},
         {id: '13', name: 'Part'}
@@ -487,7 +487,7 @@ test('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with re
   t.plan(1)
 
   class GroupModel extends BaseModel {
-    all () {
+    selectMany () {
       return Promise.resolve([
         {id: '101', name: 'Admins'},
         {id: '102', name: 'Users'}
@@ -499,7 +499,7 @@ test('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with re
   })
 
   class RightsModel extends BaseModel {
-    all () {
+    selectMany () {
       return Promise.resolve([
         {id: '12', name: 'Full'},
         {id: '13', name: 'Part'}
@@ -511,7 +511,7 @@ test('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with re
   })
 
   class UserModel extends BaseModel {
-    all () {
+    selectMany () {
       return Promise.resolve([
         {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
         {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
@@ -560,6 +560,59 @@ test('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with re
         attributes: { name: 'Part' },
         id: '13',
         type: 'rights'
+      }]
+    })
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
+
+test('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows without relations included', (t) => {
+  t.plan(1)
+
+  class GroupModel extends BaseModel {}
+  const groupModel = new GroupModel(dbMock, 'user-group', {
+    name: 'string'
+  })
+
+  class RightsModel extends BaseModel {}
+  const rightsModel = new RightsModel(dbMock, 'rights', {
+    name: 'string'
+  })
+
+  class UserModel extends BaseModel {
+    selectMany () {
+      return Promise.resolve([
+        {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+        {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+      ])
+    }
+  }
+  const userModel = new UserModel(dbMock, 'user', {
+    name: 'string',
+    group: { belongsTo: groupModel },
+    rights: { belongsTo: rightsModel }
+  })
+
+  userModel.apiFetchAll()
+  .then((serialized) => {
+    t.deepEqual(serialized, {
+      data: [{
+        attributes: { name: 'John' },
+        id: '1',
+        relationships: {
+          group: { data: { id: '101', type: 'groups' } },
+          rights: { data: { id: '12', type: 'rights' } }
+        },
+        type: 'users'
+      }, {
+        attributes: { name: 'Smith' },
+        id: '2',
+        relationships: {
+          group: { data: { id: '102', type: 'groups' } },
+          rights: { data: { id: '13', type: 'rights' } }
+        },
+        type: 'users'
       }]
     })
   })
@@ -668,59 +721,6 @@ test('BaseModel#_joinRelations with "relations" data provided joins in relations
   ])
 
   t.end()
-})
-
-test('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows without relations included', (t) => {
-  t.plan(1)
-
-  class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel(dbMock, 'user-group', {
-    name: 'string'
-  })
-
-  class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel(dbMock, 'rights', {
-    name: 'string'
-  })
-
-  class UserModel extends BaseModel {
-    all () {
-      return Promise.resolve([
-        {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
-        {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
-      ])
-    }
-  }
-  const userModel = new UserModel(dbMock, 'user', {
-    name: 'string',
-    group: { belongsTo: groupModel },
-    rights: { belongsTo: rightsModel }
-  })
-
-  userModel.apiFetchAll()
-  .then((serialized) => {
-    t.deepEqual(serialized, {
-      data: [{
-        attributes: { name: 'John' },
-        id: '1',
-        relationships: {
-          group: { data: { id: '101', type: 'groups' } },
-          rights: { data: { id: '12', type: 'rights' } }
-        },
-        type: 'users'
-      }, {
-        attributes: { name: 'Smith' },
-        id: '2',
-        relationships: {
-          group: { data: { id: '102', type: 'groups' } },
-          rights: { data: { id: '13', type: 'rights' } }
-        },
-        type: 'users'
-      }]
-    })
-  })
-  .catch((e) => t.fail(e))
-  .then(() => t.end())
 })
 
 test('BaseModel#apiFind(id) calls selectOne() and serializes row without relations included', (t) => {
