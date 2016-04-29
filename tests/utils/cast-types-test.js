@@ -1,137 +1,57 @@
 'use strict'
 const test = require('tape')
 
-const {castTypes, castTypesRows, castTypesRow} = require('../../lib/utils/cast-types')
-const Schema = require('../../lib/sql-builder/schema')
+const {
+  getCaster,
+  castTypes,
+  castTypesRows,
+  castTypesRow
+} = require('../../lib/utils/cast-types')
 
-test('all ids are string type', (t) => {
-  const odbcRow = {
-    id: '45'
-  }
-  const schema = new Schema({})
-
-  const row = castTypesRow(odbcRow, schema)
-
-  t.equal(row.id, '45')
-  t.end()
-})
-
-test('unknown type returned as is', (t) => {
-  const odbcRow = {
-    any: 455,
-    other: true,
-    third: 'str'
-  }
-  const schema = new Schema({})
-
-  const row = castTypesRow(odbcRow, schema)
-
-  t.equal(row.any, 455)
-  t.equal(row.other, true)
-  t.equal(row.third, 'str')
-  t.end()
-})
-
-test('"string" type', (t) => {
-  const odbcRow = {
-    any: 455,
-    other: true,
-    third: 'str'
-  }
-  const schema = new Schema({
-    any: 'string',
-    other: 'string',
-    third: 'string'
+test('CastTypes getCaster()', (t) => {
+  const caster = getCaster({
+    // id
+    // undefinedType
+    stringTypeField: 'string',
+    booleanTypeField: 'boolean',
+    integerTypeField: 'integer'
   })
 
-  const row = castTypesRow(odbcRow, schema)
+  t.equal(caster('id', '45'), '45', '`id` as is')
+  t.equal(caster('id', 415), 415, '`id` as is')
 
-  t.equal(row.any, '455')
-  t.equal(row.other, 'true')
-  t.equal(row.third, 'str')
+  t.equal(caster('undefinedType', 455), 455, '`unknown type` as is')
+  t.equal(caster('undefinedType', true), true, '`unknown type` as is')
+  t.equal(caster('undefinedType', 'str'), 'str', '`unknown type` as is')
+
+  t.equal(caster('stringTypeField', true), 'true', 'string type')
+  t.equal(caster('stringTypeField', 432), '432', 'string type')
+  t.equal(caster('stringTypeField', 'some value'), 'some value', 'string type')
+
+  t.equal(caster('stringTypeField', null), '', 'string type: `null` => empty string')
+  t.equal(caster('stringTypeField', undefined), '', 'string type: `undefined` => empty string')
+
+  t.equal(caster('stringTypeField', true), 'true', 'string type: boolean true')
+  t.equal(caster('stringTypeField', false), 'false', 'string type: boolean false')
+
+  t.equal(caster('booleanTypeField', '0'), false, 'boolean type')
+  t.equal(caster('booleanTypeField', '1'), true, 'boolean type')
+
+  t.equal(caster('integerTypeField', '1001'), 1001, 'integer type')
+  t.equal(caster('integerTypeField', 356), 356, 'integer type')
+
   t.end()
-})
-
-test('null and undefined are returned as empty string', (t) => {
-  const odbcRow = {
-    any: null,
-    other: undefined,
-    third: 'str'
-  }
-  const schema = new Schema({
-    any: 'string',
-    other: 'string',
-    third: 'string'
-  })
-
-  const row = castTypesRow(odbcRow, schema)
-
-  t.equal(row.any, '')
-  t.equal(row.other, '')
-  t.equal(row.third, 'str')
-  t.end()
-})
-
-test('casting of boolean values with schema.string done right', (t) => {
-  const odbcRow = {
-    falseString: false,
-    trueString: true
-  }
-  const schema = new Schema({
-    falseString: 'string',
-    trueString: 'string'
-  })
-
-  const row = castTypesRow(odbcRow, schema)
-
-  t.equal(row.falseString, 'false')
-  t.equal(row.trueString, 'true')
-  t.end()
-})
-
-test('"boolean" type', (t) => {
-  const odbcRow = {
-    enabled: '0',
-    hidden: '1'
-  }
-  const schema = new Schema({
-    enabled: 'boolean',
-    hidden: 'boolean'
-  })
-
-  const row = castTypesRow(odbcRow, schema)
-
-  t.equal(row.enabled, false)
-  t.equal(row.hidden, true)
-  t.end()
-})
-
-test('"integer" type', (t) => {
-  const odbcRow = {
-    some: '25',
-    other: '100'
-  }
-  const schema = new Schema({
-    some: 'integer',
-    other: 'integer'
-  })
-
-  const row = castTypesRow(odbcRow, schema)
-
-  t.equal(row.some, 25)
-  t.equal(row.other, 100)
-  t.end()
-})
-
-const schema = new Schema({
-  name: 'string',
-  password: 'string',
-  rights: 'id',
-  hide: 'boolean',
-  enabled: 'boolean'
 })
 
 test('castRow', (t) => {
+  const schema = {
+    name: 'string',
+    password: 'string',
+    rights: 'id',
+    hide: 'boolean',
+    enabled: 'boolean'
+  }
+
   const odbcRow = {
     id: '45',
     name: 'admin',
@@ -151,6 +71,14 @@ test('castRow', (t) => {
 })
 
 test('castRows', (t) => {
+  const schema = {
+    name: 'string',
+    password: 'string',
+    rights: 'id',
+    hide: 'boolean',
+    enabled: 'boolean'
+  }
+
   const odbcRows = [
     {
       id: '45',
@@ -192,7 +120,7 @@ test('castTypes handles "row"', (t) => {
     id: '45'
   }
 
-  const row = castTypes(odbcRow, schema)
+  const row = castTypes(odbcRow, {/* schema */})
 
   t.equal(row.id, '45', 'id has "id" type')
   t.end()
@@ -204,7 +132,7 @@ test('castTypes handles "rows"', (t) => {
     { id: '46' }
   ]
 
-  const rows = castTypes(odbcRows, schema)
+  const rows = castTypes(odbcRows, {/* schema */})
 
   t.equal(rows.length, 2)
 
