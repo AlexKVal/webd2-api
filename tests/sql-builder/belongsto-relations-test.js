@@ -23,16 +23,16 @@ test('getBelongsToRelations()', (t) => {
   t.deepEqual(
     relations, [
       {
-        name: 'group',
+        modelFieldName: 'group',
         relationModel: userGroupModel,
         fkField: 'GrpID',
-        fkName: 'userGroupId'
+        fkAs: 'userGroupId'
       },
       {
-        name: 'rights',
+        modelFieldName: 'rights',
         relationModel: rightsModel,
         fkField: 'rights',
-        fkName: 'rightsId'
+        fkAs: 'rightsId'
       }
     ],
     'returns array of "belongsTo" relations'

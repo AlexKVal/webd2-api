@@ -689,16 +689,16 @@ test('BaseModel#_joinRelations with "relations" data provided joins in relations
 
   const relationsData = [
     {
-      name: 'group',
-      fkName: 'userGroupId',
+      modelFieldName: 'group',
+      fkAs: 'userGroupId',
       rows: [
         {id: '101', name: 'Admins'},
         {id: '102', name: 'Users'}
       ]
     },
     {
-      name: 'rights',
-      fkName: 'rightsId',
+      modelFieldName: 'rights',
+      fkAs: 'rightsId',
       rows: [
         {id: '12', name: 'Full'},
         {id: '13', name: 'Part'}
