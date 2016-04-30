@@ -2,7 +2,6 @@
 const test = require('tape')
 
 const BaseModel = require('../../lib/models/base-model')
-const Schema = require('../../lib/sql-builder/schema')
 const Serializer = require('../../lib/utils/serializer')
 
 const dbMock = { exec () { return Promise.resolve() } }
@@ -14,7 +13,7 @@ test('serializer.withoutRelated() does not include relations data', (t) => {
   class Rights extends BaseModel {}
   const rights = new Rights(dbMock, 'rights', { name: 'string' })
 
-  const serializer = new Serializer('user', new Schema({
+  const serializer = new Serializer('user', {
     name: 'string',
     group: {
       belongsTo: userGroup,
@@ -24,7 +23,7 @@ test('serializer.withoutRelated() does not include relations data', (t) => {
       belongsTo: rights,
       fkField: 'GrpID'
     }
-  }))
+  })
 
   const serializedModel = serializer.withoutRelated([
     {
@@ -69,7 +68,7 @@ test('serializer.withRelated() includes relations data', (t) => {
   class Rights extends BaseModel {}
   const rights = new Rights(dbMock, 'rights', { name: 'string' })
 
-  const serializer = new Serializer('user', new Schema({
+  const serializer = new Serializer('user', {
     name: 'string',
     group: {
       belongsTo: userGroup,
@@ -79,7 +78,7 @@ test('serializer.withRelated() includes relations data', (t) => {
       belongsTo: rights,
       fkField: 'GrpID'
     }
-  }))
+  })
 
   const serializedModel = serializer.withRelated([
     {
@@ -140,13 +139,13 @@ test('serializer.withRelated() includes relations data', (t) => {
 test('serializer.deserializerOptions takes into account "belongsTo" relations', (t) => {
   class UserGroup extends BaseModel {}
   const userGroup = new UserGroup(dbMock, 'user-group', {})
-  const serializer = new Serializer('user', new Schema({
+  const serializer = new Serializer('user', {
     name: 'string',
     group: {
       belongsTo: userGroup,
       fkField: 'GrpID'
     }
-  }))
+  })
 
   t.equal(Object.keys(serializer.deserializerOptions).length, 2)
   t.equal(serializer.deserializerOptions.keyForAttribute, 'camelCase')
@@ -163,7 +162,7 @@ test('serializer.deserialize() method deserializes data', (t) => {
   class UserRights extends BaseModel {}
   const userRights = new UserRights(dbMock, 'user-rights', {})
 
-  const serializer = new Serializer('user', new Schema({
+  const serializer = new Serializer('user', {
     name: 'string',
     group: {
       belongsTo: userGroup,
@@ -173,7 +172,7 @@ test('serializer.deserialize() method deserializes data', (t) => {
       belongsTo: userRights,
       fkField: 'rights'
     }
-  }))
+  })
 
   serializer.deserialize({
     data: [ {
