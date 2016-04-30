@@ -4,7 +4,7 @@ const test = require('tape')
 const SqlBuilder = require('../../lib/sql-builder/sql-builder')
 const quoteValueIfString = SqlBuilder.quoteValueIfString
 
-test('sqlBuilder.columns holds only columns` descriptors', (t) => {
+test('sqlBuilder.columns holds only columns` schemaObject', (t) => {
   const sqlBuilder = new SqlBuilder({
     name: 'string',
     hide: 'boolean',
@@ -285,7 +285,7 @@ test('sqlBuilder.getTableName() returns tableName', (t) => {
   t.end()
 })
 
-test('sqlBuilder.descriptors contains all fields but "tableName" and "id"', (t) => {
+test('sqlBuilder.schemaObject contains all fields but "tableName" and "id"', (t) => {
   const sqlBuilder = new SqlBuilder({
     tableName: 'whatever',
     id: 'customId',
@@ -294,8 +294,8 @@ test('sqlBuilder.descriptors contains all fields but "tableName" and "id"', (t) 
     someNumber: 'integer'
   })
 
-  t.equal(Object.keys(sqlBuilder.descriptors).length, 3)
-  t.deepEqual(sqlBuilder.descriptors, {
+  t.equal(Object.keys(sqlBuilder.schemaObject).length, 3)
+  t.deepEqual(sqlBuilder.schemaObject, {
     name: 'string',
     boolFlag: 'boolean',
     someNumber: 'integer'

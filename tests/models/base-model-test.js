@@ -28,30 +28,30 @@ test('BaseModel needs database layer', (t) => {
   t.end()
 })
 
-test('BaseModel constructor gets name and schema', (t) => {
+test('BaseModel constructor gets name and schemaObject', (t) => {
   const fn0 = function fn0 () {
     return new SomeModel(dbMock /* no name provided */)
   }
   t.throws(fn0, /name is undefined/, 'throws when no "name" provided')
 
   const fn1 = function fn1 () {
-    return new SomeModel(dbMock, 'model-name' /* no schema provided */)
+    return new SomeModel(dbMock, 'model-name' /* no schemaObject provided */)
   }
-  t.throws(fn1, /schema is not provided/, 'throws when no "scheme" provided')
+  t.throws(fn1, /schemaObject is not provided/, 'throws when no "schemaObject" provided')
 
   t.end()
 })
 
-test('BaseModel throws if "schema" is not an object', (t) => {
+test('BaseModel throws if "schemaObject" is not an object', (t) => {
   const fn0 = function fn0 () {
     return new SomeModel(dbMock, 'name', 'any non object')
   }
-  t.throws(fn0, /descriptors attribute should be an object/, 'throws with not an object')
+  t.throws(fn0, /schemaObject attribute should be an object/, 'throws with not an object')
 
   const fn1 = function fn1 () {
     return new SomeModel(dbMock, 'name', {})
   }
-  t.doesNotThrow(fn1, /descriptors attribute should be an object/, 'does not throw with object')
+  t.doesNotThrow(fn1, /schemaObject attribute should be an object/, 'does not throw with object')
 
   t.end()
 })
