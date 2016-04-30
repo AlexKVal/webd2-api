@@ -120,43 +120,6 @@ test('sqlBuilder.generateFieldEqualsDataLines() with partial data', (t) => {
   t.end()
 })
 
-test('sqlBuilder._getRelations()', (t) => {
-  const sqlBuilder = new SqlBuilder({
-    group: {
-      belongsTo: { name: 'user-group' },
-      fkField: 'GrpID'
-    },
-    rights: {
-      belongsTo: { name: 'rights' }
-    },
-    post: {
-      belongsTo: { name: 'user-post' }
-    }
-  })
-
-  const lines = sqlBuilder._getRelations()
-
-  t.equal(lines.length, 3)
-
-  t.deepEqual(
-    lines[0],
-    {fkField: 'GrpID', fkAs: 'userGroupId', modelFieldName: 'group', relationModel: { name: 'user-group' }}
-  )
-
-  t.deepEqual(
-    lines[1],
-    {fkField: 'rights', fkAs: 'rightsId', modelFieldName: 'rights', relationModel: { name: 'rights' }},
-    'uses foreign table name if no fkField provided'
-  )
-
-  t.deepEqual(
-    lines[2],
-    {fkField: 'userPost', fkAs: 'userPostId', modelFieldName: 'post', relationModel: { name: 'user-post' }},
-    'uses camelCased foreign table name'
-  )
-  t.end()
-})
-
 test('sqlBuilder._generateForeignKeysLines()', (t) => {
   const sqlBuilder = new SqlBuilder({
     group: {
