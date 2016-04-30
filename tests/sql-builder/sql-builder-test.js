@@ -135,16 +135,23 @@ test('sqlBuilder._getRelations()', (t) => {
   })
 
   const lines = sqlBuilder._getRelations()
+
   t.equal(lines.length, 3)
-  t.deepEqual(lines[0], {fkField: 'GrpID', fkAs: 'userGroupId', modelFieldName: 'group'})
+
+  t.deepEqual(
+    lines[0],
+    {fkField: 'GrpID', fkAs: 'userGroupId', modelFieldName: 'group', relationModel: { name: 'user-group' }}
+  )
+
   t.deepEqual(
     lines[1],
-    {fkField: 'rights', fkAs: 'rightsId', modelFieldName: 'rights'},
+    {fkField: 'rights', fkAs: 'rightsId', modelFieldName: 'rights', relationModel: { name: 'rights' }},
     'uses foreign table name if no fkField provided'
   )
+
   t.deepEqual(
     lines[2],
-    {fkField: 'userPost', fkAs: 'userPostId', modelFieldName: 'post'},
+    {fkField: 'userPost', fkAs: 'userPostId', modelFieldName: 'post', relationModel: { name: 'user-post' }},
     'uses camelCased foreign table name'
   )
   t.end()
