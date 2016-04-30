@@ -8,10 +8,10 @@ const dbMock = { exec () { return Promise.resolve() } }
 
 test('serializer.withoutRelated() does not include relations data', (t) => {
   class UserGroup extends BaseModel {}
-  const userGroup = new UserGroup(dbMock, 'user-group', { name: 'string' })
+  const userGroup = new UserGroup({db: dbMock, name: 'user-group', schema: { name: 'string' }})
 
   class Rights extends BaseModel {}
-  const rights = new Rights(dbMock, 'rights', { name: 'string' })
+  const rights = new Rights({db: dbMock, name: 'rights', schema: { name: 'string' }})
 
   const serializer = new Serializer('user', {
     name: 'string',
@@ -63,10 +63,10 @@ test('serializer.withoutRelated() does not include relations data', (t) => {
 
 test('serializer.withRelated() includes relations data', (t) => {
   class UserGroup extends BaseModel {}
-  const userGroup = new UserGroup(dbMock, 'user-group', { name: 'string' })
+  const userGroup = new UserGroup({db: dbMock, name: 'user-group', schema: { name: 'string' }})
 
   class Rights extends BaseModel {}
-  const rights = new Rights(dbMock, 'rights', { name: 'string' })
+  const rights = new Rights({db: dbMock, name: 'rights', schema: { name: 'string' }})
 
   const serializer = new Serializer('user', {
     name: 'string',
@@ -138,7 +138,7 @@ test('serializer.withRelated() includes relations data', (t) => {
  */
 test('serializer.deserializerOptions takes into account "belongsTo" relations', (t) => {
   class UserGroup extends BaseModel {}
-  const userGroup = new UserGroup(dbMock, 'user-group', {})
+  const userGroup = new UserGroup({db: dbMock, name: 'user-group', schema: {}})
   const serializer = new Serializer('user', {
     name: 'string',
     group: {
@@ -158,9 +158,9 @@ test('serializer.deserializerOptions takes into account "belongsTo" relations', 
 
 test('serializer.deserialize() method deserializes data', (t) => {
   class UserGroup extends BaseModel {}
-  const userGroup = new UserGroup(dbMock, 'user-group', {})
+  const userGroup = new UserGroup({db: dbMock, name: 'user-group', schema: {}})
   class UserRights extends BaseModel {}
-  const userRights = new UserRights(dbMock, 'user-rights', {})
+  const userRights = new UserRights({db: dbMock, name: 'user-rights', schema: {}})
 
   const serializer = new Serializer('user', {
     name: 'string',

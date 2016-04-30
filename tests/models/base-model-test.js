@@ -8,12 +8,12 @@ class SomeModel extends BaseModel {}
 
 test('BaseModel is abstract class', (t) => {
   const fn1 = function fn1 () {
-    return new BaseModel(dbMock, 'name', {})
+    return new BaseModel({db: dbMock, name: 'name', schema: {}})
   }
   t.throws(fn1, /is abstract class/)
 
   const fn2 = function fn2 () {
-    return new SomeModel(dbMock, 'name', {})
+    return new SomeModel({db: dbMock, name: 'name', schema: {}})
   }
   t.doesNotThrow(fn2, /is abstract class/)
 
@@ -22,7 +22,7 @@ test('BaseModel is abstract class', (t) => {
 
 test('BaseModel needs database layer', (t) => {
   const fn = function fn () {
-    return new SomeModel()
+    return new SomeModel({})
   }
   t.throws(fn, /database is undefined/, 'throws when no "database" provided')
   t.end()
@@ -30,12 +30,12 @@ test('BaseModel needs database layer', (t) => {
 
 test('BaseModel constructor gets name and schemaObject', (t) => {
   const fn0 = function fn0 () {
-    return new SomeModel(dbMock /* no name provided */)
+    return new SomeModel({db: dbMock}) /* no name provided */
   }
   t.throws(fn0, /name is undefined/, 'throws when no "name" provided')
 
   const fn1 = function fn1 () {
-    return new SomeModel(dbMock, 'model-name' /* no schemaObject provided */)
+    return new SomeModel({db: dbMock, name: 'model-name'}) /* no schemaObject provided */
   }
   t.throws(fn1, /schemaObject is not provided/, 'throws when no "schemaObject" provided')
 
@@ -44,12 +44,12 @@ test('BaseModel constructor gets name and schemaObject', (t) => {
 
 test('BaseModel throws if "schemaObject" is not an object', (t) => {
   const fn0 = function fn0 () {
-    return new SomeModel(dbMock, 'name', 'any non object')
+    return new SomeModel({db: dbMock, name: 'name', schema: 'any non object'})
   }
   t.throws(fn0, /schemaObject attribute should be an object/, 'throws with not an object')
 
   const fn1 = function fn1 () {
-    return new SomeModel(dbMock, 'name', {})
+    return new SomeModel({db: dbMock, name: 'name', schema: {}})
   }
   t.doesNotThrow(fn1, /schemaObject attribute should be an object/, 'does not throw with object')
 
@@ -75,12 +75,12 @@ test('BaseModel#selectMany calls db.exec() and returns cast types', (t) => {
   }
 
   class ModelForAll extends BaseModel {}
-  const model = new ModelForAll(db, 'name', {
+  const model = new ModelForAll({db, name: 'name', schema: {
     tableName: 'some',
     enabled: 'boolean',
     disabled: 'boolean',
     counter: 'integer'
-  })
+  }})
 
   model.selectMany()
   .then((castData) => {
@@ -111,12 +111,12 @@ test('BaseModel#selectMany(options) accepts `options` for sqlBuilder.selectMany(
   }
 
   class User extends BaseModel {}
-  const model = new User(db, 'user', {
+  const model = new User({db, name: 'user', schema: {
     tableName: 'sPersonal',
     name: 'string',
     hide: 'boolean',
     counter: 'integer'
-  })
+  }})
 
   model.selectMany({where: {hide: false}, orderBy: 'name'})
   .then(() => t.pass('returns a Promise'))
@@ -147,12 +147,12 @@ test('BaseModel#selectOne(options) accepts `options` for sqlBuilder.selectOne()'
   }
 
   class ModelForGet extends BaseModel {}
-  const model = new ModelForGet(db, 'name', {
+  const model = new ModelForGet({db, name: 'name', schema: {
     tableName: 'some',
     enabled: 'boolean',
     disabled: 'boolean',
     counter: 'integer'
-  })
+  }})
 
   t.throws(() => model.selectOne(/* no id */), /either `id` or `data` option should be provided/)
 
@@ -184,7 +184,7 @@ test('BaseModel#selectOne rejects with error if db returns no rows', (t) => {
   }
 
   class ModelForGet extends BaseModel {}
-  const model = new ModelForGet(db, 'name', {tableName: 'some'})
+  const model = new ModelForGet({db, name: 'name', schema: {tableName: 'some'}})
   model.selectOne({id: 1})
   .then(() => t.fail('should not be called'))
   .catch((e) => {
@@ -199,7 +199,7 @@ test('BaseModel#selectOne rejects with error if db returns no rows', (t) => {
  */
 test('BaseModel#update throws error if no "id" or "data" provided', (t) => {
   class ModelForUpdate extends BaseModel {}
-  const model = new ModelForUpdate(dbMock, 'name', {})
+  const model = new ModelForUpdate({db: dbMock, name: 'name', schema: {}})
   t.throws(() => model.update(/* no id */), /no id has been provided/)
   t.throws(() => model.update(1 /* no data */), /no data has been provided/)
   t.end()
@@ -226,7 +226,7 @@ test('BaseModel#update rejects with error if no row with "id" exists', (t) => {
   }
 
   class ModelForUpdate extends BaseModel {}
-  const model = new ModelForUpdate(db, 'name', {tableName: 'some'})
+  const model = new ModelForUpdate({db, name: 'name', schema: {tableName: 'some'}})
   model.update(1, {name: 'new'})
   .catch((e) => {
     t.pass('catch error')
@@ -267,12 +267,12 @@ test('BaseModel#update calls db.exec, calls selectOne(), and returns a result fr
       }])
     }
   }
-  const model = new ModelForFullUpdate(db, 'name', {
+  const model = new ModelForFullUpdate({db, name: 'name', schema: {
     tableName: 'some',
     enabled: 'boolean',
     disabled: 'boolean',
     counter: 'integer'
-  })
+  }})
 
   model.update(12, {counter: 0})
   .then((castData) => {
@@ -325,12 +325,12 @@ test('BaseModel#create calls db.exec and returns saved model with cast types', (
   }
 
   class ModelForFullCreate extends BaseModel {}
-  const model = new ModelForFullCreate(db, 'name', {
+  const model = new ModelForFullCreate({db, name: 'name', schema: {
     tableName: 'some',
     enabled: 'boolean',
     disabled: 'boolean',
     counter: 'integer'
-  })
+  }})
 
   model.create({
     enabled: false,
@@ -367,10 +367,10 @@ test('BaseModel#apiFetchAll calls selectMany() and returns serialized data', (t)
     }
   }
 
-  const model = new ModelForFetchAll(dbMock, 'user', {
+  const model = new ModelForFetchAll({db: dbMock, name: 'user', schema: {
     name: 'string',
     enabled: 'boolean'
-  })
+  }})
 
   model.apiFetchAll()
   .then((data) => {
@@ -413,11 +413,11 @@ test('BaseModel#apiFetchAll childModel can override selectMany() to provide own 
     }
   }
 
-  const model = new User(db, 'user', {
+  const model = new User({db, name: 'user', schema: {
     tableName: 'sPersonal',
     name: 'string',
     hide: 'boolean'
-  })
+  }})
 
   model.apiFetchAll()
   .then(() => t.pass('success'))
@@ -436,9 +436,9 @@ test('BaseModel#_fetchRelations fetches relations data', (t) => {
       ])
     }
   }
-  const groupModel = new GroupModel(dbMock, 'user-group', {
+  const groupModel = new GroupModel({db: dbMock, name: 'user-group', schema: {
     name: 'string'
-  })
+  }})
 
   class RightsModel extends BaseModel {
     selectMany () {
@@ -448,16 +448,16 @@ test('BaseModel#_fetchRelations fetches relations data', (t) => {
       ])
     }
   }
-  const rightsModel = new RightsModel(dbMock, 'rights', {
+  const rightsModel = new RightsModel({db: dbMock, name: 'rights', schema: {
     name: 'string'
-  })
+  }})
 
   class UserModel extends BaseModel {}
-  const userModel = new UserModel(dbMock, 'user', {
+  const userModel = new UserModel({db: dbMock, name: 'user', schema: {
     name: 'string',
     group: { belongsTo: groupModel },
     rights: { belongsTo: rightsModel }
-  })
+  }})
 
   const parentRows = [
     {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
@@ -494,9 +494,9 @@ test('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with re
       ])
     }
   }
-  const groupModel = new GroupModel(dbMock, 'user-group', {
+  const groupModel = new GroupModel({db: dbMock, name: 'user-group', schema: {
     name: 'string'
-  })
+  }})
 
   class RightsModel extends BaseModel {
     selectMany () {
@@ -506,9 +506,9 @@ test('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with re
       ])
     }
   }
-  const rightsModel = new RightsModel(dbMock, 'rights', {
+  const rightsModel = new RightsModel({db: dbMock, name: 'rights', schema: {
     name: 'string'
-  })
+  }})
 
   class UserModel extends BaseModel {
     selectMany () {
@@ -518,11 +518,11 @@ test('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with re
       ])
     }
   }
-  const userModel = new UserModel(dbMock, 'user', {
+  const userModel = new UserModel({db: dbMock, name: 'user', schema: {
     name: 'string',
     group: { belongsTo: groupModel },
     rights: { belongsTo: rightsModel }
-  })
+  }})
 
   userModel.apiFetchAll({withRelated: true})
   .then((serialized) => {
@@ -571,14 +571,14 @@ test('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows withou
   t.plan(1)
 
   class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel(dbMock, 'user-group', {
+  const groupModel = new GroupModel({db: dbMock, name: 'user-group', schema: {
     name: 'string'
-  })
+  }})
 
   class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel(dbMock, 'rights', {
+  const rightsModel = new RightsModel({db: dbMock, name: 'rights', schema: {
     name: 'string'
-  })
+  }})
 
   class UserModel extends BaseModel {
     selectMany () {
@@ -588,11 +588,11 @@ test('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows withou
       ])
     }
   }
-  const userModel = new UserModel(dbMock, 'user', {
+  const userModel = new UserModel({db: dbMock, name: 'user', schema: {
     name: 'string',
     group: { belongsTo: groupModel },
     rights: { belongsTo: rightsModel }
-  })
+  }})
 
   userModel.apiFetchAll()
   .then((serialized) => {
@@ -624,21 +624,21 @@ test('BaseModel#_joinRelations with no "relations" provided changes relations id
   t.plan(1)
 
   class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel(dbMock, 'user-group', {
+  const groupModel = new GroupModel({db: dbMock, name: 'user-group', schema: {
     name: 'string'
-  })
+  }})
 
   class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel(dbMock, 'rights', {
+  const rightsModel = new RightsModel({db: dbMock, name: 'rights', schema: {
     name: 'string'
-  })
+  }})
 
   class UserModel extends BaseModel {}
-  const userModel = new UserModel(dbMock, 'user', {
+  const userModel = new UserModel({db: dbMock, name: 'user', schema: {
     name: 'string',
     group: { belongsTo: groupModel },
     rights: { belongsTo: rightsModel }
-  })
+  }})
 
   const parentRows = [
     {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
@@ -666,21 +666,21 @@ test('BaseModel#_joinRelations with "relations" data provided joins in relations
   t.plan(1)
 
   class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel(dbMock, 'user-group', {
+  const groupModel = new GroupModel({db: dbMock, name: 'user-group', schema: {
     name: 'string'
-  })
+  }})
 
   class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel(dbMock, 'rights', {
+  const rightsModel = new RightsModel({db: dbMock, name: 'rights', schema: {
     name: 'string'
-  })
+  }})
 
   class UserModel extends BaseModel {}
-  const userModel = new UserModel(dbMock, 'user', {
+  const userModel = new UserModel({db: dbMock, name: 'user', schema: {
     name: 'string',
     group: { belongsTo: groupModel },
     rights: { belongsTo: rightsModel }
-  })
+  }})
 
   const parentRows = [
     {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
@@ -727,14 +727,14 @@ test('BaseModel#apiFind(id) calls selectOne() and serializes row without relatio
   t.plan(1)
 
   class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel(dbMock, 'user-group', {
+  const groupModel = new GroupModel({db: dbMock, name: 'user-group', schema: {
     name: 'string'
-  })
+  }})
 
   class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel(dbMock, 'rights', {
+  const rightsModel = new RightsModel({db: dbMock, name: 'rights', schema: {
     name: 'string'
-  })
+  }})
 
   class UserModel extends BaseModel {
     selectOne (options) {
@@ -745,11 +745,11 @@ test('BaseModel#apiFind(id) calls selectOne() and serializes row without relatio
       return Promise.resolve(rows[options.id])
     }
   }
-  const userModel = new UserModel(dbMock, 'user', {
+  const userModel = new UserModel({db: dbMock, name: 'user', schema: {
     name: 'string',
     group: { belongsTo: groupModel },
     rights: { belongsTo: rightsModel }
-  })
+  }})
 
   userModel.apiFind(1)
   .then((serialized) => {
@@ -773,10 +773,10 @@ test('BaseModel#apiUpdate calls update() and returns updated serialized row with
   t.plan(3)
 
   class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel(dbMock, 'user-group', { name: 'string' })
+  const groupModel = new GroupModel({db: dbMock, name: 'user-group', schema: { name: 'string' }})
 
   class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel(dbMock, 'rights', { name: 'string' })
+  const rightsModel = new RightsModel({db: dbMock, name: 'rights', schema: { name: 'string' }})
 
   class UserModel extends BaseModel {
     update (id, deserializedData) {
@@ -794,11 +794,11 @@ test('BaseModel#apiUpdate calls update() and returns updated serialized row with
       })
     }
   }
-  const userModel = new UserModel(dbMock, 'user', {
+  const userModel = new UserModel({db: dbMock, name: 'user', schema: {
     name: 'string',
     userGroup: { belongsTo: groupModel },
     rights: { belongsTo: rightsModel }
-  })
+  }})
 
   const updatesData = {
     data: {
@@ -839,7 +839,7 @@ test('BaseModel#apiUpdate returns error from "update"', (t) => {
       return Promise.reject(new Error('some error'))
     }
   }
-  const userModel = new UserModel(dbMock, 'user', { name: 'string' })
+  const userModel = new UserModel({db: dbMock, name: 'user', schema: { name: 'string' }})
 
   const updatesData = {
     data: {
@@ -861,7 +861,7 @@ test('BaseModel#apiUpdate returns error from "deserialize"', (t) => {
   t.plan(2)
 
   class UserModel extends BaseModel {}
-  const userModel = new UserModel(dbMock, 'user', { name: 'string' })
+  const userModel = new UserModel({db: dbMock, name: 'user', schema: { name: 'string' }})
   userModel.serializer.deserialize = () => {
     t.pass('deserialize() has been called')
     return Promise.reject(new Error('some deserialization error'))
@@ -879,10 +879,10 @@ test('BaseModel#apiCreate calls create() and returns saved serialized row withou
   t.plan(4)
 
   class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel(dbMock, 'user-group', { name: 'string' })
+  const groupModel = new GroupModel({db: dbMock, name: 'user-group', schema: { name: 'string' }})
 
   class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel(dbMock, 'rights', { name: 'string' })
+  const rightsModel = new RightsModel({db: dbMock, name: 'rights', schema: { name: 'string' }})
 
   class UserModel extends BaseModel {
     create (deserializedNewData) {
@@ -902,11 +902,11 @@ test('BaseModel#apiCreate calls create() and returns saved serialized row withou
       })
     }
   }
-  const userModel = new UserModel(dbMock, 'user', {
+  const userModel = new UserModel({db: dbMock, name: 'user', schema: {
     name: 'string',
     userGroup: { belongsTo: groupModel },
     rights: { belongsTo: rightsModel }
-  })
+  }})
 
   const newData = {
     data: {
@@ -948,7 +948,7 @@ test('BaseModel#apiCreate returns error from "update"', (t) => {
       return Promise.reject(new Error('some error'))
     }
   }
-  const userModel = new UserModel(dbMock, 'user', { name: 'string' })
+  const userModel = new UserModel({db: dbMock, name: 'user', schema: { name: 'string' }})
 
   const newData = {
     data: {
@@ -969,7 +969,7 @@ test('BaseModel#apiCreate returns error from "deserialize"', (t) => {
   t.plan(2)
 
   class UserModel extends BaseModel {}
-  const userModel = new UserModel(dbMock, 'user', { name: 'string' })
+  const userModel = new UserModel({db: dbMock, name: 'user', schema: { name: 'string' }})
   userModel.serializer.deserialize = () => {
     t.pass('deserialize() has been called')
     return Promise.reject(new Error('some deserialization error'))
