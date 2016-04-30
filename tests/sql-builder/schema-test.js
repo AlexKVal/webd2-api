@@ -34,37 +34,3 @@ test('Schema: "attributes" contains all dataSet keys', (t) => {
   ])
   t.end()
 })
-
-test('schema.getBelongsToRelations() returns array of "belongsTo" relations', (t) => {
-  const userGroupModel = { name: 'user-group' }
-  const rightsModel = { name: 'rights' }
-
-  const schema = new Schema({
-    group: {
-      belongsTo: userGroupModel,
-      fkField: 'GrpID'
-    },
-    rights: {
-      belongsTo: rightsModel,
-      fkField: 'rights'
-    }
-  })
-
-  const relations = schema.getBelongsToRelations()
-  t.equal(relations.length, 2)
-  t.deepEqual(relations, [
-    {
-      name: 'group',
-      relationModel: userGroupModel,
-      fkField: 'GrpID',
-      fkName: 'userGroupId'
-    },
-    {
-      name: 'rights',
-      relationModel: rightsModel,
-      fkField: 'rights',
-      fkName: 'rightsId'
-    }
-  ])
-  t.end()
-})
