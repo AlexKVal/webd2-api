@@ -45,5 +45,12 @@ test.only('registry is a `singleton` store for models', (t) => {
     'it hints for schemaObject'
   )
 
+  const userModel = registry.model('User')
+  t.equal(
+    userModel.registry,
+    registry,
+    'it injects itself to models'
+  )
+
   t.end()
 })
