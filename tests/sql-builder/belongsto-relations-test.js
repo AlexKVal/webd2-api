@@ -1,7 +1,10 @@
 'use strict'
 const test = require('tape')
 
-const {getBelongsToRelations} = require('../../lib/sql-builder/belongsto-relations')
+const {
+  attributesOfRelations,
+  getBelongsToRelations
+} = require('../../lib/sql-builder/belongsto-relations')
 
 test('getBelongsToRelations()', (t) => {
   const schemaObject = {
@@ -33,6 +36,55 @@ test('getBelongsToRelations()', (t) => {
       }
     ],
     'returns array of "belongsTo" relations'
+  )
+  t.end()
+})
+
+test('attributesOfRelations()', (t) => {
+  const registryMock = {
+    model (modelName) {
+      const schemas = {
+        rights: {
+          fullName: 'string',
+          enabled: 'boolean',
+          group: {
+            belongsTo: 'rightsGroup'
+          }
+        },
+        userGroup: {
+          shortName: 'string',
+          hide: 'boolean'
+        }
+      }
+
+      return {
+        name: modelName,
+        sqlBuilder: {
+          schemaObject: schemas[modelName]
+        }
+      }
+    }
+  }
+
+  const parentSchema = {
+    name: 'string',
+    hide: 'boolean',
+    group: {
+      belongsTo: 'userGroup',
+      fkField: 'GrpID'
+    },
+    rights: {
+      belongsTo: 'rights'
+    }
+  }
+
+  t.deepEqual(
+    attributesOfRelations(registryMock, parentSchema),
+    {
+      group: ['shortName', 'hide'],
+      rights: ['fullName', 'enabled', 'group']
+    },
+    'returns attributes for all belongsTo relations'
   )
   t.end()
 })
