@@ -2,14 +2,13 @@
 const test = require('tape')
 
 const SqlBuilder = require('../../lib/sql-builder/sql-builder')
-const quoteValueIfString = SqlBuilder.quoteValueIfString
 
 test('sqlBuilder.columns holds only columns` schemaObject', (t) => {
   const sqlBuilder = new SqlBuilder({
     name: 'string',
     hide: 'boolean',
     group: {
-      belongsTo: { name: 'user-group' }
+      belongsTo: 'userGroup'
     }
   })
 
@@ -24,7 +23,7 @@ test('sqlBuilder.columnsNames holds columns` names', (t) => {
     name: 'string',
     hide: 'boolean',
     group: {
-      belongsTo: { name: 'user-group' }
+      belongsTo: 'userGroup'
     }
   })
 
@@ -44,11 +43,11 @@ test('sqlBuilder.generateFieldEqualsDataLines() with full data', (t) => {
     shouldBeString2: 'string',
 
     userGroup: {
-      belongsTo: { name: 'user-group' },
+      belongsTo: 'userGroup',
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: { name: 'rights' }
+      belongsTo: 'rights'
     }
   })
 
@@ -94,11 +93,11 @@ test('sqlBuilder.generateFieldEqualsDataLines() with partial data', (t) => {
     shouldBeString2: 'string',
 
     userGroup: {
-      belongsTo: { name: 'user-group' },
+      belongsTo: 'userGroup',
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: { name: 'rights' }
+      belongsTo: 'rights'
     }
   })
 
@@ -123,14 +122,14 @@ test('sqlBuilder.generateFieldEqualsDataLines() with partial data', (t) => {
 test('sqlBuilder._generateForeignKeysLines()', (t) => {
   const sqlBuilder = new SqlBuilder({
     group: {
-      belongsTo: { name: 'user-group' },
+      belongsTo: 'userGroup',
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: { name: 'rights' }
+      belongsTo: 'rights'
     },
     posts: {
-      belongsTo: { name: 'user-post' }
+      belongsTo: 'user-post'
     }
   })
 
@@ -169,7 +168,7 @@ test('sqlBuilder.generateSelectFieldsPart()', (t) => {
     hide: 'boolean',
     counter: 'integer',
     group: {
-      belongsTo: { name: 'user-group' },
+      belongsTo: 'userGroup',
       fkField: 'GrpID'
     }
   })
@@ -287,7 +286,7 @@ test('sqlBuilder.sqlIsRowExist(id) returns sql query for checking row existence 
     tableName: 'sPersonal',
     id: 'PersID',
     name: 'string',
-    rights: { belongsTo: { name: 'rights' } }
+    rights: { belongsTo: 'rights' }
   })
 
   t.equal(
@@ -300,11 +299,11 @@ test('sqlBuilder.sqlIsRowExist(id) returns sql query for checking row existence 
 test('sqlBuilder._getRelationsLinesForUpdate() with full data', (t) => {
   const sqlBuilder = new SqlBuilder({
     userGroup: {
-      belongsTo: { name: 'user-group' },
+      belongsTo: 'userGroup',
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: { name: 'rights' }
+      belongsTo: 'rights'
     }
   })
 
@@ -326,14 +325,14 @@ test('sqlBuilder._getRelationsLinesForUpdate() with full data', (t) => {
 test('sqlBuilder._getRelationsLinesForUpdate() with partial data', (t) => {
   const sqlBuilder = new SqlBuilder({
     userGroup: {
-      belongsTo: { name: 'user-group' },
+      belongsTo: 'userGroup',
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: { name: 'rights' }
+      belongsTo: 'rights'
     },
     post: {
-      belongsTo: { name: 'user-post' },
+      belongsTo: 'user-post',
       fkField: 'PostID'
     }
   })
@@ -359,14 +358,14 @@ test('sqlBuilder.update(id, data) returns sql query for updating row', (t) => {
     counter: 'integer',
 
     group: {
-      belongsTo: { name: 'user-group' },
+      belongsTo: 'userGroup',
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: { name: 'rights' }
+      belongsTo: 'rights'
     },
     post: {
-      belongsTo: { name: 'post' },
+      belongsTo: 'post',
       fkField: 'PostID'
     }
   })
@@ -400,14 +399,14 @@ test('sqlBuilder.update(id, data) can generate sql query with partial data', (t)
     counter: 'integer',
 
     group: {
-      belongsTo: { name: 'user-group' },
+      belongsTo: 'userGroup',
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: { name: 'rights' }
+      belongsTo: 'rights'
     },
     post: {
-      belongsTo: { name: 'post' },
+      belongsTo: 'post',
       fkField: 'PostID'
     }
   })
@@ -438,14 +437,14 @@ test('sqlBuilder._fieldsNamesForInsert(data) only names that are present in data
     counter: 'integer',
 
     group: {
-      belongsTo: { name: 'user-group' },
+      belongsTo: 'userGroup',
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: { name: 'rights' }
+      belongsTo: 'rights'
     },
     post: {
-      belongsTo: { name: 'post' },
+      belongsTo: 'post',
       fkField: 'PostID'
     }
   })
@@ -499,6 +498,8 @@ test('sqlBuilder._fieldsNamesForInsert(data) only names that are present in data
   t.end()
 })
 
+const quoteValueIfString = SqlBuilder.quoteValueIfString
+
 test('quoteValueIfString() returns as is "boolean" and "integer" types', (t) => {
   t.equal(quoteValueIfString('boolean', false), false)
   t.equal(quoteValueIfString('integer', 3), 3)
@@ -548,14 +549,14 @@ test('sqlBuilder._fieldsValuesForInsert(data)', (t) => {
     counter: 'integer',
 
     group: {
-      belongsTo: { name: 'user-group' },
+      belongsTo: 'userGroup',
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: { name: 'rights' }
+      belongsTo: 'rights'
     },
     post: {
-      belongsTo: { name: 'post' },
+      belongsTo: 'post',
       fkField: 'PostID'
     }
   })
@@ -620,14 +621,14 @@ test('sqlBuilder.create(data) returns sql query for INSERT-ing new row', (t) => 
     counter: 'integer',
 
     group: {
-      belongsTo: { name: 'user-group' },
+      belongsTo: 'userGroup',
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: { name: 'rights' }
+      belongsTo: 'rights'
     },
     post: {
-      belongsTo: { name: 'post' },
+      belongsTo: 'post',
       fkField: 'PostID'
     }
   })
@@ -699,11 +700,11 @@ test('sqlBuilder._wherePart() generates clauses for WHERE part', (t) => {
     hide: 'boolean',
     /* password field is not described in the schema to prevent accidental leaking */
     group: {
-      belongsTo: { name: 'user-group' },
+      belongsTo: 'userGroup',
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: { name: 'rights' }
+      belongsTo: 'rights'
     }
   })
 
@@ -733,11 +734,11 @@ test('sqlBuilder.selectMany() generates SELECT query for fetching many rows', (t
     name: 'string',
     hide: 'boolean',
     groups: {
-      belongsTo: { name: 'user-group' },
+      belongsTo: 'userGroup',
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: { name: 'rights' }
+      belongsTo: 'rights'
     }
   })
 
@@ -830,11 +831,11 @@ test('sqlBuilder.selectOne() generates SELECT query for fetching one row', (t) =
     name: 'string',
     hide: 'boolean',
     group: {
-      belongsTo: { name: 'user-group' },
+      belongsTo: 'userGroup',
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: { name: 'rights' }
+      belongsTo: 'rights'
     }
   })
 
