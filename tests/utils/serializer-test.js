@@ -29,8 +29,7 @@ test('Serializer.constructor', (t) => {
       attributesOfRelations: {
         rel1: ['one', 'two'],
         rel2: ['one1', 'two1']
-      },
-      modelNamesOfRelations: []
+      }
     })
   }
 
@@ -85,8 +84,7 @@ test('Serializer serialization', (t) => {
     attributesOfRelations: {
       group: ['name', 'hide'],
       rights: ['shortName']
-    },
-    modelNamesOfRelations: []
+    }
   })
 
   const data = [
@@ -168,100 +166,4 @@ test('Serializer serialization', (t) => {
   )
 
   t.end()
-})
-
-test('serializer.deserializerOptions takes into account "belongsTo" relations', (t) => {
-  const serializer = new Serializer({
-    modelName: 'user',
-    attributes: ['name', 'group', 'rights'],
-    attributesOfRelations: {
-      group: ['name', 'hide'],
-      rights: ['shortName']
-    },
-    modelNamesOfRelations: ['userGroup', 'userRights']
-  })
-
-  const options = serializer.deserializerOptions
-
-  t.equal(Object.keys(options).length, 3)
-  t.equal(options.keyForAttribute, 'camelCase')
-  t.equal(typeof options['user-groups'].valueForRelationship, 'function')
-  t.equal(typeof options['user-rights'].valueForRelationship, 'function')
-
-  /*
-  t.deepEqual(
-    options,
-    {
-      keyForAttribute: 'camelCase',
-      'user-groups': { valueForRelationship: [Function: valueForRelationship] },
-      'user-rights': { valueForRelationship: [Function: valueForRelationship] }
-    }
-  )
-  */
-
-  t.end()
-})
-
-test('serializer.deserialize() method deserializes array of data', (t) => {
-  const serializer = new Serializer({
-    modelName: 'user',
-    attributes: ['name', 'group', 'rights'],
-    attributesOfRelations: {
-      group: ['name', 'hide'],
-      rights: ['shortName']
-    },
-    modelNamesOfRelations: ['userGroup', 'userRights']
-  })
-
-  serializer.deserialize({
-    data: [ {
-      attributes: {
-        name: 'Admin',
-        'user-group-id': '1',
-        'user-rights-id': '3'
-      },
-      id: '1',
-      type: 'users'
-    } ]
-  })
-  .then((data) => {
-    t.deepEqual(data, [ {id: '1', name: 'Admin', userGroupId: '1', userRightsId: '3'} ])
-    t.end()
-  })
-})
-
-test('serializer.deserialize() method deserializes one row of data', (t) => {
-  const serializer = new Serializer({
-    modelName: 'user',
-    attributes: ['name', 'hide', 'group', 'rights'],
-    attributesOfRelations: {
-      userGroup: ['name', 'hide'],
-      rights: ['shortName']
-    },
-    modelNamesOfRelations: ['userGroup', 'rights']
-  })
-
-  const dataFromTheClient = {
-    data: {
-      type: 'user-accounts',
-      attributes: {name: 'New Name', hide: false},
-      relationships: {
-        'user-group': {data: {type: 'user-groups', id: '2'}},
-        'rights': {data: {type: 'rights', id: '21'}}
-      }
-    }
-  }
-
-  serializer.deserialize(dataFromTheClient)
-  .then((data) => {
-    t.deepEqual(
-      data,
-      {
-        id: undefined, name: 'New Name', hide: false,
-        rights: { id: '21' },
-        userGroup: { id: '2' }
-      }
-    )
-    t.end()
-  })
 })
