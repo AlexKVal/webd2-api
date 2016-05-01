@@ -6,6 +6,81 @@ const Serializer = require('../../lib/utils/serializer')
 
 const dbMock = { exec () { return Promise.resolve() } }
 
+test('Serializer.constructor', (t) => {
+  t.throws(
+    () => new Serializer({}),
+    /provide `modelName`/,
+    'requires `modelName`'
+  )
+
+  t.throws(
+    () => new Serializer({modelName: 'some'}),
+    /provide `attributes`/,
+    'requires `attributes`'
+  )
+
+  t.throws(
+    () => new Serializer({modelName: 'some', attributes: []}),
+    /provide `attributesOfRelations`/,
+    'requires `attributesOfRelations`'
+  )
+
+  const fn1 = function () {
+    new Serializer({ // eslint-disable-line
+      modelName: 'userAccount',
+      attributes: ['name', 'userGroup'],
+      attributesOfRelations: {
+        rel1: ['one', 'two'],
+        rel2: ['one1', 'two1']
+      },
+      belongsToRelations: []
+    })
+  }
+
+  t.doesNotThrow(fn1, 'when all parameters are provided')
+
+  t.end()
+})
+
+const serializerOptions = Serializer.serializerOptions
+
+test('Serializer.serializerOptions()', (t) => {
+  const modelAttributes = ['name', 'hide', 'rel1', 'rel2']
+
+  const attributesOfRelations = {
+    rel1: ['enabled'],
+    rel2: ['shortName']
+  }
+
+  let relatedIncluded = true
+  const options1 = serializerOptions(modelAttributes, attributesOfRelations, relatedIncluded)
+  t.deepEqual(
+    options1,
+    {
+      attributes: ['name', 'hide', 'rel1', 'rel2'],
+      keyForAttribute: 'camelCase',
+      rel1: { attributes: ['enabled'], included: true, ref: 'id' },
+      rel2: { attributes: ['shortName'], included: true, ref: 'id' }
+    },
+    'generates options with `included` on'
+  )
+
+  relatedIncluded = false
+  const options2 = serializerOptions(modelAttributes, attributesOfRelations, relatedIncluded)
+  t.deepEqual(
+    options2,
+    {
+      attributes: ['name', 'hide', 'rel1', 'rel2'],
+      keyForAttribute: 'camelCase',
+      rel1: { attributes: ['enabled'], included: false, ref: 'id' },
+      rel2: { attributes: ['shortName'], included: false, ref: 'id' }
+    },
+    'generates options with `included` off'
+  )
+
+  t.end()
+})
+
 test('serializer.withoutRelated() does not include relations data', (t) => {
   class UserGroup extends BaseModel {}
   const userGroup = new UserGroup({db: dbMock, name: 'user-group', schema: { name: 'string' }})
