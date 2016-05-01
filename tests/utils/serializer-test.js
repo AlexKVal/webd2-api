@@ -81,129 +81,94 @@ test('Serializer.serializerOptions()', (t) => {
   t.end()
 })
 
-test('serializer.withoutRelated() does not include relations data', (t) => {
-  class UserGroup extends BaseModel {}
-  const userGroup = new UserGroup({db: dbMock, name: 'user-group', schema: { name: 'string' }})
-
-  class Rights extends BaseModel {}
-  const rights = new Rights({db: dbMock, name: 'rights', schema: { name: 'string' }})
-
-  const serializer = new Serializer('user', {
-    name: 'string',
-    group: {
-      belongsTo: userGroup,
-      fkField: 'GrpID'
+test('Serializer serialization', (t) => {
+  const serializer = new Serializer({
+    modelName: 'user',
+    attributes: ['name', 'group', 'rights'],
+    attributesOfRelations: {
+      group: ['name', 'hide'],
+      rights: ['shortName']
     },
-    rights: {
-      belongsTo: rights,
-      fkField: 'GrpID'
-    }
+    belongsToRelations: []
   })
 
-  const serializedModel = serializer.withoutRelated([
+  const data = [
     {
       id: '1', name: 'John',
-      group: { id: '101', name: 'Admins' },
-      rights: {id: '12', name: 'Full'}
+      group: {id: '101', name: 'Admins', hide: false},
+      rights: {id: '12', shortName: 'Full'}
     },
     {
       id: '2', name: 'Smith',
-      group: {id: '102', name: 'Users'},
-      rights: {id: '13', name: 'Part'}
+      group: {id: '102', name: 'Users', hide: true},
+      rights: {id: '13', shortName: 'Part'}
     }
-  ])
+  ]
 
-  t.deepEqual(serializedModel, {
-    data: [{
-      attributes: { name: 'John' },
-      id: '1',
-      relationships: {
-        group: { data: { id: '101', type: 'groups' } },
-        rights: { data: { id: '12', type: 'rights' } }
-      },
-      type: 'users'
-    }, {
-      attributes: { name: 'Smith' },
-      id: '2',
-      relationships: {
-        group: { data: { id: '102', type: 'groups' } },
-        rights: { data: { id: '13', type: 'rights' } }
-      },
-      type: 'users'
-    }]
-  })
-
-  t.end()
-})
-
-test('serializer.withRelated() includes relations data', (t) => {
-  class UserGroup extends BaseModel {}
-  const userGroup = new UserGroup({db: dbMock, name: 'user-group', schema: { name: 'string' }})
-
-  class Rights extends BaseModel {}
-  const rights = new Rights({db: dbMock, name: 'rights', schema: { name: 'string' }})
-
-  const serializer = new Serializer('user', {
-    name: 'string',
-    group: {
-      belongsTo: userGroup,
-      fkField: 'GrpID'
-    },
-    rights: {
-      belongsTo: rights,
-      fkField: 'GrpID'
-    }
-  })
-
-  const serializedModel = serializer.withRelated([
+  t.deepEqual(
+    serializer.withoutRelated(data),
     {
-      id: '1', name: 'John',
-      group: { id: '101', name: 'Admins' },
-      rights: {id: '12', name: 'Full'}
+      data: [{
+        attributes: { name: 'John' },
+        id: '1',
+        relationships: {
+          group: { data: { id: '101', type: 'groups' } },
+          rights: { data: { id: '12', type: 'rights' } }
+        },
+        type: 'users'
+      }, {
+        attributes: { name: 'Smith' },
+        id: '2',
+        relationships: {
+          group: { data: { id: '102', type: 'groups' } },
+          rights: { data: { id: '13', type: 'rights' } }
+        },
+        type: 'users'
+      }]
     },
-    {
-      id: '2', name: 'Smith',
-      group: {id: '102', name: 'Users'},
-      rights: {id: '13', name: 'Part'}
-    }
-  ])
+    'withoutRelated() does not include relations` data'
+  )
 
-  t.deepEqual(serializedModel, {
-    data: [{
-      attributes: { name: 'John' },
-      id: '1',
-      relationships: {
-        group: { data: { id: '101', type: 'groups' } },
-        rights: { data: { id: '12', type: 'rights' } }
-      },
-      type: 'users'
-    }, {
-      attributes: { name: 'Smith' },
-      id: '2',
-      relationships: {
-        group: { data: { id: '102', type: 'groups' } },
-        rights: { data: { id: '13', type: 'rights' } }
-      },
-      type: 'users'
-    }],
-    included: [{
-      attributes: { name: 'Admins' },
-      id: '101',
-      type: 'groups'
-    }, {
-      attributes: { name: 'Full' },
-      id: '12',
-      type: 'rights'
-    }, {
-      attributes: { name: 'Users' },
-      id: '102',
-      type: 'groups'
-    }, {
-      attributes: { name: 'Part' },
-      id: '13',
-      type: 'rights'
-    }]
-  })
+  t.deepEqual(
+    serializer.withRelated(data),
+    {
+      data: [{
+        attributes: { name: 'John' },
+        id: '1',
+        relationships: {
+          group: { data: { id: '101', type: 'groups' } },
+          rights: { data: { id: '12', type: 'rights' } }
+        },
+        type: 'users'
+      }, {
+        attributes: { name: 'Smith' },
+        id: '2',
+        relationships: {
+          group: { data: { id: '102', type: 'groups' } },
+          rights: { data: { id: '13', type: 'rights' } }
+        },
+        type: 'users'
+      }],
+      included: [{
+        attributes: { name: 'Admins', hide: false },
+        id: '101',
+        type: 'groups'
+      }, {
+        attributes: { shortName: 'Full' },
+        id: '12',
+        type: 'rights'
+      }, {
+        attributes: { name: 'Users', hide: true },
+        id: '102',
+        type: 'groups'
+      }, {
+        attributes: { shortName: 'Part' },
+        id: '13',
+        type: 'rights'
+      }]
+    },
+    'withRelated() includes relations data'
+  )
 
   t.end()
 })
