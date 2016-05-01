@@ -4,17 +4,14 @@ const test = require('tape')
 const {getBelongsToRelations} = require('../../lib/sql-builder/belongsto-relations')
 
 test('getBelongsToRelations()', (t) => {
-  const userGroupModel = { name: 'user-group' }
-  const rightsModel = { name: 'rights' }
-
   const schemaObject = {
     group: {
-      belongsTo: userGroupModel,
+      belongsTo: 'userGroup',
       fkField: 'GrpID'
     },
     rights: {
-      belongsTo: rightsModel,
-      fkField: 'rights'
+      belongsTo: 'rights'
+      /* fkField: is the same, so we can skip it */
     }
   }
 
@@ -23,14 +20,14 @@ test('getBelongsToRelations()', (t) => {
   t.deepEqual(
     relations, [
       {
+        relationModelName: 'userGroup',
         modelFieldName: 'group',
-        relationModel: userGroupModel,
         fkField: 'GrpID',
         fkAs: 'userGroupId'
       },
       {
+        relationModelName: 'rights',
         modelFieldName: 'rights',
-        relationModel: rightsModel,
         fkField: 'rights',
         fkAs: 'rightsId'
       }
