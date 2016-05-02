@@ -788,18 +788,24 @@ test('BaseModel#_joinRelations with "relations" data provided joins in relations
   t.end()
 })
 
-test.skip('BaseModel#apiFind(id) calls selectOne() and serializes row without relations included', (t) => {
+test('BaseModel#apiFind(id) calls selectOne() and serializes row without relations included', (t) => {
   t.plan(1)
 
-  class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel({db: dbMock, registry, name: 'user-group', schema: {
-    name: 'string'
-  }})
+  const registryMock = {
+    model (modelName) {
+      const _schemas = {
+        rights: { /* doesn't matter here */ },
+        userGroup: { /* doesn't matter here */ }
+      }
 
-  class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel({db: dbMock, registry, name: 'rights', schema: {
-    name: 'string'
-  }})
+      return {
+        name: modelName,
+        sqlBuilder: {
+          schemaObject: _schemas[modelName]
+        }
+      }
+    }
+  }
 
   class UserModel extends BaseModel {
     selectOne (options) {
@@ -810,11 +816,14 @@ test.skip('BaseModel#apiFind(id) calls selectOne() and serializes row without re
       return Promise.resolve(rows[options.id])
     }
   }
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: {
-    name: 'string',
-    group: { belongsTo: groupModel },
-    rights: { belongsTo: rightsModel }
-  }})
+  const userModel = new UserModel({
+    db: dbMock, registry: registryMock, name: 'user',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
 
   userModel.apiFind(1)
   .then((serialized) => {
