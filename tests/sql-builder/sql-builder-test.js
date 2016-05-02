@@ -254,7 +254,7 @@ test('sqlBuilder.getTableName() returns tableName', (t) => {
   t.end()
 })
 
-test('sqlBuilder.schemaObject contains all fields but "tableName" and "id"', (t) => {
+test('sqlBuilder._schema contains all fields but "tableName" and "id"', (t) => {
   const sqlBuilder = new SqlBuilder({
     tableName: 'whatever',
     id: 'customId',
@@ -263,8 +263,8 @@ test('sqlBuilder.schemaObject contains all fields but "tableName" and "id"', (t)
     someNumber: 'integer'
   })
 
-  t.equal(Object.keys(sqlBuilder.schemaObject).length, 3)
-  t.deepEqual(sqlBuilder.schemaObject, {
+  t.equal(Object.keys(sqlBuilder._schema).length, 3)
+  t.deepEqual(sqlBuilder._schema, {
     name: 'string',
     boolFlag: 'boolean',
     someNumber: 'integer'
