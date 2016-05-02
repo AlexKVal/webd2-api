@@ -96,7 +96,6 @@ test('deserializer.deserialize() with one row of data', (t) => {
     t.deepEqual(
       data,
       {
-        id: undefined, // new object creation case
         name: 'New Name', hide: false,
         rights: { id: '21' },
         userGroup: { id: '2' }
