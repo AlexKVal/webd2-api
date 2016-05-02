@@ -4,7 +4,21 @@ const test = require('tape')
 const BaseModel = require('../../lib/models/base-model')
 
 const dbMock = { exec () { return Promise.resolve() } }
-const registry = { model (modelName) { return { name: modelName } } }
+const registry = {
+  model (modelName) {
+    const _schemas = {
+      rights: { /* doesn't matter here */ },
+      userGroup: { /* doesn't matter here */ }
+    }
+
+    return {
+      name: modelName,
+      sqlBuilder: {
+        schemaObject: _schemas[modelName]
+      }
+    }
+  }
+}
 
 class SomeModel extends BaseModel {}
 
@@ -425,39 +439,54 @@ test('BaseModel#apiFetchAll childModel can override selectMany() to provide own 
   .then(() => t.end())
 })
 
-test.skip('BaseModel#_fetchRelations fetches relations data', (t) => {
+test('BaseModel#_fetchRelations fetches relations data', (t) => {
   t.plan(1)
 
-  class GroupModel extends BaseModel {
-    selectMany () {
-      return Promise.resolve([
-        {id: '101', name: 'Admins'},
-        {id: '102', name: 'Users'}
-      ])
-    }
-  }
-  const groupModel = new GroupModel({db: dbMock, registry, name: 'user-group', schema: {
-    name: 'string'
-  }})
+  const registryMock = {
+    model (modelName) {
+      const _models = {
+        rights: {
+          selectMany () {
+            return Promise.resolve([
+              {id: '12', fullName: 'Full'},
+              {id: '13', fullName: 'Part'}
+            ])
+          },
+          sqlBuilder: {
+            schemaObject: {
+              fullName: 'string'
+            }
+          }
+        },
 
-  class RightsModel extends BaseModel {
-    selectMany () {
-      return Promise.resolve([
-        {id: '12', name: 'Full'},
-        {id: '13', name: 'Part'}
-      ])
+        userGroup: {
+          selectMany () {
+            return Promise.resolve([
+              {id: '101', shortName: 'Admins'},
+              {id: '102', shortName: 'Users'}
+            ])
+          },
+          sqlBuilder: {
+            schemaObject: {
+              shortName: 'string'
+            }
+          }
+        }
+      }
+
+      return _models[modelName]
     }
   }
-  const rightsModel = new RightsModel({db: dbMock, registry, name: 'rights', schema: {
-    name: 'string'
-  }})
 
   class UserModel extends BaseModel {}
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: {
-    name: 'string',
-    group: { belongsTo: groupModel },
-    rights: { belongsTo: rightsModel }
-  }})
+  const userModel = new UserModel({
+    db: dbMock, registry: registryMock, name: 'user',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
 
   const parentRows = [
     {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
@@ -469,13 +498,13 @@ test.skip('BaseModel#_fetchRelations fetches relations data', (t) => {
     t.deepEqual(data, [
       {
         id: '1', name: 'John',
-        group: {id: '101', name: 'Admins'},
-        rights: {id: '12', name: 'Full'}
+        group: {id: '101', shortName: 'Admins'},
+        rights: {id: '12', fullName: 'Full'}
       },
       {
         id: '2', name: 'Smith',
-        group: {id: '102', name: 'Users'},
-        rights: {id: '13', name: 'Part'}
+        group: {id: '102', shortName: 'Users'},
+        rights: {id: '13', fullName: 'Part'}
       }
     ])
   })
@@ -483,32 +512,44 @@ test.skip('BaseModel#_fetchRelations fetches relations data', (t) => {
   .then(() => t.end())
 })
 
-test.skip('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with relations data included', (t) => {
+test('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with relations data included', (t) => {
   t.plan(1)
 
-  class GroupModel extends BaseModel {
-    selectMany () {
-      return Promise.resolve([
-        {id: '101', name: 'Admins'},
-        {id: '102', name: 'Users'}
-      ])
-    }
-  }
-  const groupModel = new GroupModel({db: dbMock, registry, name: 'user-group', schema: {
-    name: 'string'
-  }})
+  const registryMock = {
+    model (modelName) {
+      const _models = {
+        rights: {
+          selectMany () {
+            return Promise.resolve([
+              {id: '12', fullName: 'Full'},
+              {id: '13', fullName: 'Part'}
+            ])
+          },
+          sqlBuilder: {
+            schemaObject: {
+              fullName: 'string'
+            }
+          }
+        },
 
-  class RightsModel extends BaseModel {
-    selectMany () {
-      return Promise.resolve([
-        {id: '12', name: 'Full'},
-        {id: '13', name: 'Part'}
-      ])
+        userGroup: {
+          selectMany () {
+            return Promise.resolve([
+              {id: '101', shortName: 'Admins'},
+              {id: '102', shortName: 'Users'}
+            ])
+          },
+          sqlBuilder: {
+            schemaObject: {
+              shortName: 'string'
+            }
+          }
+        }
+      }
+
+      return _models[modelName]
     }
   }
-  const rightsModel = new RightsModel({db: dbMock, registry, name: 'rights', schema: {
-    name: 'string'
-  }})
 
   class UserModel extends BaseModel {
     selectMany () {
@@ -518,11 +559,14 @@ test.skip('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows wi
       ])
     }
   }
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: {
-    name: 'string',
-    group: { belongsTo: groupModel },
-    rights: { belongsTo: rightsModel }
-  }})
+  const userModel = new UserModel({
+    db: dbMock, registry: registryMock, name: 'user',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
 
   userModel.apiFetchAll({withRelated: true})
   .then((serialized) => {
@@ -545,19 +589,19 @@ test.skip('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows wi
         type: 'users'
       }],
       included: [{
-        attributes: { name: 'Admins' },
+        attributes: { 'short-name': 'Admins' },
         id: '101',
         type: 'groups'
       }, {
-        attributes: { name: 'Full' },
+        attributes: { 'full-name': 'Full' },
         id: '12',
         type: 'rights'
       }, {
-        attributes: { name: 'Users' },
+        attributes: { 'short-name': 'Users' },
         id: '102',
         type: 'groups'
       }, {
-        attributes: { name: 'Part' },
+        attributes: { 'full-name': 'Part' },
         id: '13',
         type: 'rights'
       }]
@@ -567,18 +611,8 @@ test.skip('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows wi
   .then(() => t.end())
 })
 
-test.skip('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows without relations included', (t) => {
+test('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows without relations included', (t) => {
   t.plan(1)
-
-  class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel({db: dbMock, registry, name: 'user-group', schema: {
-    name: 'string'
-  }})
-
-  class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel({db: dbMock, registry, name: 'rights', schema: {
-    name: 'string'
-  }})
 
   class UserModel extends BaseModel {
     selectMany () {
@@ -588,11 +622,14 @@ test.skip('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows w
       ])
     }
   }
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: {
-    name: 'string',
-    group: { belongsTo: groupModel },
-    rights: { belongsTo: rightsModel }
-  }})
+  const userModel = new UserModel({
+    db: dbMock, registry, name: 'user',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
 
   userModel.apiFetchAll()
   .then((serialized) => {
@@ -620,25 +657,18 @@ test.skip('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows w
   .then(() => t.end())
 })
 
-test.skip('BaseModel#_joinRelations with no "relations" provided changes relations ids into empty relations with ids', (t) => {
+test('BaseModel#_joinRelations with no "relations" provided changes relations ids into empty relations with ids', (t) => {
   t.plan(1)
 
-  class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel({db: dbMock, registry, name: 'user-group', schema: {
-    name: 'string'
-  }})
-
-  class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel({db: dbMock, registry, name: 'rights', schema: {
-    name: 'string'
-  }})
-
   class UserModel extends BaseModel {}
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: {
-    name: 'string',
-    group: { belongsTo: groupModel },
-    rights: { belongsTo: rightsModel }
-  }})
+  const userModel = new UserModel({
+    db: dbMock, registry, name: 'user',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
 
   const parentRows = [
     {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
@@ -662,25 +692,18 @@ test.skip('BaseModel#_joinRelations with no "relations" provided changes relatio
   t.end()
 })
 
-test.skip('BaseModel#_joinRelations with "relations" data provided joins in relations data', (t) => {
+test('BaseModel#_joinRelations with "relations" data provided joins in relations data', (t) => {
   t.plan(1)
 
-  class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel({db: dbMock, registry, name: 'user-group', schema: {
-    name: 'string'
-  }})
-
-  class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel({db: dbMock, registry, name: 'rights', schema: {
-    name: 'string'
-  }})
-
   class UserModel extends BaseModel {}
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: {
-    name: 'string',
-    group: { belongsTo: groupModel },
-    rights: { belongsTo: rightsModel }
-  }})
+  const userModel = new UserModel({
+    db: dbMock, registry, name: 'user',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
 
   const parentRows = [
     {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
@@ -723,18 +746,43 @@ test.skip('BaseModel#_joinRelations with "relations" data provided joins in rela
   t.end()
 })
 
-test.skip('BaseModel#apiFind(id) calls selectOne() and serializes row without relations included', (t) => {
+test('BaseModel#_joinRelationsAndSerialize()', (t) => {
+  class UserModel extends BaseModel {}
+  const userModel = new UserModel({
+    db: dbMock, registry, name: 'user',
+    schema: {
+      name: 'string',
+      userGroup: { belongsTo: 'userGroup' },
+      userRights: { belongsTo: 'rights' }
+    }
+  })
+
+  const sqlRow = {
+    id: '1', name: 'John',
+    rightsId: '12',
+    userGroupId: '101'
+  }
+
+  t.deepEqual(
+    userModel._joinRelationsAndSerialize(sqlRow),
+    {
+      data: {
+        attributes: { name: 'John' },
+        id: '1',
+        relationships: {
+          'user-group': { data: { id: '101', type: 'userGroups' } },
+          'user-rights': { data: { id: '12', type: 'userRights' } }
+        },
+        type: 'users'
+      }
+    }
+  )
+
+  t.end()
+})
+
+test('BaseModel#apiFind(id) calls selectOne() and serializes row without relations included', (t) => {
   t.plan(1)
-
-  class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel({db: dbMock, registry, name: 'user-group', schema: {
-    name: 'string'
-  }})
-
-  class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel({db: dbMock, registry, name: 'rights', schema: {
-    name: 'string'
-  }})
 
   class UserModel extends BaseModel {
     selectOne (options) {
@@ -745,11 +793,14 @@ test.skip('BaseModel#apiFind(id) calls selectOne() and serializes row without re
       return Promise.resolve(rows[options.id])
     }
   }
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: {
-    name: 'string',
-    group: { belongsTo: groupModel },
-    rights: { belongsTo: rightsModel }
-  }})
+  const userModel = new UserModel({
+    db: dbMock, registry, name: 'user',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
 
   userModel.apiFind(1)
   .then((serialized) => {
@@ -769,43 +820,46 @@ test.skip('BaseModel#apiFind(id) calls selectOne() and serializes row without re
   .then(() => t.end())
 })
 
-test.skip('BaseModel#apiUpdate calls update() and returns updated serialized row without relations included', (t) => {
+test('BaseModel#apiUpdate calls update() and returns updated serialized row without relations included', (t) => {
   t.plan(3)
-
-  class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel({db: dbMock, registry, name: 'user-group', schema: { name: 'string' }})
-
-  class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel({db: dbMock, registry, name: 'rights', schema: { name: 'string' }})
 
   class UserModel extends BaseModel {
     update (id, deserializedData) {
       t.pass('update(id, data) has been called')
 
-      t.deepEqual(deserializedData, {
-        id: '1', name: 'John',
-        rights: { id: '12' },
-        userGroup: { id: '101' }
-      })
-      return Promise.resolve({
+      t.deepEqual(
+        deserializedData,
+        {
+          id: '1', name: 'John',
+          rights: { id: '12' },
+          userGroup: { id: '101' }
+        },
+        'receives deserialized data'
+      )
+
+      const sqlResult = {
         id: '1', name: 'John',
         rightsId: '12',
         userGroupId: '101'
-      })
+      }
+      return Promise.resolve(sqlResult)
     }
   }
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: {
-    name: 'string',
-    userGroup: { belongsTo: groupModel },
-    rights: { belongsTo: rightsModel }
-  }})
+  const userModel = new UserModel({
+    db: dbMock, registry, name: 'user',
+    schema: {
+      name: 'string',
+      userGroup: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
 
   const updatesData = {
     data: {
       attributes: { name: 'John' },
       id: '1',
       relationships: {
-        userGroup: { data: { id: '101', type: 'user-groups' } },
+        'user-group': { data: { id: '101', type: 'user-groups' } },
         rights: { data: { id: '12', type: 'rights' } }
       },
       type: 'users'
@@ -857,12 +911,16 @@ test('BaseModel#apiUpdate returns error from "update"', (t) => {
   .then(() => t.end())
 })
 
-test.skip('BaseModel#apiUpdate returns error from "deserialize"', (t) => {
+test('BaseModel#apiUpdate returns error from "deserialize"', (t) => {
   t.plan(2)
 
   class UserModel extends BaseModel {}
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: { name: 'string' }})
-  userModel.serializer.deserialize = () => {
+  const userModel = new UserModel({
+    db: dbMock, registry, name: 'user', schema: { name: 'string' }
+  })
+
+  // overwrite deserializer for testing
+  userModel.deserializer.deserialize = () => {
     t.pass('deserialize() has been called')
     return Promise.reject(new Error('some deserialization error'))
   }
@@ -875,14 +933,8 @@ test.skip('BaseModel#apiUpdate returns error from "deserialize"', (t) => {
   .then(() => t.end())
 })
 
-test.skip('BaseModel#apiCreate calls create() and returns saved serialized row without relations included', (t) => {
+test('BaseModel#apiCreate calls create() and returns saved serialized row without relations included', (t) => {
   t.plan(4)
-
-  class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel({db: dbMock, registry, name: 'user-group', schema: { name: 'string' }})
-
-  class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel({db: dbMock, registry, name: 'rights', schema: { name: 'string' }})
 
   class UserModel extends BaseModel {
     create (deserializedNewData) {
@@ -902,11 +954,14 @@ test.skip('BaseModel#apiCreate calls create() and returns saved serialized row w
       })
     }
   }
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: {
-    name: 'string',
-    userGroup: { belongsTo: groupModel },
-    rights: { belongsTo: rightsModel }
-  }})
+  const userModel = new UserModel({
+    db: dbMock, registry, name: 'user',
+    schema: {
+      name: 'string',
+      userGroup: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
 
   const newData = {
     data: {
@@ -965,12 +1020,14 @@ test('BaseModel#apiCreate returns error from "update"', (t) => {
   .then(() => t.end())
 })
 
-test.skip('BaseModel#apiCreate returns error from "deserialize"', (t) => {
+test('BaseModel#apiCreate returns error from "deserialize"', (t) => {
   t.plan(2)
 
   class UserModel extends BaseModel {}
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: { name: 'string' }})
-  userModel.serializer.deserialize = () => {
+  const userModel = new UserModel({
+    db: dbMock, registry, name: 'user', schema: { name: 'string' }
+  })
+  userModel.deserializer.deserialize = () => {
     t.pass('deserialize() has been called')
     return Promise.reject(new Error('some deserialization error'))
   }
