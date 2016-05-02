@@ -54,7 +54,6 @@ test('Serializer.serializerOptions()', (t) => {
     options1,
     {
       attributes: ['name', 'hide', 'rel1', 'rel2'],
-      keyForAttribute: 'camelCase',
       rel1: { attributes: ['enabled'], included: true, ref: 'id' },
       rel2: { attributes: ['shortName'], included: true, ref: 'id' }
     },
@@ -67,7 +66,6 @@ test('Serializer.serializerOptions()', (t) => {
     options2,
     {
       attributes: ['name', 'hide', 'rel1', 'rel2'],
-      keyForAttribute: 'camelCase',
       rel1: { attributes: ['enabled'], included: false, ref: 'id' },
       rel2: { attributes: ['shortName'], included: false, ref: 'id' }
     },
@@ -149,7 +147,7 @@ test('Serializer serialization', (t) => {
         id: '101',
         type: 'groups'
       }, {
-        attributes: { shortName: 'Full' },
+        attributes: { 'short-name': 'Full' },
         id: '12',
         type: 'rights'
       }, {
@@ -157,7 +155,7 @@ test('Serializer serialization', (t) => {
         id: '102',
         type: 'groups'
       }, {
-        attributes: { shortName: 'Part' },
+        attributes: { 'short-name': 'Part' },
         id: '13',
         type: 'rights'
       }]
