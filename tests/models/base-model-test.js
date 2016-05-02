@@ -843,43 +843,62 @@ test('BaseModel#apiFind(id) calls selectOne() and serializes row without relatio
   .then(() => t.end())
 })
 
-test.skip('BaseModel#apiUpdate calls update() and returns updated serialized row without relations included', (t) => {
+test('BaseModel#apiUpdate calls update() and returns updated serialized row without relations included', (t) => {
   t.plan(3)
 
-  class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel({db: dbMock, registry, name: 'user-group', schema: { name: 'string' }})
+  const registryMock = {
+    model (modelName) {
+      const _schemas = {
+        rights: { /* doesn't matter here */ },
+        userGroup: { /* doesn't matter here */ }
+      }
 
-  class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel({db: dbMock, registry, name: 'rights', schema: { name: 'string' }})
+      return {
+        name: modelName,
+        sqlBuilder: {
+          schemaObject: _schemas[modelName]
+        }
+      }
+    }
+  }
 
   class UserModel extends BaseModel {
     update (id, deserializedData) {
       t.pass('update(id, data) has been called')
 
-      t.deepEqual(deserializedData, {
-        id: '1', name: 'John',
-        rights: { id: '12' },
-        userGroup: { id: '101' }
-      })
-      return Promise.resolve({
+      t.deepEqual(
+        deserializedData,
+        {
+          id: '1', name: 'John',
+          rights: { id: '12' },
+          userGroup: { id: '101' }
+        },
+        'receives deserialized data'
+      )
+
+      const sqlResult = {
         id: '1', name: 'John',
         rightsId: '12',
         userGroupId: '101'
-      })
+      }
+      return Promise.resolve(sqlResult)
     }
   }
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: {
-    name: 'string',
-    userGroup: { belongsTo: groupModel },
-    rights: { belongsTo: rightsModel }
-  }})
+  const userModel = new UserModel({
+    db: dbMock, registry: registryMock, name: 'user',
+    schema: {
+      name: 'string',
+      userGroup: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
 
   const updatesData = {
     data: {
       attributes: { name: 'John' },
       id: '1',
       relationships: {
-        userGroup: { data: { id: '101', type: 'user-groups' } },
+        'user-group': { data: { id: '101', type: 'user-groups' } },
         rights: { data: { id: '12', type: 'rights' } }
       },
       type: 'users'
@@ -893,7 +912,7 @@ test.skip('BaseModel#apiUpdate calls update() and returns updated serialized row
         attributes: { name: 'John' },
         id: '1',
         relationships: {
-          'user-group': { data: { id: '101', type: 'userGroups' } },
+          userGroup: { data: { id: '101', type: 'userGroups' } },
           rights: { data: { id: '12', type: 'rights' } }
         },
         type: 'users'
@@ -931,12 +950,16 @@ test('BaseModel#apiUpdate returns error from "update"', (t) => {
   .then(() => t.end())
 })
 
-test.skip('BaseModel#apiUpdate returns error from "deserialize"', (t) => {
+test('BaseModel#apiUpdate returns error from "deserialize"', (t) => {
   t.plan(2)
 
   class UserModel extends BaseModel {}
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: { name: 'string' }})
-  userModel.serializer.deserialize = () => {
+  const userModel = new UserModel({
+    db: dbMock, registry, name: 'user', schema: { name: 'string' }
+  })
+
+  // overwrite deserializer for testing
+  userModel.deserializer.deserialize = () => {
     t.pass('deserialize() has been called')
     return Promise.reject(new Error('some deserialization error'))
   }
