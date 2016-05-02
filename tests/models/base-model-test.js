@@ -390,8 +390,16 @@ test('BaseModel#apiFetchAll calls selectMany() and returns serialized data', (t)
   .then((data) => {
     t.deepEqual(data, {
       data: [
-        { attributes: { enabled: false, name: 'Mathew' }, id: '1', type: 'users' },
-        { attributes: { enabled: true, name: 'John' }, id: '2', type: 'users' }
+        {
+          id: '1', type: 'users',
+          attributes: { enabled: false, name: 'Mathew' },
+          relationships: {}
+        },
+        {
+          id: '2', type: 'users',
+          attributes: { enabled: true, name: 'John' },
+          relationships: {}
+        }
       ]
     })
   })
@@ -941,7 +949,6 @@ test('BaseModel#apiCreate calls create() and returns saved serialized row withou
       t.pass('create(newData) has been called')
 
       t.deepEqual(deserializedNewData, {
-        id: undefined, // it's added by deserializer
         name: 'John',
         rights: { id: '12' },
         userGroup: { id: '101' }
