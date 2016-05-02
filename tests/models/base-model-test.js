@@ -788,6 +788,57 @@ test('BaseModel#_joinRelations with "relations" data provided joins in relations
   t.end()
 })
 
+test('BaseModel#_joinRelationsAndSerialize()', (t) => {
+  const registryMock = {
+    model (modelName) {
+      const _schemas = {
+        rights: { /* doesn't matter here */ },
+        userGroup: { /* doesn't matter here */ }
+      }
+
+      return {
+        name: modelName,
+        sqlBuilder: {
+          schemaObject: _schemas[modelName]
+        }
+      }
+    }
+  }
+
+  class UserModel extends BaseModel {}
+  const userModel = new UserModel({
+    db: dbMock, registry: registryMock, name: 'user',
+    schema: {
+      name: 'string',
+      userGroup: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
+
+  const sqlRow = {
+    id: '1', name: 'John',
+    rightsId: '12',
+    userGroupId: '101'
+  }
+
+  t.deepEqual(
+    userModel._joinRelationsAndSerialize(sqlRow),
+    {
+      data: {
+        attributes: { name: 'John' },
+        id: '1',
+        relationships: {
+          userGroup: { data: { id: '101', type: 'userGroups' } },
+          rights: { data: { id: '12', type: 'rights' } }
+        },
+        type: 'users'
+      }
+    }
+  )
+
+  t.end()
+})
+
 test('BaseModel#apiFind(id) calls selectOne() and serializes row without relations included', (t) => {
   t.plan(1)
 
