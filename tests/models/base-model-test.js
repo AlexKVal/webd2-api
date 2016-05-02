@@ -589,19 +589,19 @@ test('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with re
         type: 'users'
       }],
       included: [{
-        attributes: { shortName: 'Admins' },
+        attributes: { 'short-name': 'Admins' },
         id: '101',
         type: 'groups'
       }, {
-        attributes: { fullName: 'Full' },
+        attributes: { 'full-name': 'Full' },
         id: '12',
         type: 'rights'
       }, {
-        attributes: { shortName: 'Users' },
+        attributes: { 'short-name': 'Users' },
         id: '102',
         type: 'groups'
       }, {
-        attributes: { fullName: 'Part' },
+        attributes: { 'full-name': 'Part' },
         id: '13',
         type: 'rights'
       }]
@@ -753,7 +753,7 @@ test('BaseModel#_joinRelationsAndSerialize()', (t) => {
     schema: {
       name: 'string',
       userGroup: { belongsTo: 'userGroup' },
-      rights: { belongsTo: 'rights' }
+      userRights: { belongsTo: 'rights' }
     }
   })
 
@@ -770,8 +770,8 @@ test('BaseModel#_joinRelationsAndSerialize()', (t) => {
         attributes: { name: 'John' },
         id: '1',
         relationships: {
-          userGroup: { data: { id: '101', type: 'userGroups' } },
-          rights: { data: { id: '12', type: 'rights' } }
+          'user-group': { data: { id: '101', type: 'userGroups' } },
+          'user-rights': { data: { id: '12', type: 'userRights' } }
         },
         type: 'users'
       }
@@ -873,7 +873,7 @@ test('BaseModel#apiUpdate calls update() and returns updated serialized row with
         attributes: { name: 'John' },
         id: '1',
         relationships: {
-          userGroup: { data: { id: '101', type: 'userGroups' } },
+          'user-group': { data: { id: '101', type: 'userGroups' } },
           rights: { data: { id: '12', type: 'rights' } }
         },
         type: 'users'
@@ -983,7 +983,7 @@ test('BaseModel#apiCreate calls create() and returns saved serialized row withou
         attributes: { name: 'John' },
         id: '1',
         relationships: {
-          userGroup: { data: { id: '101', type: 'userGroups' } },
+          'user-group': { data: { id: '101', type: 'userGroups' } },
           rights: { data: { id: '12', type: 'rights' } }
         },
         type: 'users'
