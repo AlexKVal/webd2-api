@@ -4,7 +4,21 @@ const test = require('tape')
 const BaseModel = require('../../lib/models/base-model')
 
 const dbMock = { exec () { return Promise.resolve() } }
-const registry = { model (modelName) { return { name: modelName } } }
+const registry = {
+  model (modelName) {
+    const _schemas = {
+      rights: { /* doesn't matter here */ },
+      userGroup: { /* doesn't matter here */ }
+    }
+
+    return {
+      name: modelName,
+      sqlBuilder: {
+        schemaObject: _schemas[modelName]
+      }
+    }
+  }
+}
 
 class SomeModel extends BaseModel {}
 
@@ -600,30 +614,6 @@ test('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with re
 test('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows without relations included', (t) => {
   t.plan(1)
 
-  const registryMock = {
-    model (modelName) {
-      const _models = {
-        rights: {
-          sqlBuilder: {
-            schemaObject: {
-              /* doesn't matter here */
-            }
-          }
-        },
-
-        userGroup: {
-          sqlBuilder: {
-            schemaObject: {
-              /* doesn't matter here */
-            }
-          }
-        }
-      }
-
-      return _models[modelName]
-    }
-  }
-
   class UserModel extends BaseModel {
     selectMany () {
       return Promise.resolve([
@@ -633,7 +623,7 @@ test('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows withou
     }
   }
   const userModel = new UserModel({
-    db: dbMock, registry: registryMock, name: 'user',
+    db: dbMock, registry, name: 'user',
     schema: {
       name: 'string',
       group: { belongsTo: 'userGroup' },
@@ -670,25 +660,9 @@ test('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows withou
 test('BaseModel#_joinRelations with no "relations" provided changes relations ids into empty relations with ids', (t) => {
   t.plan(1)
 
-  const registryMock = {
-    model (modelName) {
-      const schemas = {
-        rights: { /* doesn't matter here */ },
-        userGroup: { /* doesn't matter here */ }
-      }
-
-      return {
-        name: modelName,
-        sqlBuilder: {
-          schemaObject: schemas[modelName]
-        }
-      }
-    }
-  }
-
   class UserModel extends BaseModel {}
   const userModel = new UserModel({
-    db: dbMock, registry: registryMock, name: 'user',
+    db: dbMock, registry, name: 'user',
     schema: {
       name: 'string',
       group: { belongsTo: 'userGroup' },
@@ -721,25 +695,9 @@ test('BaseModel#_joinRelations with no "relations" provided changes relations id
 test('BaseModel#_joinRelations with "relations" data provided joins in relations data', (t) => {
   t.plan(1)
 
-  const registryMock = {
-    model (modelName) {
-      const schemas = {
-        rights: { /* doesn't matter here */ },
-        userGroup: { /* doesn't matter here */ }
-      }
-
-      return {
-        name: modelName,
-        sqlBuilder: {
-          schemaObject: schemas[modelName]
-        }
-      }
-    }
-  }
-
   class UserModel extends BaseModel {}
   const userModel = new UserModel({
-    db: dbMock, registry: registryMock, name: 'user',
+    db: dbMock, registry, name: 'user',
     schema: {
       name: 'string',
       group: { belongsTo: 'userGroup' },
@@ -789,25 +747,9 @@ test('BaseModel#_joinRelations with "relations" data provided joins in relations
 })
 
 test('BaseModel#_joinRelationsAndSerialize()', (t) => {
-  const registryMock = {
-    model (modelName) {
-      const _schemas = {
-        rights: { /* doesn't matter here */ },
-        userGroup: { /* doesn't matter here */ }
-      }
-
-      return {
-        name: modelName,
-        sqlBuilder: {
-          schemaObject: _schemas[modelName]
-        }
-      }
-    }
-  }
-
   class UserModel extends BaseModel {}
   const userModel = new UserModel({
-    db: dbMock, registry: registryMock, name: 'user',
+    db: dbMock, registry, name: 'user',
     schema: {
       name: 'string',
       userGroup: { belongsTo: 'userGroup' },
@@ -842,22 +784,6 @@ test('BaseModel#_joinRelationsAndSerialize()', (t) => {
 test('BaseModel#apiFind(id) calls selectOne() and serializes row without relations included', (t) => {
   t.plan(1)
 
-  const registryMock = {
-    model (modelName) {
-      const _schemas = {
-        rights: { /* doesn't matter here */ },
-        userGroup: { /* doesn't matter here */ }
-      }
-
-      return {
-        name: modelName,
-        sqlBuilder: {
-          schemaObject: _schemas[modelName]
-        }
-      }
-    }
-  }
-
   class UserModel extends BaseModel {
     selectOne (options) {
       const rows = {
@@ -868,7 +794,7 @@ test('BaseModel#apiFind(id) calls selectOne() and serializes row without relatio
     }
   }
   const userModel = new UserModel({
-    db: dbMock, registry: registryMock, name: 'user',
+    db: dbMock, registry, name: 'user',
     schema: {
       name: 'string',
       group: { belongsTo: 'userGroup' },
@@ -897,22 +823,6 @@ test('BaseModel#apiFind(id) calls selectOne() and serializes row without relatio
 test('BaseModel#apiUpdate calls update() and returns updated serialized row without relations included', (t) => {
   t.plan(3)
 
-  const registryMock = {
-    model (modelName) {
-      const _schemas = {
-        rights: { /* doesn't matter here */ },
-        userGroup: { /* doesn't matter here */ }
-      }
-
-      return {
-        name: modelName,
-        sqlBuilder: {
-          schemaObject: _schemas[modelName]
-        }
-      }
-    }
-  }
-
   class UserModel extends BaseModel {
     update (id, deserializedData) {
       t.pass('update(id, data) has been called')
@@ -936,7 +846,7 @@ test('BaseModel#apiUpdate calls update() and returns updated serialized row with
     }
   }
   const userModel = new UserModel({
-    db: dbMock, registry: registryMock, name: 'user',
+    db: dbMock, registry, name: 'user',
     schema: {
       name: 'string',
       userGroup: { belongsTo: 'userGroup' },
@@ -1026,22 +936,6 @@ test('BaseModel#apiUpdate returns error from "deserialize"', (t) => {
 test('BaseModel#apiCreate calls create() and returns saved serialized row without relations included', (t) => {
   t.plan(4)
 
-  const registryMock = {
-    model (modelName) {
-      const _schemas = {
-        rights: { /* doesn't matter here */ },
-        userGroup: { /* doesn't matter here */ }
-      }
-
-      return {
-        name: modelName,
-        sqlBuilder: {
-          schemaObject: _schemas[modelName]
-        }
-      }
-    }
-  }
-
   class UserModel extends BaseModel {
     create (deserializedNewData) {
       t.pass('create(newData) has been called')
@@ -1061,7 +955,7 @@ test('BaseModel#apiCreate calls create() and returns saved serialized row withou
     }
   }
   const userModel = new UserModel({
-    db: dbMock, registry: registryMock, name: 'user',
+    db: dbMock, registry, name: 'user',
     schema: {
       name: 'string',
       userGroup: { belongsTo: 'userGroup' },
