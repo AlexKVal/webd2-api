@@ -498,32 +498,44 @@ test('BaseModel#_fetchRelations fetches relations data', (t) => {
   .then(() => t.end())
 })
 
-test.skip('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with relations data included', (t) => {
+test('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with relations data included', (t) => {
   t.plan(1)
 
-  class GroupModel extends BaseModel {
-    selectMany () {
-      return Promise.resolve([
-        {id: '101', name: 'Admins'},
-        {id: '102', name: 'Users'}
-      ])
-    }
-  }
-  const groupModel = new GroupModel({db: dbMock, registry, name: 'user-group', schema: {
-    name: 'string'
-  }})
+  const registryMock = {
+    model (modelName) {
+      const _models = {
+        rights: {
+          selectMany () {
+            return Promise.resolve([
+              {id: '12', fullName: 'Full'},
+              {id: '13', fullName: 'Part'}
+            ])
+          },
+          sqlBuilder: {
+            schemaObject: {
+              fullName: 'string'
+            }
+          }
+        },
 
-  class RightsModel extends BaseModel {
-    selectMany () {
-      return Promise.resolve([
-        {id: '12', name: 'Full'},
-        {id: '13', name: 'Part'}
-      ])
+        userGroup: {
+          selectMany () {
+            return Promise.resolve([
+              {id: '101', shortName: 'Admins'},
+              {id: '102', shortName: 'Users'}
+            ])
+          },
+          sqlBuilder: {
+            schemaObject: {
+              shortName: 'string'
+            }
+          }
+        }
+      }
+
+      return _models[modelName]
     }
   }
-  const rightsModel = new RightsModel({db: dbMock, registry, name: 'rights', schema: {
-    name: 'string'
-  }})
 
   class UserModel extends BaseModel {
     selectMany () {
@@ -533,11 +545,14 @@ test.skip('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows wi
       ])
     }
   }
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: {
-    name: 'string',
-    group: { belongsTo: groupModel },
-    rights: { belongsTo: rightsModel }
-  }})
+  const userModel = new UserModel({
+    db: dbMock, registry: registryMock, name: 'user',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
 
   userModel.apiFetchAll({withRelated: true})
   .then((serialized) => {
@@ -560,19 +575,19 @@ test.skip('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows wi
         type: 'users'
       }],
       included: [{
-        attributes: { name: 'Admins' },
+        attributes: { shortName: 'Admins' },
         id: '101',
         type: 'groups'
       }, {
-        attributes: { name: 'Full' },
+        attributes: { fullName: 'Full' },
         id: '12',
         type: 'rights'
       }, {
-        attributes: { name: 'Users' },
+        attributes: { shortName: 'Users' },
         id: '102',
         type: 'groups'
       }, {
-        attributes: { name: 'Part' },
+        attributes: { fullName: 'Part' },
         id: '13',
         type: 'rights'
       }]
@@ -582,18 +597,32 @@ test.skip('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows wi
   .then(() => t.end())
 })
 
-test.skip('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows without relations included', (t) => {
+test('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows without relations included', (t) => {
   t.plan(1)
 
-  class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel({db: dbMock, registry, name: 'user-group', schema: {
-    name: 'string'
-  }})
+  const registryMock = {
+    model (modelName) {
+      const _models = {
+        rights: {
+          sqlBuilder: {
+            schemaObject: {
+              /* doesn't matter here */
+            }
+          }
+        },
 
-  class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel({db: dbMock, registry, name: 'rights', schema: {
-    name: 'string'
-  }})
+        userGroup: {
+          sqlBuilder: {
+            schemaObject: {
+              /* doesn't matter here */
+            }
+          }
+        }
+      }
+
+      return _models[modelName]
+    }
+  }
 
   class UserModel extends BaseModel {
     selectMany () {
@@ -603,11 +632,14 @@ test.skip('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows w
       ])
     }
   }
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: {
-    name: 'string',
-    group: { belongsTo: groupModel },
-    rights: { belongsTo: rightsModel }
-  }})
+  const userModel = new UserModel({
+    db: dbMock, registry: registryMock, name: 'user',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
 
   userModel.apiFetchAll()
   .then((serialized) => {
