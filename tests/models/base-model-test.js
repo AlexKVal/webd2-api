@@ -443,7 +443,7 @@ test('BaseModel#apiFetchAll childModel can override selectMany() to provide own 
 
   model.apiFetchAll()
   .then(() => t.pass('success'))
-  .catch(() => t.fail('should not be called'))
+  .catch((e) => t.fail(e))
   .then(() => t.end())
 })
 
