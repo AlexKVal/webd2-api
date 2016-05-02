@@ -43,43 +43,27 @@ test('getBelongsToRelations()', (t) => {
 test('attributesOfRelations()', (t) => {
   const registryMock = {
     model (modelName) {
-      const schemas = {
-        rights: {
-          fullName: 'string',
-          enabled: 'boolean',
-          group: {
-            belongsTo: 'rightsGroup'
-          }
-        },
-        userGroup: {
-          shortName: 'string',
-          hide: 'boolean'
-        }
+      const _models = {
+        userGroup: { attributesSerialize: ['shortName', 'hide'] },
+        rights: { attributesSerialize: ['fullName', 'enabled', 'group'] }
       }
 
-      return {
-        name: modelName,
-        sqlBuilder: {
-          schemaObject: schemas[modelName]
-        }
-      }
+      return _models[modelName]
     }
   }
 
-  const parentSchema = {
-    name: 'string',
-    hide: 'boolean',
-    group: {
-      belongsTo: 'userGroup',
-      fkField: 'GrpID'
-    },
-    rights: {
-      belongsTo: 'rights'
+  const belongsToRelations = [
+    {
+      relationModelName: 'userGroup',
+      modelFieldName: 'group'
+    }, {
+      relationModelName: 'rights',
+      modelFieldName: 'rights'
     }
-  }
+  ]
 
   t.deepEqual(
-    attributesOfRelations(registryMock, parentSchema),
+    attributesOfRelations(registryMock, belongsToRelations),
     {
       group: ['shortName', 'hide'],
       rights: ['fullName', 'enabled', 'group']

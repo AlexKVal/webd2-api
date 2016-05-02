@@ -533,11 +533,7 @@ test('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with re
               {id: '13', fullName: 'Part'}
             ])
           },
-          sqlBuilder: {
-            schemaObject: {
-              fullName: 'string'
-            }
-          }
+          attributesSerialize: ['fullName']
         },
 
         userGroup: {
@@ -547,11 +543,7 @@ test('BaseModel#apiFetchAll({withRelated: true}) returns serialized rows with re
               {id: '102', shortName: 'Users'}
             ])
           },
-          sqlBuilder: {
-            schemaObject: {
-              shortName: 'string'
-            }
-          }
+          attributesSerialize: ['shortName']
         }
       }
 
