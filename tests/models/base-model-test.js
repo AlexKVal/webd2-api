@@ -620,25 +620,34 @@ test.skip('BaseModel#apiFetchAll({withRelated: false}) returns serialized rows w
   .then(() => t.end())
 })
 
-test.skip('BaseModel#_joinRelations with no "relations" provided changes relations ids into empty relations with ids', (t) => {
+test('BaseModel#_joinRelations with no "relations" provided changes relations ids into empty relations with ids', (t) => {
   t.plan(1)
 
-  class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel({db: dbMock, registry, name: 'user-group', schema: {
-    name: 'string'
-  }})
+  const registryMock = {
+    model (modelName) {
+      const schemas = {
+        rights: { /* doesn't matter here */ },
+        userGroup: { /* doesn't matter here */ }
+      }
 
-  class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel({db: dbMock, registry, name: 'rights', schema: {
-    name: 'string'
-  }})
+      return {
+        name: modelName,
+        sqlBuilder: {
+          schemaObject: schemas[modelName]
+        }
+      }
+    }
+  }
 
   class UserModel extends BaseModel {}
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: {
-    name: 'string',
-    group: { belongsTo: groupModel },
-    rights: { belongsTo: rightsModel }
-  }})
+  const userModel = new UserModel({
+    db: dbMock, registry: registryMock, name: 'user',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
 
   const parentRows = [
     {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
@@ -662,25 +671,34 @@ test.skip('BaseModel#_joinRelations with no "relations" provided changes relatio
   t.end()
 })
 
-test.skip('BaseModel#_joinRelations with "relations" data provided joins in relations data', (t) => {
+test('BaseModel#_joinRelations with "relations" data provided joins in relations data', (t) => {
   t.plan(1)
 
-  class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel({db: dbMock, registry, name: 'user-group', schema: {
-    name: 'string'
-  }})
+  const registryMock = {
+    model (modelName) {
+      const schemas = {
+        rights: { /* doesn't matter here */ },
+        userGroup: { /* doesn't matter here */ }
+      }
 
-  class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel({db: dbMock, registry, name: 'rights', schema: {
-    name: 'string'
-  }})
+      return {
+        name: modelName,
+        sqlBuilder: {
+          schemaObject: schemas[modelName]
+        }
+      }
+    }
+  }
 
   class UserModel extends BaseModel {}
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: {
-    name: 'string',
-    group: { belongsTo: groupModel },
-    rights: { belongsTo: rightsModel }
-  }})
+  const userModel = new UserModel({
+    db: dbMock, registry: registryMock, name: 'user',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
 
   const parentRows = [
     {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
