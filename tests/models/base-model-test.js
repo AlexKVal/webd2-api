@@ -1023,14 +1023,24 @@ test('BaseModel#apiUpdate returns error from "deserialize"', (t) => {
   .then(() => t.end())
 })
 
-test.skip('BaseModel#apiCreate calls create() and returns saved serialized row without relations included', (t) => {
+test('BaseModel#apiCreate calls create() and returns saved serialized row without relations included', (t) => {
   t.plan(4)
 
-  class GroupModel extends BaseModel {}
-  const groupModel = new GroupModel({db: dbMock, registry, name: 'user-group', schema: { name: 'string' }})
+  const registryMock = {
+    model (modelName) {
+      const _schemas = {
+        rights: { /* doesn't matter here */ },
+        userGroup: { /* doesn't matter here */ }
+      }
 
-  class RightsModel extends BaseModel {}
-  const rightsModel = new RightsModel({db: dbMock, registry, name: 'rights', schema: { name: 'string' }})
+      return {
+        name: modelName,
+        sqlBuilder: {
+          schemaObject: _schemas[modelName]
+        }
+      }
+    }
+  }
 
   class UserModel extends BaseModel {
     create (deserializedNewData) {
@@ -1050,11 +1060,14 @@ test.skip('BaseModel#apiCreate calls create() and returns saved serialized row w
       })
     }
   }
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: {
-    name: 'string',
-    userGroup: { belongsTo: groupModel },
-    rights: { belongsTo: rightsModel }
-  }})
+  const userModel = new UserModel({
+    db: dbMock, registry: registryMock, name: 'user',
+    schema: {
+      name: 'string',
+      userGroup: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
 
   const newData = {
     data: {
@@ -1076,7 +1089,7 @@ test.skip('BaseModel#apiCreate calls create() and returns saved serialized row w
         attributes: { name: 'John' },
         id: '1',
         relationships: {
-          'user-group': { data: { id: '101', type: 'userGroups' } },
+          userGroup: { data: { id: '101', type: 'userGroups' } },
           rights: { data: { id: '12', type: 'rights' } }
         },
         type: 'users'
@@ -1113,12 +1126,14 @@ test('BaseModel#apiCreate returns error from "update"', (t) => {
   .then(() => t.end())
 })
 
-test.skip('BaseModel#apiCreate returns error from "deserialize"', (t) => {
+test('BaseModel#apiCreate returns error from "deserialize"', (t) => {
   t.plan(2)
 
   class UserModel extends BaseModel {}
-  const userModel = new UserModel({db: dbMock, registry, name: 'user', schema: { name: 'string' }})
-  userModel.serializer.deserialize = () => {
+  const userModel = new UserModel({
+    db: dbMock, registry, name: 'user', schema: { name: 'string' }
+  })
+  userModel.deserializer.deserialize = () => {
     t.pass('deserialize() has been called')
     return Promise.reject(new Error('some deserialization error'))
   }
