@@ -76,3 +76,57 @@ test('apiWrapper.apiCreate()', (t) => {
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
+
+test('apiWrapper.apiUpdate()', (t) => {
+  t.plan(6)
+
+  const updatesDataFromClient = { some: 'does not matter' }
+  const deserializedUpdatesData = { someOther: 'also does not matter' }
+  const dataFromUpdate = { some2: '2' }
+
+  const deserializer = {
+    deserialize (data) {
+      t.equal(data, updatesDataFromClient, 'passes to deserializer updates data')
+      return Promise.resolve(deserializedUpdatesData)
+    }
+  }
+
+  const model = {
+    name: 'someModelName',
+
+    update (id, deserialized) {
+      t.equal(id, 131, 'provides id to model`s update method')
+      t.equal(
+        deserialized,
+        deserializedUpdatesData,
+        'provides deserialized data to model`s update() method'
+      )
+
+      return Promise.resolve(dataFromUpdate)
+    }
+  }
+
+  const apiWrappedModel = new ApiWrapper({model, deserializer})
+
+  t.throws(
+    () => apiWrappedModel.apiUpdate(/* no id */),
+    /id and updates cannot be undefined/,
+    'needs id and updates'
+  )
+
+  // mock it for testing
+  apiWrappedModel._joinRelationsAndSerialize = (record) => {
+    t.equal(
+      record,
+      dataFromUpdate,
+      'joins relations and serializes the result from model.update()'
+    )
+
+    return 'joined and serialized record'
+  }
+
+  apiWrappedModel.apiUpdate(131, updatesDataFromClient)
+  .then((result) => t.equal(result, 'joined and serialized record'))
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
