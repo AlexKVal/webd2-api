@@ -5,7 +5,7 @@ const ApiWrapper = require('../../lib/api/api-wrapper')
 
 test('ApiWrapper', (t) => {
   const someModelMock = { name: 'some-model-name' }
-  const apiWrappedSomeModel = new ApiWrapper({model: someModelMock})
+  const apiWrappedSomeModel = new ApiWrapper({model: someModelMock, serializer: {}, deserializer: {}})
 
   t.throws(
     () => new ApiWrapper(),
@@ -52,7 +52,7 @@ test('apiWrapper.apiCreate()', (t) => {
     }
   }
 
-  const apiWrappedModel = new ApiWrapper({model, deserializer})
+  const apiWrappedModel = new ApiWrapper({model, deserializer, serializer: {}})
 
   t.throws(
     () => apiWrappedModel.apiCreate(/* no data */),
@@ -106,7 +106,7 @@ test('apiWrapper.apiUpdate()', (t) => {
     }
   }
 
-  const apiWrappedModel = new ApiWrapper({model, deserializer})
+  const apiWrappedModel = new ApiWrapper({model, deserializer, serializer: {}})
 
   t.throws(
     () => apiWrappedModel.apiUpdate(/* no id */),
@@ -145,7 +145,7 @@ test('apiWrapper.apiFind()', (t) => {
     }
   }
 
-  const apiWrappedModel = new ApiWrapper({ model, deserializer: {} })
+  const apiWrappedModel = new ApiWrapper({ model, deserializer: {}, serializer: {} })
 
   t.throws(
     () => apiWrappedModel.apiFind(/* no id */),
