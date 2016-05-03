@@ -253,3 +253,42 @@ test('apiWrapper.apiFetchAll() with related', (t) => {
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
+
+test('apiWrapper._joinRelations() with no "relations" provided', (t) => {
+  t.plan(1)
+
+  const model = {
+    name: 'someModelName',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  }
+
+  const parentRows = [
+    {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+    {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+  ]
+
+  const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}})
+
+  t.deepEqual(
+    apiWrappedModel._joinRelations(parentRows /*, no_relations_data */),
+    [
+      {
+        id: '1', name: 'John',
+        group: { id: '101' },
+        rights: {id: '12'}
+      },
+      {
+        id: '2', name: 'Smith',
+        group: {id: '102'},
+        rights: {id: '13'}
+      }
+    ],
+    'changes relations ids into empty relations with ids'
+  )
+
+  t.end()
+})
