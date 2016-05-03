@@ -820,3 +820,55 @@ test('I&T apiWrapper.apiFind()', (t) => {
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
+
+test('I&T apiWrapper.apiFetchAll({withRelated: false})', (t) => {
+  t.plan(1)
+
+  class UserModel extends BaseModel {
+    selectMany () {
+      return Promise.resolve([
+        {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+        {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+      ])
+    }
+  }
+  const userModel = new UserModel({
+    db: dbMock, registry, name: 'user',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
+
+  const apiWrappedUserModel = new ApiWrapper({model: userModel})
+
+  apiWrappedUserModel.apiFetchAll()
+  .then((serialized) => {
+    t.deepEqual(
+      serialized,
+      {
+        data: [{
+          attributes: { name: 'John' },
+          id: '1',
+          relationships: {
+            group: { data: { id: '101', type: 'groups' } },
+            rights: { data: { id: '12', type: 'rights' } }
+          },
+          type: 'users'
+        }, {
+          attributes: { name: 'Smith' },
+          id: '2',
+          relationships: {
+            group: { data: { id: '102', type: 'groups' } },
+            rights: { data: { id: '13', type: 'rights' } }
+          },
+          type: 'users'
+        }]
+      },
+      'returns serialized rows without relations included'
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
