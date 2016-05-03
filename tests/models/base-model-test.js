@@ -4,20 +4,17 @@ const test = require('tape')
 const BaseModel = require('../../lib/models/base-model')
 
 const dbMock = { exec () { return Promise.resolve() } }
-const registry = {
-  model () { return { sqlBuilder: { schemaObject: { /* doesn't matter */ } } } }
-}
 
 class SomeModel extends BaseModel {}
 
 test('BaseModel is abstract class', (t) => {
   t.throws(
-    () => new BaseModel({db: dbMock, registry, name: 'name', schema: {}}),
+    () => new BaseModel({db: dbMock, name: 'name', schema: {}}),
     /is abstract class/
   )
 
   t.doesNotThrow(
-    () => new SomeModel({db: dbMock, registry, name: 'name', schema: {}}),
+    () => new SomeModel({db: dbMock, name: 'name', schema: {}}),
     /is abstract class/
   )
 
@@ -38,19 +35,13 @@ test('BaseModel constructor requires parameters', (t) => {
   )
 
   t.throws(
-    () => new SomeModel({db: dbMock, registry, name: 'model-name'}),
+    () => new SomeModel({db: dbMock, name: 'model-name'}),
     /schema is not provided/,
     'throws when no "schema" provided'
   )
 
   t.throws(
-    () => new SomeModel({db: dbMock, name: 'model-name', schema: {}}),
-    /registry is not provided/,
-    'throws when no "registry" provided'
-  )
-
-  t.throws(
-    () => new SomeModel({db: dbMock, registry, name: 'name', schema: 'any non object'}),
+    () => new SomeModel({db: dbMock, name: 'name', schema: 'any non object'}),
     /schema attribute should be an object/,
     'throws if "schema" is not an object'
   )
@@ -77,7 +68,7 @@ test('BaseModel#selectMany calls db.exec() and returns cast types', (t) => {
   }
 
   class ModelForAll extends BaseModel {}
-  const model = new ModelForAll({db, registry, name: 'name', schema: {
+  const model = new ModelForAll({db, name: 'name', schema: {
     tableName: 'some',
     enabled: 'boolean',
     disabled: 'boolean',
@@ -113,7 +104,7 @@ test('BaseModel#selectMany(options) accepts `options` for sqlBuilder.selectMany(
   }
 
   class User extends BaseModel {}
-  const model = new User({db, registry, name: 'user', schema: {
+  const model = new User({db, name: 'user', schema: {
     tableName: 'sPersonal',
     name: 'string',
     hide: 'boolean',
@@ -149,7 +140,7 @@ test('BaseModel#selectOne(options) accepts `options` for sqlBuilder.selectOne()'
   }
 
   class ModelForGet extends BaseModel {}
-  const model = new ModelForGet({db, registry, name: 'name', schema: {
+  const model = new ModelForGet({db, name: 'name', schema: {
     tableName: 'some',
     enabled: 'boolean',
     disabled: 'boolean',
@@ -186,7 +177,7 @@ test('BaseModel#selectOne rejects with error if db returns no rows', (t) => {
   }
 
   class ModelForGet extends BaseModel {}
-  const model = new ModelForGet({db, registry, name: 'name', schema: {tableName: 'some'}})
+  const model = new ModelForGet({db, name: 'name', schema: {tableName: 'some'}})
   model.selectOne({id: 1})
   .then(() => t.fail('should not be called'))
   .catch((e) => {
@@ -201,7 +192,7 @@ test('BaseModel#selectOne rejects with error if db returns no rows', (t) => {
  */
 test('BaseModel#update throws error if no "id" or "data" provided', (t) => {
   class ModelForUpdate extends BaseModel {}
-  const model = new ModelForUpdate({db: dbMock, registry, name: 'name', schema: {}})
+  const model = new ModelForUpdate({db: dbMock, name: 'name', schema: {}})
   t.throws(() => model.update(/* no id */), /no id has been provided/)
   t.throws(() => model.update(1 /* no data */), /no data has been provided/)
   t.end()
@@ -228,7 +219,7 @@ test('BaseModel#update rejects with error if no row with "id" exists', (t) => {
   }
 
   class ModelForUpdate extends BaseModel {}
-  const model = new ModelForUpdate({db, registry, name: 'name', schema: {tableName: 'some'}})
+  const model = new ModelForUpdate({db, name: 'name', schema: {tableName: 'some'}})
   model.update(1, {name: 'new'})
   .catch((e) => {
     t.pass('catch error')
@@ -269,7 +260,7 @@ test('BaseModel#update calls db.exec, calls selectOne(), and returns a result fr
       }])
     }
   }
-  const model = new ModelForFullUpdate({db, registry, name: 'name', schema: {
+  const model = new ModelForFullUpdate({db, name: 'name', schema: {
     tableName: 'some',
     enabled: 'boolean',
     disabled: 'boolean',
@@ -327,7 +318,7 @@ test('BaseModel#create calls db.exec and returns saved model with cast types', (
   }
 
   class ModelForFullCreate extends BaseModel {}
-  const model = new ModelForFullCreate({db, registry, name: 'name', schema: {
+  const model = new ModelForFullCreate({db, name: 'name', schema: {
     tableName: 'some',
     enabled: 'boolean',
     disabled: 'boolean',

@@ -3,9 +3,15 @@ const test = require('tape')
 
 const ApiWrapper = require('../../lib/api/api-wrapper')
 
+const registryMock = { model (modelName) { return {name: modelName} } }
+
 test('ApiWrapper', (t) => {
   const someModelMock = { name: 'some-model-name' }
-  const apiWrappedSomeModel = new ApiWrapper({model: someModelMock, serializer: {}, deserializer: {}})
+  const apiWrappedSomeModel = new ApiWrapper({
+    model: someModelMock,
+    serializer: {}, deserializer: {},
+    registryMock
+  })
 
   t.throws(
     () => new ApiWrapper(),
@@ -19,10 +25,17 @@ test('ApiWrapper', (t) => {
     'model should be with a name'
   )
 
+  const aModelMock = { name: 'modelName', attributesSerialize: [] }
   t.doesNotThrow(
-    () => new ApiWrapper({ name: 'modelName', attributesSerialize: [] }),
+    () => new ApiWrapper(aModelMock),
     /ApiWrapper needs a model/,
     'model could be provided directly'
+  )
+
+  const aRegistryMock = {}
+  t.doesNotThrow(
+    () => new ApiWrapper(aModelMock, aRegistryMock),
+    'registry could be passed as a second argument for testing'
   )
 
   t.equal(apiWrappedSomeModel.model, someModelMock, '`model` property holds a model')
@@ -58,7 +71,7 @@ test('apiWrapper.apiCreate()', (t) => {
     }
   }
 
-  const apiWrappedModel = new ApiWrapper({model, deserializer, serializer: {}})
+  const apiWrappedModel = new ApiWrapper({model, deserializer, serializer: {}, registryMock})
 
   t.throws(
     () => apiWrappedModel.apiCreate(/* no data */),
@@ -100,7 +113,7 @@ test('apiWrapper.apiCreate() returns error from deserializer', (t) => {
     }
   }
 
-  const apiWrappedModel = new ApiWrapper({model, deserializer, serializer: {}})
+  const apiWrappedModel = new ApiWrapper({model, deserializer, serializer: {}, registryMock})
 
   // mock it for testing
   apiWrappedModel._joinRelationsAndSerialize = () => {
@@ -143,7 +156,7 @@ test('apiWrapper.apiCreate() returns error from model.create()', (t) => {
     }
   }
 
-  const apiWrappedModel = new ApiWrapper({model, deserializer, serializer: {}})
+  const apiWrappedModel = new ApiWrapper({model, deserializer, serializer: {}, registryMock})
 
   // mock it for testing
   apiWrappedModel._joinRelationsAndSerialize = () => {
@@ -191,7 +204,7 @@ test('apiWrapper.apiUpdate()', (t) => {
     }
   }
 
-  const apiWrappedModel = new ApiWrapper({model, deserializer, serializer: {}})
+  const apiWrappedModel = new ApiWrapper({model, deserializer, serializer: {}, registryMock})
 
   t.throws(
     () => apiWrappedModel.apiUpdate(/* no id */),
@@ -232,7 +245,7 @@ test('apiWrapper.apiUpdate() returns error from deserializer', (t) => {
     }
   }
 
-  const apiWrappedModel = new ApiWrapper({model, deserializer, serializer: {}})
+  const apiWrappedModel = new ApiWrapper({model, deserializer, serializer: {}, registryMock})
 
   // mock it for testing
   apiWrappedModel._joinRelationsAndSerialize = () => {
@@ -267,7 +280,7 @@ test('apiWrapper.apiUpdate() returns error from model.update()', (t) => {
     }
   }
 
-  const apiWrappedModel = new ApiWrapper({model, deserializer, serializer: {}})
+  const apiWrappedModel = new ApiWrapper({model, deserializer, serializer: {}, registryMock})
 
   // mock it for testing
   apiWrappedModel._joinRelationsAndSerialize = () => {
@@ -300,7 +313,7 @@ test('apiWrapper.apiFind()', (t) => {
     }
   }
 
-  const apiWrappedModel = new ApiWrapper({ model, deserializer: {}, serializer: {} })
+  const apiWrappedModel = new ApiWrapper({ model, deserializer: {}, serializer: {}, registryMock })
 
   t.throws(
     () => apiWrappedModel.apiFind(/* no id */),
@@ -347,7 +360,7 @@ test('apiWrapper.apiFetchAll() without related', (t) => {
     }
   }
 
-  const apiWrappedModel = new ApiWrapper({model, serializer: serializer, deserializer: {}})
+  const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}, registryMock})
 
   // mock it for testing
   apiWrappedModel._joinRelations = (parentRows) => {
@@ -389,7 +402,7 @@ test('apiWrapper.apiFetchAll() with related', (t) => {
     }
   }
 
-  const apiWrappedModel = new ApiWrapper({model, serializer: serializer, deserializer: {}})
+  const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}, registryMock})
 
   // mock it for testing
   apiWrappedModel._fetchRelations = (parentRows) => {
@@ -426,7 +439,7 @@ test('apiWrapper._joinRelations() with no "relations" provided', (t) => {
     {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
   ]
 
-  const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}})
+  const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}, registryMock})
 
   t.deepEqual(
     apiWrappedModel._joinRelations(parentRows /*, no_relations_data */),
@@ -484,7 +497,7 @@ test('apiWrapper._joinRelations() with "relations" data provided', (t) => {
     }
   ]
 
-  const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}})
+  const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}, registryMock})
 
   t.deepEqual(
     apiWrappedModel._joinRelations(parentRows, relationsData),
@@ -518,7 +531,7 @@ test('apiWrapper._joinRelationsAndSerialize()', (t) => {
 
   const model = { name: 'someModelName' }
 
-  const apiWrappedModel = new ApiWrapper({model, serializer: serializer, deserializer: {}})
+  const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}, registryMock})
 
   // mock it for testing
   apiWrappedModel._joinRelations = (parentRows) => {
@@ -599,7 +612,7 @@ test('apiWrapper._fetchRelations()', (t) => {
     }
   }
 
-  const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}})
+  const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}, registryMock})
 
   const parentRows = [
     {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
@@ -635,11 +648,6 @@ test('apiWrapper._fetchRelations()', (t) => {
 const BaseModel = require('../../lib/models/base-model')
 
 const dbMock = { exec () { return Promise.resolve() } }
-const registry = {
-  model () {
-    return { sqlBuilder: { schemaObject: { /* doesn't matter */ } } }
-  }
-}
 
 test('I&T apiWrapper.apiCreate()', (t) => {
   t.plan(3)
@@ -665,7 +673,7 @@ test('I&T apiWrapper.apiCreate()', (t) => {
     }
   }
   const userModel = new UserModel({
-    db: dbMock, registry, name: 'user',
+    db: dbMock, name: 'user',
     schema: {
       name: 'string',
       userGroup: { belongsTo: 'userGroup' },
@@ -673,7 +681,7 @@ test('I&T apiWrapper.apiCreate()', (t) => {
     }
   })
 
-  const apiWrappedUserModel = new ApiWrapper(userModel)
+  const apiWrappedUserModel = new ApiWrapper(userModel, registryMock)
 
   const newData = {
     data: {
@@ -737,7 +745,7 @@ test('I&T apiWrapper.apiUpdate()', (t) => {
   }
 
   const userModel = new UserModel({
-    db: dbMock, registry, name: 'user',
+    db: dbMock, name: 'user',
     schema: {
       name: 'string',
       userGroup: { belongsTo: 'userGroup' },
@@ -745,7 +753,7 @@ test('I&T apiWrapper.apiUpdate()', (t) => {
     }
   })
 
-  const apiWrappedUserModel = new ApiWrapper(userModel)
+  const apiWrappedUserModel = new ApiWrapper(userModel, registryMock)
 
   const updatesData = {
     data: {
@@ -795,7 +803,7 @@ test('I&T apiWrapper.apiFind()', (t) => {
   }
 
   const userModel = new UserModel({
-    db: dbMock, registry, name: 'user',
+    db: dbMock, name: 'user',
     schema: {
       name: 'string',
       group: { belongsTo: 'userGroup' },
@@ -803,7 +811,7 @@ test('I&T apiWrapper.apiFind()', (t) => {
     }
   })
 
-  const apiWrappedUserModel = new ApiWrapper(userModel)
+  const apiWrappedUserModel = new ApiWrapper(userModel, registryMock)
 
   apiWrappedUserModel.apiFind(1)
   .then((serialized) => {
@@ -839,7 +847,7 @@ test('I&T apiWrapper.apiFetchAll({withRelated: false})', (t) => {
     }
   }
   const userModel = new UserModel({
-    db: dbMock, registry, name: 'user',
+    db: dbMock, name: 'user',
     schema: {
       name: 'string',
       group: { belongsTo: 'userGroup' },
@@ -847,7 +855,7 @@ test('I&T apiWrapper.apiFetchAll({withRelated: false})', (t) => {
     }
   })
 
-  const apiWrappedUserModel = new ApiWrapper(userModel)
+  const apiWrappedUserModel = new ApiWrapper(userModel, registryMock)
 
   apiWrappedUserModel.apiFetchAll()
   .then((serialized) => {
@@ -927,7 +935,7 @@ test('I&T apiWrapper.apiFetchAll({withRelated: true})', (t) => {
     }
   })
 
-  const apiWrappedUserModel = new ApiWrapper(userModel)
+  const apiWrappedUserModel = new ApiWrapper(userModel, registryMock)
 
   apiWrappedUserModel.apiFetchAll({withRelated: true})
   .then((serialized) => {

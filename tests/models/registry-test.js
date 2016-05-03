@@ -45,13 +45,6 @@ test('registry is a `singleton` store for models', (t) => {
     'it hints about absent schemaObject'
   )
 
-  const userModel = registry.model('User')
-  t.equal(
-    userModel.registry,
-    registry,
-    'it injects itself to models'
-  )
-
   class UserAccount extends BaseModel {}
   UserAccount.schemaObject = { tableName: 'sPersonal', id: 'PersID', name: 'string' }
   const userAccountModel = registry.model('UserAccount', UserAccount, dbMock)
