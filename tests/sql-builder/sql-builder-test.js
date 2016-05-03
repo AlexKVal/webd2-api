@@ -866,6 +866,20 @@ test('relationModel.sqlBuilder.selectMany({ whereIn })', (t) => {
     'is used for fetching relations data'
   )
 
+  t.equal(
+    relationModelSqlBuilder.selectMany({
+      whereIn: {
+        parentFkName: parent.relFkName,
+        parentTableName: parent.tableName,
+        parentWhere: undefined
+      }
+    }),
+    'SELECT GrpID as id, name, hide' +
+    ' FROM sPepTree' +
+    ' WHERE id IN (SELECT DISTINCT GrpID FROM sPersonal)',
+    'the case without parent`s {where} constraints'
+  )
+
   t.end()
 })
 
