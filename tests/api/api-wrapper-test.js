@@ -556,14 +556,22 @@ test('apiWrapper._joinRelationsAndSerialize()', (t) => {
   .then(() => t.end())
 })
 
-test('apiWrapper._fetchRelations()', (t) => {
-  t.plan(1)
+test.only('apiWrapper._fetchRelations()', (t) => {
+  t.plan(5)
 
   const registryMock = {
     model (modelName) {
       const _models = {
         rights: {
-          selectMany () {
+          selectMany (options) {
+            t.ok(options.whereIn, 'uses {whereIn} option')
+
+            t.deepEqual(
+              options.whereIn.parentWhere,
+              {someField: 'parent where constraints'},
+              'passes parentWhere to rel.selectMany()'
+            )
+
             return Promise.resolve([
               {id: '12', fullName: 'Full'},
               {id: '13', fullName: 'Part'}
@@ -577,7 +585,15 @@ test('apiWrapper._fetchRelations()', (t) => {
         },
 
         userGroup: {
-          selectMany () {
+          selectMany (options) {
+            t.ok(options.whereIn, 'uses {whereIn} option')
+
+            t.deepEqual(
+              options.whereIn.parentWhere,
+              {someField: 'parent where constraints'},
+              'passes parentWhere to rel.selectMany()'
+            )
+
             return Promise.resolve([
               {id: '101', shortName: 'Admins'},
               {id: '102', shortName: 'Users'}
@@ -598,6 +614,7 @@ test('apiWrapper._fetchRelations()', (t) => {
   const model = {
     name: 'someModelName',
     registry: registryMock,
+    sqlBuilder: {tableName: 'someTableName'},
     schema: {
       name: 'string',
       group: { belongsTo: 'userGroup' },
@@ -619,7 +636,9 @@ test('apiWrapper._fetchRelations()', (t) => {
     {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
   ]
 
-  apiWrappedModel._fetchRelations(parentRows)
+  const parentWhere = {someField: 'parent where constraints'}
+
+  apiWrappedModel._fetchRelations(parentRows, parentWhere)
   .then((data) => {
     t.deepEqual(
       data,
