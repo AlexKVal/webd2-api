@@ -169,3 +169,45 @@ test('apiWrapper.apiFind()', (t) => {
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
+
+test('apiWrapper.apiFetchAll() without related', (t) => {
+  t.plan(4)
+
+  const serializer = {
+    withoutRelated (data) {
+      t.equal(data, '"joined" data', 'passes to serializer data after joining')
+      return Promise.resolve('serialized data')
+    },
+    withRelated () {
+      t.fail('serializer.withRelated() should no be called')
+    }
+  }
+
+  const model = {
+    name: 'someModelName',
+
+    selectMany (options) {
+      t.deepEqual(options, {}, 'options for model.selectMany()')
+      return Promise.resolve('data from selectMany')
+    }
+  }
+
+  const apiWrappedModel = new ApiWrapper({model, serializer: serializer, deserializer: {}})
+
+  // mock it for testing
+  apiWrappedModel._joinRelations = (parentRows) => {
+    t.equal(
+      parentRows,
+      'data from selectMany',
+      'joins relations and serializes the result from model.update()'
+    )
+
+    return '"joined" data'
+  }
+  apiWrappedModel._fetchRelations = () => t.fail('this._fetchRelations() should not be called')
+
+  apiWrappedModel.apiFetchAll(/* no options */)
+  .then((result) => t.equal(result, 'serialized data'))
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
