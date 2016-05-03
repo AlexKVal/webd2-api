@@ -130,3 +130,42 @@ test('apiWrapper.apiUpdate()', (t) => {
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
+
+test('apiWrapper.apiFind()', (t) => {
+  t.plan(4)
+
+  const dataFromSelect = { some: 'some' }
+
+  const model = {
+    name: 'someModelName',
+
+    selectOne ({id}) {
+      t.equal(id, 1001, 'provides id to model`s selectOne() method')
+      return Promise.resolve(dataFromSelect)
+    }
+  }
+
+  const apiWrappedModel = new ApiWrapper({ model, deserializer: {} })
+
+  t.throws(
+    () => apiWrappedModel.apiFind(/* no id */),
+    /id cannot be undefined/,
+    'needs an id'
+  )
+
+  // mock it for testing
+  apiWrappedModel._joinRelationsAndSerialize = (record) => {
+    t.equal(
+      record,
+      dataFromSelect,
+      'joins relations and serializes the result from model.selectOne()'
+    )
+
+    return 'joined and serialized record'
+  }
+
+  apiWrappedModel.apiFind(1001)
+  .then((result) => t.equal(result, 'joined and serialized record'))
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
