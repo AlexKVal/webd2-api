@@ -77,6 +77,42 @@ test('apiWrapper.apiCreate()', (t) => {
   .then(() => t.end())
 })
 
+test('apiWrapper.apiCreate() returns error from deserializer', (t) => {
+  t.plan(2)
+
+  const deserializer = {
+    deserialize (newData) {
+      t.equal(newData, 'new data from client', 'passes to deserializer newData')
+      return Promise.reject(new Error('some deserializer`s error'))
+    }
+  }
+
+  const model = {
+    name: 'someModelName',
+    create (deserialized) {
+      t.fail('model.create() should not be called')
+    }
+  }
+
+  const apiWrappedModel = new ApiWrapper({model, deserializer, serializer: {}})
+
+  // mock it for testing
+  apiWrappedModel._joinRelationsAndSerialize = () => {
+    t.fail('_joinRelationsAndSerialize() should not be called')
+  }
+
+  apiWrappedModel.apiCreate('new data from client')
+  .then(() => t.fail('should not be called'))
+  .catch((e) => {
+    t.equal(
+      e.message,
+      'some deserializer`s error',
+      'returns error from deserializer'
+    )
+  })
+  .then(() => t.end())
+})
+
 test('apiWrapper.apiCreate() returns error from model.create()', (t) => {
   t.plan(3)
 
