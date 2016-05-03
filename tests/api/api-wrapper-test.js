@@ -350,3 +350,40 @@ test('apiWrapper._joinRelations() with "relations" data provided', (t) => {
 
   t.end()
 })
+
+test('apiWrapper._joinRelationsAndSerialize()', (t) => {
+  t.plan(3)
+
+  const serializer = {
+    withoutRelated (data) {
+      t.equal(data, 'joined-empty-relations row', 'passes row to serializer')
+      return Promise.resolve('serialized data')
+    }
+  }
+
+  const model = { name: 'someModelName' }
+
+  const apiWrappedModel = new ApiWrapper({model, serializer: serializer, deserializer: {}})
+
+  // mock it for testing
+  apiWrappedModel._joinRelations = (parentRows) => {
+    t.deepEqual(
+      parentRows,
+      [ 'parent`s row' ],
+      'changes relations ids into empty relations with ids'
+    )
+
+    return [ 'joined-empty-relations row' ]
+  }
+
+  apiWrappedModel._joinRelationsAndSerialize('parent`s row')
+  .then((result) => {
+    t.deepEqual(
+      result,
+      'serialized data',
+      'calls _joinRelations() and serializes without related data'
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
