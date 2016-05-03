@@ -292,3 +292,61 @@ test('apiWrapper._joinRelations() with no "relations" provided', (t) => {
 
   t.end()
 })
+
+test('apiWrapper._joinRelations() with "relations" data provided', (t) => {
+  t.plan(1)
+
+  const model = {
+    name: 'someModelName',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  }
+
+  const parentRows = [
+    {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+    {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+  ]
+
+  const relationsData = [
+    {
+      modelFieldName: 'group',
+      fkAs: 'userGroupId',
+      rows: [
+        {id: '101', name: 'Admins'},
+        {id: '102', name: 'Users'}
+      ]
+    },
+    {
+      modelFieldName: 'rights',
+      fkAs: 'rightsId',
+      rows: [
+        {id: '12', name: 'Full'},
+        {id: '13', name: 'Part'}
+      ]
+    }
+  ]
+
+  const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}})
+
+  t.deepEqual(
+    apiWrappedModel._joinRelations(parentRows, relationsData),
+    [
+      {
+        id: '1', name: 'John',
+        group: { id: '101', name: 'Admins' },
+        rights: {id: '12', name: 'Full'}
+      },
+      {
+        id: '2', name: 'Smith',
+        group: {id: '102', name: 'Users'},
+        rights: {id: '13', name: 'Part'}
+      }
+    ],
+    'joins in relations data'
+  )
+
+  t.end()
+})
