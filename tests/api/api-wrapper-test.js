@@ -473,3 +473,84 @@ test('apiWrapper._fetchRelations()', (t) => {
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
+
+/**
+ * Integration testing
+ */
+const BaseModel = require('../../lib/models/base-model')
+
+const dbMock = { exec () { return Promise.resolve() } }
+const registry = {
+  model () {
+    return { sqlBuilder: { schemaObject: { /* doesn't matter */ } } }
+  }
+}
+
+test('I&T apiWrapper.apiCreate()', (t) => {
+  t.plan(3)
+
+  class UserModel extends BaseModel {
+    create (deserializedNewData) {
+      t.deepEqual(
+        deserializedNewData,
+        {
+          name: 'John',
+          rights: { id: '12' },
+          userGroup: { id: '101' }
+        },
+      'create(newData) has been called'
+      )
+
+      return Promise.resolve({
+        id: '1', // sql assigns an ID
+        name: 'John',
+        rightsId: '12',
+        userGroupId: '101'
+      })
+    }
+  }
+  const userModel = new UserModel({
+    db: dbMock, registry, name: 'user',
+    schema: {
+      name: 'string',
+      userGroup: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
+
+  const apiWrappedUserModel = new ApiWrapper({model: userModel})
+
+  const newData = {
+    data: {
+      attributes: { name: 'John' },
+      relationships: {
+        userGroup: { data: { id: '101', type: 'user-groups' } },
+        rights: { data: { id: '12', type: 'rights' } }
+      },
+      type: 'users'
+    }
+  }
+
+  apiWrappedUserModel.apiCreate(newData)
+  .then((savedSerialized) => {
+    t.equal(savedSerialized.data.id, '1', 'returns with ID')
+
+    t.deepEqual(
+      savedSerialized,
+      {
+        data: {
+          attributes: { name: 'John' },
+          id: '1',
+          relationships: {
+            'user-group': { data: { id: '101', type: 'userGroups' } },
+            rights: { data: { id: '12', type: 'rights' } }
+          },
+          type: 'users'
+        }
+      },
+      'result of integration testing'
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
