@@ -703,3 +703,74 @@ test('I&T apiWrapper.apiCreate()', (t) => {
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
+
+test('I&T apiWrapper.apiUpdate()', (t) => {
+  t.plan(3)
+
+  class UserModel extends BaseModel {
+    update (id, deserializedData) {
+      t.pass('update(id, data) has been called')
+
+      t.deepEqual(
+        deserializedData,
+        {
+          id: '1', name: 'John',
+          rights: { id: '12' },
+          userGroup: { id: '101' }
+        },
+        'receives deserialized data'
+      )
+
+      const sqlResult = {
+        id: '1', name: 'John',
+        rightsId: '12',
+        userGroupId: '101'
+      }
+      return Promise.resolve(sqlResult)
+    }
+  }
+
+  const userModel = new UserModel({
+    db: dbMock, registry, name: 'user',
+    schema: {
+      name: 'string',
+      userGroup: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
+
+  const apiWrappedUserModel = new ApiWrapper({model: userModel})
+
+  const updatesData = {
+    data: {
+      attributes: { name: 'John' },
+      id: '1',
+      relationships: {
+        'user-group': { data: { id: '101', type: 'user-groups' } },
+        rights: { data: { id: '12', type: 'rights' } }
+      },
+      type: 'users'
+    }
+  }
+
+  apiWrappedUserModel.apiUpdate(1, updatesData)
+  .then((updatedSerialized) => {
+    t.deepEqual(
+      updatedSerialized,
+      {
+        data: {
+          attributes: { name: 'John' },
+          id: '1',
+          relationships: {
+            'user-group': { data: { id: '101', type: 'userGroups' } },
+            rights: { data: { id: '12', type: 'rights' } }
+          },
+          type: 'users'
+        }
+      },
+      'returns updated serialized row without relations included'
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
