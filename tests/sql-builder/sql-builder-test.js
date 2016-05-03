@@ -824,6 +824,53 @@ test('sqlBuilder.selectMany() generates SELECT query for fetching many rows', (t
   t.end()
 })
 
+test('relationModel.sqlBuilder.selectMany({ whereIn })', (t) => {
+  const parent = {
+    name: 'user',
+    tableName: 'sPersonal',
+    relFkName: 'GrpID',
+    where: {hide: false}
+  }
+
+  const relationModelSqlBuilder = new SqlBuilder({
+    tableName: 'sPepTree',
+    id: 'GrpID',
+    name: 'string',
+    hide: 'boolean'
+  })
+
+  t.throws(
+    () => relationModelSqlBuilder.selectMany({
+      where: {hide: false},
+      whereIn: {
+        parentFkName: parent.relFkName,
+        parentTableName: parent.tableName,
+        parentWhere: parent.where
+      }
+    }),
+    /where and whereIn are in conflict/,
+    'where and whereIn cannot be used together'
+  )
+
+  t.equal(
+    relationModelSqlBuilder.selectMany({
+      whereIn: {
+        parentFkName: parent.relFkName,
+        parentTableName: parent.tableName,
+        parentWhere: parent.where
+      },
+      orderBy: 'name'
+    }),
+    'SELECT GrpID as id, name, hide' +
+    ' FROM sPepTree' +
+    ' WHERE id IN (SELECT GrpID FROM sPersonal WHERE hide=false)' +
+    ' ORDER BY name',
+    'is used for fetching relations data'
+  )
+
+  t.end()
+})
+
 test('sqlBuilder.selectOne() generates SELECT query for fetching one row', (t) => {
   const sqlBuilder = new SqlBuilder({
     tableName: 'sPersonal',
