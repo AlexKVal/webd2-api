@@ -858,13 +858,11 @@ test('relationModel.sqlBuilder.selectMany({ whereIn })', (t) => {
         parentFkName: parent.relFkName,
         parentTableName: parent.tableName,
         parentWhere: parent.where
-      },
-      orderBy: 'name'
+      }
     }),
     'SELECT GrpID as id, name, hide' +
     ' FROM sPepTree' +
-    ' WHERE id IN (SELECT GrpID FROM sPersonal WHERE hide=false)' +
-    ' ORDER BY name',
+    ' WHERE id IN (SELECT DISTINCT GrpID FROM sPersonal WHERE hide=false)',
     'is used for fetching relations data'
   )
 
