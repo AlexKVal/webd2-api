@@ -872,3 +872,100 @@ test('I&T apiWrapper.apiFetchAll({withRelated: false})', (t) => {
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
+
+test('I&T apiWrapper.apiFetchAll({withRelated: true})', (t) => {
+  t.plan(1)
+
+  const registryMock = {
+    model (modelName) {
+      const _models = {
+        rights: {
+          selectMany () {
+            return Promise.resolve([
+              {id: '12', fullName: 'Full'},
+              {id: '13', fullName: 'Part'}
+            ])
+          },
+          attributesSerialize: ['fullName']
+        },
+
+        userGroup: {
+          selectMany () {
+            return Promise.resolve([
+              {id: '101', shortName: 'Admins'},
+              {id: '102', shortName: 'Users'}
+            ])
+          },
+          attributesSerialize: ['shortName']
+        }
+      }
+
+      return _models[modelName]
+    }
+  }
+
+  class UserModel extends BaseModel {
+    selectMany () {
+      return Promise.resolve([
+        {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+        {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+      ])
+    }
+  }
+  const userModel = new UserModel({
+    db: dbMock, registry: registryMock, name: 'user',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
+
+  const apiWrappedUserModel = new ApiWrapper({model: userModel})
+
+  apiWrappedUserModel.apiFetchAll({withRelated: true})
+  .then((serialized) => {
+    t.deepEqual(
+      serialized,
+      {
+        data: [{
+          attributes: { name: 'John' },
+          id: '1',
+          relationships: {
+            group: { data: { id: '101', type: 'groups' } },
+            rights: { data: { id: '12', type: 'rights' } }
+          },
+          type: 'users'
+        }, {
+          attributes: { name: 'Smith' },
+          id: '2',
+          relationships: {
+            group: { data: { id: '102', type: 'groups' } },
+            rights: { data: { id: '13', type: 'rights' } }
+          },
+          type: 'users'
+        }],
+        included: [{
+          attributes: { 'short-name': 'Admins' },
+          id: '101',
+          type: 'groups'
+        }, {
+          attributes: { 'full-name': 'Full' },
+          id: '12',
+          type: 'rights'
+        }, {
+          attributes: { 'short-name': 'Users' },
+          id: '102',
+          type: 'groups'
+        }, {
+          attributes: { 'full-name': 'Part' },
+          id: '13',
+          type: 'rights'
+        }]
+      },
+      'returns serialized rows with relations data included'
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
