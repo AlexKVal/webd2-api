@@ -19,6 +19,12 @@ test('ApiWrapper', (t) => {
     'model should be with a name'
   )
 
+  t.doesNotThrow(
+    () => new ApiWrapper({ name: 'modelName', attributesSerialize: [] }),
+    /ApiWrapper needs a model/,
+    'model could be provided directly'
+  )
+
   t.equal(apiWrappedSomeModel.model, someModelMock, '`model` property holds a model')
 
   t.end()
@@ -667,7 +673,7 @@ test('I&T apiWrapper.apiCreate()', (t) => {
     }
   })
 
-  const apiWrappedUserModel = new ApiWrapper({model: userModel})
+  const apiWrappedUserModel = new ApiWrapper(userModel)
 
   const newData = {
     data: {
@@ -739,7 +745,7 @@ test('I&T apiWrapper.apiUpdate()', (t) => {
     }
   })
 
-  const apiWrappedUserModel = new ApiWrapper({model: userModel})
+  const apiWrappedUserModel = new ApiWrapper(userModel)
 
   const updatesData = {
     data: {
@@ -797,7 +803,7 @@ test('I&T apiWrapper.apiFind()', (t) => {
     }
   })
 
-  const apiWrappedUserModel = new ApiWrapper({model: userModel})
+  const apiWrappedUserModel = new ApiWrapper(userModel)
 
   apiWrappedUserModel.apiFind(1)
   .then((serialized) => {
@@ -841,7 +847,7 @@ test('I&T apiWrapper.apiFetchAll({withRelated: false})', (t) => {
     }
   })
 
-  const apiWrappedUserModel = new ApiWrapper({model: userModel})
+  const apiWrappedUserModel = new ApiWrapper(userModel)
 
   apiWrappedUserModel.apiFetchAll()
   .then((serialized) => {
@@ -921,7 +927,7 @@ test('I&T apiWrapper.apiFetchAll({withRelated: true})', (t) => {
     }
   })
 
-  const apiWrappedUserModel = new ApiWrapper({model: userModel})
+  const apiWrappedUserModel = new ApiWrapper(userModel)
 
   apiWrappedUserModel.apiFetchAll({withRelated: true})
   .then((serialized) => {
