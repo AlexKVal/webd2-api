@@ -387,3 +387,89 @@ test('apiWrapper._joinRelationsAndSerialize()', (t) => {
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
+
+test('apiWrapper._fetchRelations()', (t) => {
+  t.plan(1)
+
+  const registryMock = {
+    model (modelName) {
+      const _models = {
+        rights: {
+          selectMany () {
+            return Promise.resolve([
+              {id: '12', fullName: 'Full'},
+              {id: '13', fullName: 'Part'}
+            ])
+          },
+          sqlBuilder: {
+            schemaObject: {
+              fullName: 'string'
+            }
+          }
+        },
+
+        userGroup: {
+          selectMany () {
+            return Promise.resolve([
+              {id: '101', shortName: 'Admins'},
+              {id: '102', shortName: 'Users'}
+            ])
+          },
+          sqlBuilder: {
+            schemaObject: {
+              shortName: 'string'
+            }
+          }
+        }
+      }
+
+      return _models[modelName]
+    }
+  }
+
+  const model = {
+    name: 'someModelName',
+    registry: registryMock,
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  }
+
+  const serializer = {
+    withoutRelated (data) {
+      t.equal(data, 'joined-empty-relations row', 'passes row to serializer')
+      return Promise.resolve('serialized data')
+    }
+  }
+
+  const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}})
+
+  const parentRows = [
+    {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+    {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+  ]
+
+  apiWrappedModel._fetchRelations(parentRows)
+  .then((data) => {
+    t.deepEqual(
+      data,
+      [
+        {
+          id: '1', name: 'John',
+          group: {id: '101', shortName: 'Admins'},
+          rights: {id: '12', fullName: 'Full'}
+        },
+        {
+          id: '2', name: 'Smith',
+          group: {id: '102', shortName: 'Users'},
+          rights: {id: '13', fullName: 'Part'}
+        }
+      ],
+      'fetches relations data'
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
