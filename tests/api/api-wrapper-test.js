@@ -245,6 +245,41 @@ test('apiWrapper.apiUpdate() returns error from deserializer', (t) => {
   .then(() => t.end())
 })
 
+test('apiWrapper.apiUpdate() returns error from model.update()', (t) => {
+  t.plan(1)
+
+  const deserializer = {
+    deserialize () {
+      return Promise.resolve('deserializedNewData')
+    }
+  }
+
+  const model = {
+    name: 'someModelName',
+    update () {
+      return Promise.reject(new Error('some update()`s error'))
+    }
+  }
+
+  const apiWrappedModel = new ApiWrapper({model, deserializer, serializer: {}})
+
+  // mock it for testing
+  apiWrappedModel._joinRelationsAndSerialize = () => {
+    t.fail('_joinRelationsAndSerialize() should not be called')
+  }
+
+  apiWrappedModel.apiUpdate(131, {updatesData: 'from client'})
+  .then(() => t.fail('should not be called'))
+  .catch((e) => {
+    t.equal(
+      e.message,
+      'some update()`s error',
+      'returns error from model.update()'
+    )
+  })
+  .then(() => t.end())
+})
+
 test('apiWrapper.apiFind()', (t) => {
   t.plan(4)
 
