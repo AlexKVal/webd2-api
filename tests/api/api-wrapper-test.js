@@ -774,3 +774,49 @@ test('I&T apiWrapper.apiUpdate()', (t) => {
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
+
+test('I&T apiWrapper.apiFind()', (t) => {
+  t.plan(1)
+
+  class UserModel extends BaseModel {
+    selectOne (options) {
+      const rows = {
+        1: {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+        2: {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+      }
+      return Promise.resolve(rows[options.id])
+    }
+  }
+
+  const userModel = new UserModel({
+    db: dbMock, registry, name: 'user',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  })
+
+  const apiWrappedUserModel = new ApiWrapper({model: userModel})
+
+  apiWrappedUserModel.apiFind(1)
+  .then((serialized) => {
+    t.deepEqual(
+      serialized,
+      {
+        data: {
+          attributes: { name: 'John' },
+          id: '1',
+          relationships: {
+            group: { data: { id: '101', type: 'groups' } },
+            rights: { data: { id: '12', type: 'rights' } }
+          },
+          type: 'users'
+        }
+      },
+      'returns serialized row without relations included'
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
