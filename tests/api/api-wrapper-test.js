@@ -648,11 +648,6 @@ test('apiWrapper._fetchRelations()', (t) => {
 const BaseModel = require('../../lib/models/base-model')
 
 const dbMock = { exec () { return Promise.resolve() } }
-const registry = {
-  model () {
-    return { sqlBuilder: { schemaObject: { /* doesn't matter */ } } }
-  }
-}
 
 test('I&T apiWrapper.apiCreate()', (t) => {
   t.plan(3)
@@ -678,7 +673,7 @@ test('I&T apiWrapper.apiCreate()', (t) => {
     }
   }
   const userModel = new UserModel({
-    db: dbMock, registry, name: 'user',
+    db: dbMock, name: 'user',
     schema: {
       name: 'string',
       userGroup: { belongsTo: 'userGroup' },
@@ -750,7 +745,7 @@ test('I&T apiWrapper.apiUpdate()', (t) => {
   }
 
   const userModel = new UserModel({
-    db: dbMock, registry, name: 'user',
+    db: dbMock, name: 'user',
     schema: {
       name: 'string',
       userGroup: { belongsTo: 'userGroup' },
@@ -808,7 +803,7 @@ test('I&T apiWrapper.apiFind()', (t) => {
   }
 
   const userModel = new UserModel({
-    db: dbMock, registry, name: 'user',
+    db: dbMock, name: 'user',
     schema: {
       name: 'string',
       group: { belongsTo: 'userGroup' },
@@ -852,7 +847,7 @@ test('I&T apiWrapper.apiFetchAll({withRelated: false})', (t) => {
     }
   }
   const userModel = new UserModel({
-    db: dbMock, registry, name: 'user',
+    db: dbMock, name: 'user',
     schema: {
       name: 'string',
       group: { belongsTo: 'userGroup' },
