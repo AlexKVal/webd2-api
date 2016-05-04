@@ -1,6 +1,8 @@
 'use strict'
 const test = require('tape')
 
+const SqlBuilder = require('../../lib/sql-builder/sql-builder')
+
 const ApiWrapper = require('../../lib/api/api-wrapper')
 
 const registryMock = { model (modelName) { return {name: modelName} } }
@@ -742,14 +744,16 @@ test('apiWrapper._fetchHasManyRelations()', (t) => {
               { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, userGroupId: '2' }
             ])
           },
-          sqlBuilder: {
+          sqlBuilder: new SqlBuilder({
+            id: 'PersID',
             tableName: 'sPersonal',
-            schemaObject: {
-              name: 'string',
-              cardcode: 'string',
-              hide: 'boolean'
+            name: 'string',
+            cardcode: 'string',
+            hide: 'boolean',
+            group: {
+              belongsTo: 'userGroup'
             }
-          }
+          })
         }
       }
 
@@ -792,7 +796,7 @@ test('apiWrapper._fetchHasManyRelations()', (t) => {
       [
         {
           modelFieldName: 'users',
-          // parentModelFieldName: 'group', TODO when sqlBuilder.getModelFieldName() is implemented
+          parentModelFieldName: 'group',
           fkAs: 'userGroupId',
           rows: [
             { id: '101', name: 'John', cardcode: '123', hide: false, userGroupId: '1' },
