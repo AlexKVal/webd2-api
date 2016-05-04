@@ -888,6 +888,21 @@ test('relationModel.sqlBuilder.selectMany({ whereIn }) belongsTo / many-to-one',
 
   t.equal(
     relationModelSqlBuilder.selectMany({
+      where: {hide: false},
+      whereIn: {
+        parentFkName: parent.relFkName,
+        parentTableName: parent.tableName,
+        parentWhere: parent.where
+      }
+    }),
+    'SELECT GrpID as id, name, hide' +
+    ' FROM sPepTree' +
+    ' WHERE hide=false AND id IN (SELECT DISTINCT GrpID FROM sPersonal WHERE hide=false)',
+    'belongsTo: where and whereIn'
+  )
+
+  t.equal(
+    relationModelSqlBuilder.selectMany({
       whereIn: {
         parentFkName: parent.relFkName,
         parentTableName: parent.tableName,
