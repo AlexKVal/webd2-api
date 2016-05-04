@@ -519,6 +519,68 @@ test('apiWrapper._joinRelations() with "relations" data provided', (t) => {
   t.end()
 })
 
+test('apiWrapper._joinHasManyRelations() with "relations" data provided', (t) => {
+  t.plan(1)
+
+  const model = {
+    name: 'userGroup',
+    schema: {
+      name: 'string',
+      hide: 'boolean',
+      users: {
+        hasMany: 'user'
+      }
+    }
+  }
+
+  const fkAs = model.name + 'Id'
+  const parentModelFieldName = 'group' // parent.modelFieldName
+
+  const relationsData = [
+    {
+      modelFieldName: 'users',
+      parentModelFieldName,
+      fkAs,
+      rows: [
+        { id: '101', name: 'John', cardcode: '123', hide: false, userGroupId: '1' },
+        { id: '102', name: 'Simona', cardcode: '455', hide: false, userGroupId: '1' },
+        { id: '103', name: 'Whatson', cardcode: '', hide: false, userGroupId: '2' },
+        { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, userGroupId: '2' }
+      ]
+    }
+  ]
+
+  const parentRows = [
+    {id: '1', name: 'Bartenders', hide: false},
+    {id: '2', name: 'Waiters', hide: false}
+  ]
+
+  const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}, registryMock})
+
+  t.deepEqual(
+    apiWrappedModel._joinHasManyRelations(parentRows, relationsData),
+    [
+      {
+        id: '1', name: 'Bartenders', hide: false,
+        users: [
+          { id: '101', name: 'John', cardcode: '123', hide: false, group: {id: '1'} },
+          { id: '102', name: 'Simona', cardcode: '455', hide: false, group: {id: '1'} }
+        ]
+      },
+      {
+        id: '2', name: 'Waiters', hide: false,
+        users: [
+          { id: '103', name: 'Whatson', cardcode: '', hide: false, group: {id: '2'} },
+          { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, group: {id: '2'} }
+        ]
+      }
+    ],
+    'joins in hasMany relations data'
+  )
+
+  t.end()
+})
+
 test('apiWrapper._joinRelationsAndSerialize()', (t) => {
   t.plan(3)
 
