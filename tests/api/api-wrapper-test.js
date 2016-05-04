@@ -716,6 +716,100 @@ test('apiWrapper._fetchRelations()', (t) => {
   .then(() => t.end())
 })
 
+test.only('apiWrapper._fetchHasManyRelations()', (t) => {
+  t.plan(2)
+
+  const registryMock = {
+    model (modelName) {
+      const _models = {
+        user: {
+          selectMany (options) {
+            t.deepEqual(
+              options.whereIn,
+              {
+                relationFkName: 'GrpID',
+                parentIdFieldName: 'GrpID',
+                parentTableName: 'sPepTree',
+                parentWhere: {someField: 'parent where constraints'}
+              },
+              'uses {whereIn} with relationFkName option'
+            )
+
+            return Promise.resolve([
+              { id: '101', name: 'John', cardcode: '123', hide: false, userGroupId: '1' },
+              { id: '102', name: 'Simona', cardcode: '455', hide: false, userGroupId: '1' },
+              { id: '103', name: 'Whatson', cardcode: '', hide: false, userGroupId: '2' },
+              { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, userGroupId: '2' }
+            ])
+          },
+          sqlBuilder: {
+            tableName: 'sPersonal',
+            schemaObject: {
+              name: 'string',
+              cardcode: 'string',
+              hide: 'boolean'
+            }
+          }
+        }
+      }
+
+      return _models[modelName]
+    }
+  }
+
+  const model = {
+    name: 'userGroup',
+    registry: registryMock,
+    sqlBuilder: { idFieldName: 'GrpID', tableName: 'sPepTree' },
+    schema: {
+      id: 'GrpID',
+      name: 'string',
+      users: {
+        hasMany: 'user',
+        fkField: 'GrpID'
+      }
+    }
+  }
+
+  const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}, registryMock})
+
+  // mock for testing
+  apiWrappedModel._hasManyRelations = [
+    {
+      modelName: model.schema.users.hasMany, // 'user'
+      fkField: model.schema.users.fkField, // 'GrpID'
+      modelFieldName: 'users', // model.schema.users
+      fkAs: 'userGroupId' // model.name + 'Id'
+    }
+  ]
+
+  const parentWhere = {someField: 'parent where constraints'}
+
+  apiWrappedModel._fetchHasManyRelations(parentWhere)
+  .then((data) => {
+    t.deepEqual(
+      data,
+      [
+        {
+          modelFieldName: 'users',
+          // parentModelFieldName: 'group', TODO when sqlBuilder.getModelFieldName() is implemented
+          fkAs: 'userGroupId',
+          rows: [
+            { id: '101', name: 'John', cardcode: '123', hide: false, userGroupId: '1' },
+            { id: '102', name: 'Simona', cardcode: '455', hide: false, userGroupId: '1' },
+            { id: '103', name: 'Whatson', cardcode: '', hide: false, userGroupId: '2' },
+            { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, userGroupId: '2' }
+          ]
+        }
+        // TODO add tables-for-users data
+      ],
+      'fetches hasMany relations data'
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
+
 /**
  * Integration testing
  */
