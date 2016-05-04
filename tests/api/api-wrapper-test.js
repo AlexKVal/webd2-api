@@ -716,7 +716,7 @@ test('apiWrapper._fetchRelations()', (t) => {
   .then(() => t.end())
 })
 
-test.only('apiWrapper._fetchHasManyRelations()', (t) => {
+test('apiWrapper._fetchHasManyRelations()', (t) => {
   t.plan(2)
 
   const registryMock = {
