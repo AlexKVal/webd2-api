@@ -843,18 +843,6 @@ test('relationModel.sqlBuilder.selectMany({ whereIn }) general part', (t) => {
 
   t.throws(
     () => relationModelSqlBuilder.selectMany({
-      where: {hide: false},
-      whereIn: {
-        parentFkName: 'name',
-        parentTableName: 'name'
-      }
-    }),
-    /where and whereIn are in conflict/,
-    'where and whereIn cannot be used together'
-  )
-
-  t.throws(
-    () => relationModelSqlBuilder.selectMany({
       whereIn: {
         parentTableName: 'some',
 
@@ -960,6 +948,23 @@ test('relationModel.sqlBuilder.selectMany({ whereIn }) hasMany / one-to-many', (
     ' FROM sPersonal' +
     ' WHERE GrpID IN (SELECT GrpID FROM sPepTree)',
     'the case without parent`s {where} constraints'
+  )
+
+  t.equal(
+    relationModelSqlBuilder.selectMany({
+      where: {hide: false}, orderBy: 'name',
+      whereIn: {
+        relationFkName,
+        parentIdFieldName: parent.idFieldName,
+        parentTableName: parent.tableName,
+        parentWhere: parent.where
+      }
+    }),
+    'SELECT PersID as id, name, cardcode, hide' +
+    ' FROM sPersonal' +
+    ' WHERE hide=false AND GrpID IN (SELECT GrpID FROM sPepTree WHERE hide=false)' +
+    ' ORDER BY name',
+    'the case with where and whereIn'
   )
 
   t.throws(
