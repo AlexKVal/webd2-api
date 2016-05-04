@@ -719,7 +719,7 @@ test('apiWrapper._fetchRelations()', (t) => {
 })
 
 test('apiWrapper._fetchHasManyRelations()', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   const registryMock = {
     model (modelName) {
@@ -730,7 +730,7 @@ test('apiWrapper._fetchHasManyRelations()', (t) => {
               options.whereIn,
               {
                 relationFkName: 'GrpID',
-                parentIdFieldName: 'GrpID',
+                parentIdFieldName: 'GroupID',
                 parentTableName: 'sPepTree',
                 parentWhere: {someField: 'parent where constraints'}
               },
@@ -754,6 +754,37 @@ test('apiWrapper._fetchHasManyRelations()', (t) => {
               belongsTo: 'userGroup'
             }
           })
+        },
+
+        division: {
+          selectMany (options) {
+            t.deepEqual(
+              options.whereIn,
+              {
+                relationFkName: 'UserGrpID',
+                parentIdFieldName: 'GroupID',
+                parentTableName: 'sPepTree',
+                parentWhere: {someField: 'parent where constraints'}
+              },
+              'uses {whereIn} with relationFkName option'
+            )
+
+            return Promise.resolve([
+              { id: '23', name: 'Kitchen', hide: false, userGroupId: '1' },
+              { id: '24', name: 'Sad', hide: false, userGroupId: '1' },
+              { id: '25', name: 'Mangal', hide: false, userGroupId: '2' },
+              { id: '26', name: 'Tandyr', hide: false, userGroupId: '2' }
+            ])
+          },
+          sqlBuilder: new SqlBuilder({
+            id: 'DivID',
+            tableName: 'sDivisions',
+            name: 'string',
+            hide: 'boolean',
+            someFancyFieldName: {
+              belongsTo: 'userGroup'
+            }
+          })
         }
       }
 
@@ -761,18 +792,25 @@ test('apiWrapper._fetchHasManyRelations()', (t) => {
     }
   }
 
+  const userGroupSchema = {
+    id: 'GroupID',
+    tableName: 'sPepTree',
+    name: 'string',
+    users: {
+      hasMany: 'user',
+      fkField: 'GrpID'
+    },
+    divisions: {
+      hasMany: 'division',
+      fkField: 'UserGrpID'
+    }
+  }
+
   const model = {
     name: 'userGroup',
     registry: registryMock,
-    sqlBuilder: { idFieldName: 'GrpID', tableName: 'sPepTree' },
-    schema: {
-      id: 'GrpID',
-      name: 'string',
-      users: {
-        hasMany: 'user',
-        fkField: 'GrpID'
-      }
-    }
+    sqlBuilder: new SqlBuilder(userGroupSchema),
+    schema: userGroupSchema
   }
 
   const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}, registryMock})
@@ -782,8 +820,12 @@ test('apiWrapper._fetchHasManyRelations()', (t) => {
     {
       modelName: model.schema.users.hasMany, // 'user'
       fkField: model.schema.users.fkField, // 'GrpID'
-      modelFieldName: 'users', // model.schema.users
-      fkAs: 'userGroupId' // model.name + 'Id'
+      modelFieldName: 'users' // model.schema.users
+    },
+    {
+      modelName: model.schema.divisions.hasMany, // 'division'
+      fkField: model.schema.divisions.fkField, // 'UserGrpID'
+      modelFieldName: 'divisions' // model.schema.users
     }
   ]
 
@@ -804,8 +846,18 @@ test('apiWrapper._fetchHasManyRelations()', (t) => {
             { id: '103', name: 'Whatson', cardcode: '', hide: false, userGroupId: '2' },
             { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, userGroupId: '2' }
           ]
+        },
+        {
+          modelFieldName: 'divisions',
+          parentModelFieldName: 'someFancyFieldName',
+          fkAs: 'userGroupId',
+          rows: [
+            { id: '23', name: 'Kitchen', hide: false, userGroupId: '1' },
+            { id: '24', name: 'Sad', hide: false, userGroupId: '1' },
+            { id: '25', name: 'Mangal', hide: false, userGroupId: '2' },
+            { id: '26', name: 'Tandyr', hide: false, userGroupId: '2' }
+          ]
         }
-        // TODO add tables-for-users data
       ],
       'fetches hasMany relations data'
     )
