@@ -8,7 +8,12 @@ const ApiWrapper = require('../../lib/api/api-wrapper')
 const registryMock = { model (modelName) { return {name: modelName} } }
 
 test('ApiWrapper', (t) => {
-  const someModelMock = { name: 'some-model-name' }
+  const someModelMock = {
+    name: 'some-model-name',
+    attributesSerialize: [],
+    sqlBuilder: new SqlBuilder({})
+  }
+
   const apiWrappedSomeModel = new ApiWrapper({
     model: someModelMock,
     serializer: {}, deserializer: {},
@@ -27,16 +32,15 @@ test('ApiWrapper', (t) => {
     'model should be with a name'
   )
 
-  const aModelMock = { name: 'modelName', attributesSerialize: [] }
   t.doesNotThrow(
-    () => new ApiWrapper(aModelMock),
+    () => new ApiWrapper(someModelMock),
     /ApiWrapper needs a model/,
     'model could be provided directly'
   )
 
   const aRegistryMock = {}
   t.doesNotThrow(
-    () => new ApiWrapper(aModelMock, aRegistryMock),
+    () => new ApiWrapper(someModelMock, aRegistryMock),
     'registry could be passed as a second argument for testing'
   )
 
@@ -429,11 +433,11 @@ test('apiWrapper._joinBelongsToRelations() with no "relations" provided', (t) =>
 
   const model = {
     name: 'someModelName',
-    schema: {
+    sqlBuilder: new SqlBuilder({
       name: 'string',
       group: { belongsTo: 'userGroup' },
       rights: { belongsTo: 'rights' }
-    }
+    })
   }
 
   const parentRows = [
@@ -675,15 +679,17 @@ test('apiWrapper._fetchRelations()', (t) => {
     }
   }
 
+  const modelSchema = {
+    tableName: 'someTableName',
+    name: 'string',
+    group: { belongsTo: 'userGroup' },
+    rights: { belongsTo: 'rights' }
+  }
   const model = {
     name: 'someModelName',
     registry: registryMock,
-    sqlBuilder: {tableName: 'someTableName'},
-    schema: {
-      name: 'string',
-      group: { belongsTo: 'userGroup' },
-      rights: { belongsTo: 'rights' }
-    }
+    sqlBuilder: new SqlBuilder(modelSchema),
+    schema: modelSchema
   }
 
   const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}, registryMock})
