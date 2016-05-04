@@ -363,7 +363,7 @@ test('apiWrapper.apiFetchAll() without related', (t) => {
   const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}, registryMock})
 
   // mock it for testing
-  apiWrappedModel._joinRelations = (parentRows) => {
+  apiWrappedModel._joinBelongsToRelations = (parentRows) => {
     t.equal(
       parentRows,
       'data from selectMany',
@@ -414,7 +414,7 @@ test('apiWrapper.apiFetchAll() with related', (t) => {
 
     return '"joined" data'
   }
-  apiWrappedModel._joinRelations = () => t.fail('this._joinRelations() should not be called')
+  apiWrappedModel._joinBelongsToRelations = () => t.fail('this._joinBelongsToRelations() should not be called')
 
   apiWrappedModel.apiFetchAll({withRelated: true})
   .then((result) => t.equal(result, 'serialized data'))
@@ -422,7 +422,7 @@ test('apiWrapper.apiFetchAll() with related', (t) => {
   .then(() => t.end())
 })
 
-test('apiWrapper._joinRelations() with no "relations" provided', (t) => {
+test('apiWrapper._joinBelongsToRelations() with no "relations" provided', (t) => {
   t.plan(1)
 
   const model = {
@@ -442,7 +442,7 @@ test('apiWrapper._joinRelations() with no "relations" provided', (t) => {
   const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}, registryMock})
 
   t.deepEqual(
-    apiWrappedModel._joinRelations(parentRows /*, no_relations_data */),
+    apiWrappedModel._joinBelongsToRelations(parentRows /*, no_relations_data */),
     [
       {
         id: '1', name: 'John',
@@ -461,7 +461,7 @@ test('apiWrapper._joinRelations() with no "relations" provided', (t) => {
   t.end()
 })
 
-test('apiWrapper._joinRelations() with "relations" data provided', (t) => {
+test('apiWrapper._joinBelongsToRelations() with "relations" data provided', (t) => {
   t.plan(1)
 
   const model = {
@@ -500,7 +500,7 @@ test('apiWrapper._joinRelations() with "relations" data provided', (t) => {
   const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}, registryMock})
 
   t.deepEqual(
-    apiWrappedModel._joinRelations(parentRows, relationsData),
+    apiWrappedModel._joinBelongsToRelations(parentRows, relationsData),
     [
       {
         id: '1', name: 'John',
@@ -596,7 +596,7 @@ test('apiWrapper._joinRelationsAndSerialize()', (t) => {
   const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}, registryMock})
 
   // mock it for testing
-  apiWrappedModel._joinRelations = (parentRows) => {
+  apiWrappedModel._joinBelongsToRelations = (parentRows) => {
     t.deepEqual(
       parentRows,
       [ 'parent`s row' ],
@@ -611,7 +611,7 @@ test('apiWrapper._joinRelationsAndSerialize()', (t) => {
     t.deepEqual(
       result,
       'serialized data',
-      'calls _joinRelations() and serializes without related data'
+      'calls _joinBelongsToRelations() and serializes without related data'
     )
   })
   .catch((e) => t.fail(e))
