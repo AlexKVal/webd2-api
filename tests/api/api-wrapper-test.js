@@ -556,7 +556,7 @@ test('apiWrapper._joinRelationsAndSerialize()', (t) => {
   .then(() => t.end())
 })
 
-test.only('apiWrapper._fetchRelations()', (t) => {
+test('apiWrapper._fetchRelations()', (t) => {
   t.plan(5)
 
   const registryMock = {

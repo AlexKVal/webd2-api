@@ -824,7 +824,52 @@ test('sqlBuilder.selectMany() generates SELECT query for fetching many rows', (t
   t.end()
 })
 
-test('relationModel.sqlBuilder.selectMany({ whereIn })', (t) => {
+test('relationModel.sqlBuilder.selectMany({ whereIn }) general part', (t) => {
+  const relationModelSqlBuilder = new SqlBuilder({
+    tableName: 'some',
+    id: 'some',
+    name: 'string'
+  })
+
+  t.throws(
+    () => relationModelSqlBuilder.selectMany({
+      whereIn: {
+        /* parentTableName: undefined */
+      }
+    }),
+    /parentTableName is undefined/,
+    'parentTableName cannot be undefined'
+  )
+
+  t.throws(
+    () => relationModelSqlBuilder.selectMany({
+      where: {hide: false},
+      whereIn: {
+        parentFkName: 'name',
+        parentTableName: 'name'
+      }
+    }),
+    /where and whereIn are in conflict/,
+    'where and whereIn cannot be used together'
+  )
+
+  t.throws(
+    () => relationModelSqlBuilder.selectMany({
+      whereIn: {
+        parentTableName: 'some',
+
+        relationFkName: 'name1',
+        parentFkName: 'name2'
+      }
+    }),
+    /ambiguous relationFkName and parentFkName/,
+    'relationFkName and parentFkName cannot be used together'
+  )
+
+  t.end()
+})
+
+test('relationModel.sqlBuilder.selectMany({ whereIn }) belongsTo / many-to-one', (t) => {
   const parent = {
     name: 'user',
     tableName: 'sPersonal',
@@ -839,19 +884,6 @@ test('relationModel.sqlBuilder.selectMany({ whereIn })', (t) => {
     hide: 'boolean'
   })
 
-  t.throws(
-    () => relationModelSqlBuilder.selectMany({
-      where: {hide: false},
-      whereIn: {
-        parentFkName: parent.relFkName,
-        parentTableName: parent.tableName,
-        parentWhere: parent.where
-      }
-    }),
-    /where and whereIn are in conflict/,
-    'where and whereIn cannot be used together'
-  )
-
   t.equal(
     relationModelSqlBuilder.selectMany({
       whereIn: {
@@ -863,7 +895,7 @@ test('relationModel.sqlBuilder.selectMany({ whereIn })', (t) => {
     'SELECT GrpID as id, name, hide' +
     ' FROM sPepTree' +
     ' WHERE id IN (SELECT DISTINCT GrpID FROM sPersonal WHERE hide=false)',
-    'is used for fetching relations data'
+    'if parentFkName => belongsTo / many-to-one'
   )
 
   t.equal(
@@ -878,6 +910,69 @@ test('relationModel.sqlBuilder.selectMany({ whereIn })', (t) => {
     ' FROM sPepTree' +
     ' WHERE id IN (SELECT DISTINCT GrpID FROM sPersonal)',
     'the case without parent`s {where} constraints'
+  )
+
+  t.end()
+})
+
+test('relationModel.sqlBuilder.selectMany({ whereIn }) hasMany / one-to-many', (t) => {
+  const parent = {
+    name: 'userGroup',
+    tableName: 'sPepTree',
+    idFieldName: 'GrpID',
+    where: {hide: false}
+  }
+
+  const relationModelSqlBuilder = new SqlBuilder({
+    tableName: 'sPersonal',
+    id: 'PersID',
+    name: 'string',
+    cardcode: 'string',
+    hide: 'boolean'
+  })
+
+  const relationFkName = 'GrpID'
+
+  t.equal(
+    relationModelSqlBuilder.selectMany({
+      whereIn: {
+        relationFkName,
+        parentIdFieldName: parent.idFieldName,
+        parentTableName: parent.tableName,
+        parentWhere: parent.where
+      }
+    }),
+    'SELECT PersID as id, name, cardcode, hide' +
+    ' FROM sPersonal' +
+    ' WHERE GrpID IN (SELECT GrpID FROM sPepTree WHERE hide=false)',
+    'if relationFkName => hasMany / one-to-many'
+  )
+
+  t.equal(
+    relationModelSqlBuilder.selectMany({
+      whereIn: {
+        relationFkName,
+        parentIdFieldName: parent.idFieldName,
+        parentTableName: parent.tableName
+      }
+    }),
+    'SELECT PersID as id, name, cardcode, hide' +
+    ' FROM sPersonal' +
+    ' WHERE GrpID IN (SELECT GrpID FROM sPepTree)',
+    'the case without parent`s {where} constraints'
+  )
+
+  t.throws(
+    () => relationModelSqlBuilder.selectMany({
+      whereIn: {
+        parentTableName: 'some',
+
+        relationFkName: 'name1'
+        /* parentIdFieldName: undefined */
+      }
+    }),
+    /parentIdFieldName is undefined/,
+    'with relationFkName parentIdFieldName should be defined'
   )
 
   t.end()
