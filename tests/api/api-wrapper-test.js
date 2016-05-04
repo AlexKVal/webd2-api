@@ -539,14 +539,12 @@ test('apiWrapper._joinHasManyRelations() with "relations" data provided', (t) =>
     }
   }
 
-  const fkAs = model.name + 'Id'
   const parentModelFieldName = 'group' // parent.modelFieldName
 
   const relationsData = [
     {
       modelFieldName: 'users',
       parentModelFieldName,
-      fkAs,
       rows: [
         { id: '101', name: 'John', cardcode: '123', hide: false, userGroupId: '1' },
         { id: '102', name: 'Simona', cardcode: '455', hide: false, userGroupId: '1' },
@@ -845,7 +843,6 @@ test('apiWrapper._fetchHasManyRelations()', (t) => {
         {
           modelFieldName: 'users',
           parentModelFieldName: 'group',
-          fkAs: 'userGroupId',
           rows: [
             { id: '101', name: 'John', cardcode: '123', hide: false, userGroupId: '1' },
             { id: '102', name: 'Simona', cardcode: '455', hide: false, userGroupId: '1' },
@@ -856,7 +853,6 @@ test('apiWrapper._fetchHasManyRelations()', (t) => {
         {
           modelFieldName: 'divisions',
           parentModelFieldName: 'someFancyFieldName',
-          fkAs: 'userGroupId',
           rows: [
             { id: '23', name: 'Kitchen', hide: false, userGroupId: '1' },
             { id: '24', name: 'Sad', hide: false, userGroupId: '1' },
