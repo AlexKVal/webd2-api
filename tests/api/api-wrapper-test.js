@@ -684,14 +684,7 @@ test('apiWrapper._fetchRelations()', (t) => {
     }
   }
 
-  const serializer = {
-    withoutRelated (data) {
-      t.equal(data, 'joined-empty-relations row', 'passes row to serializer')
-      return Promise.resolve('serialized data')
-    }
-  }
-
-  const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}, registryMock})
+  const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}, registryMock})
 
   const parentRows = [
     {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
