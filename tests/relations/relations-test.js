@@ -512,6 +512,43 @@ test('relations._fetchBelongsTo() if relation model is not found in Registry', (
   .then(() => t.end())
 })
 
+test('relations.fetchAndEmbed()', (t) => {
+  t.plan(7)
+
+  const modelRelations = new Relations('model-name', {tableName: 'table-name'})
+
+  // mock everything for the test
+  modelRelations._fetchBelongsTo = function _fetchBelongsTo (parentWhere) {
+    t.equal(parentWhere, 'custom parentWhere')
+    return Promise.resolve('fetched belongsTo relations data')
+  }
+  modelRelations._embedBelongsTo = function _embedBelongsTo (parentRows, relationsData) {
+    t.equal(parentRows, 'some parentRows')
+    t.equal(relationsData, 'fetched belongsTo relations data')
+    return 'parent`s rows with belongsTo relations data embedded'
+  }
+  modelRelations._fetchHasMany = function _fetchHasMany (parentWhere) {
+    t.equal(parentWhere, 'custom parentWhere')
+    return Promise.resolve('fetched hasMany relations data')
+  }
+  modelRelations._embedHasMany = function _embedHasMany (parentRows, relationsData) {
+    t.equal(parentRows, 'parent`s rows with belongsTo relations data embedded')
+    t.equal(relationsData, 'fetched hasMany relations data')
+    return 'parent`s rows with all relations data embedded'
+  }
+
+  modelRelations.fetchAndEmbed('some parentRows', 'custom parentWhere')
+  .then((parentRowsWithRelationsData) => {
+    t.equal(
+      parentRowsWithRelationsData,
+      'parent`s rows with all relations data embedded',
+      'fetches and embeds all relations data'
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
+
 /**
  * Integration testing
  */
@@ -679,7 +716,7 @@ test('I&T Relations _fetchBelongsTo() + _embedBelongsTo()', (t) => {
           rights: {id: '13', fullName: 'Part'}
         }
       ],
-      'embeds relations data'
+      'fetches and embeds belongsTo relations data'
     )
   })
   .catch((e) => t.fail(e))
