@@ -66,7 +66,7 @@ test('apiWrapper.apiCreate()', (t) => {
 
   const model = {
     name: 'someModelName',
-
+    sqlBuilder: new SqlBuilder({}),
     create (deserialized) {
       t.equal(
         deserialized,
@@ -115,6 +115,7 @@ test('apiWrapper.apiCreate() returns error from deserializer', (t) => {
 
   const model = {
     name: 'someModelName',
+    sqlBuilder: new SqlBuilder({}),
     create (deserialized) {
       t.fail('model.create() should not be called')
     }
@@ -151,7 +152,7 @@ test('apiWrapper.apiCreate() returns error from model.create()', (t) => {
 
   const model = {
     name: 'someModelName',
-
+    sqlBuilder: new SqlBuilder({}),
     create (deserialized) {
       t.equal(
         deserialized,
@@ -198,7 +199,7 @@ test('apiWrapper.apiUpdate()', (t) => {
 
   const model = {
     name: 'someModelName',
-
+    sqlBuilder: new SqlBuilder({}),
     update (id, deserialized) {
       t.equal(id, 131, 'provides id to model`s update method')
       t.equal(
@@ -247,6 +248,7 @@ test('apiWrapper.apiUpdate() returns error from deserializer', (t) => {
 
   const model = {
     name: 'someModelName',
+    sqlBuilder: new SqlBuilder({}),
     update () {
       t.fail('model.update() should not be called')
     }
@@ -282,6 +284,7 @@ test('apiWrapper.apiUpdate() returns error from model.update()', (t) => {
 
   const model = {
     name: 'someModelName',
+    sqlBuilder: new SqlBuilder({}),
     update () {
       return Promise.reject(new Error('some update()`s error'))
     }
@@ -313,7 +316,7 @@ test('apiWrapper.apiFind()', (t) => {
 
   const model = {
     name: 'someModelName',
-
+    sqlBuilder: new SqlBuilder({}),
     selectOne ({id}) {
       t.equal(id, 1001, 'provides id to model`s selectOne() method')
       return Promise.resolve(dataFromSelect)
@@ -360,7 +363,7 @@ test('apiWrapper.apiFetchAll() without related', (t) => {
 
   const model = {
     name: 'someModelName',
-
+    sqlBuilder: new SqlBuilder({}),
     selectMany (options) {
       t.deepEqual(options, {}, 'options for model.selectMany()')
       return Promise.resolve('data from selectMany')
@@ -402,7 +405,7 @@ test('apiWrapper.apiFetchAll() with related', (t) => {
 
   const model = {
     name: 'someModelName',
-
+    sqlBuilder: new SqlBuilder({}),
     selectMany (options) {
       t.deepEqual(options, {withRelated: true}, 'options for model.selectMany()')
       return Promise.resolve('data from selectMany')
@@ -479,6 +482,7 @@ test('apiWrapper._joinBelongsToRelations() with "relations" data provided', (t) 
       rights: { belongsTo: 'rights' }
     }
   }
+  model.sqlBuilder = new SqlBuilder(model.schema)
 
   const parentRows = [
     {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
@@ -535,10 +539,12 @@ test('apiWrapper._joinHasManyRelations() with "relations" data provided', (t) =>
       name: 'string',
       hide: 'boolean',
       users: {
-        hasMany: 'user'
+        hasMany: 'user',
+        fkField: 'GrpID'
       }
     }
   }
+  model.sqlBuilder = new SqlBuilder(model.schema)
 
   const parentModelFieldName = 'group' // parent.modelFieldName
 
@@ -596,7 +602,7 @@ test('apiWrapper._joinRelationsAndSerialize()', (t) => {
     }
   }
 
-  const model = { name: 'someModelName' }
+  const model = { name: 'someModelName', sqlBuilder: new SqlBuilder({}) }
 
   const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}, registryMock})
 
