@@ -803,48 +803,26 @@ test('apiWrapper._fetchHasManyRelations()', (t) => {
     }
   }
 
-  const userGroupSchema = {
-    id: 'GroupID',
-    tableName: 'sPepTree',
-    name: 'string',
-    users: {
-      hasMany: 'user',
-      fkField: 'GrpID'
-    },
-    divisions: {
-      hasMany: 'division',
-      fkField: 'UserGrpID'
-    }
-  }
-
   const model = {
     name: 'userGroup',
     registry: registryMock,
-    sqlBuilder: new SqlBuilder(userGroupSchema),
-    schema: userGroupSchema
+    schema: {
+      id: 'GroupID',
+      tableName: 'sPepTree',
+      name: 'string',
+      users: {
+        hasMany: 'user',
+        fkField: 'GrpID'
+      },
+      divisions: {
+        hasMany: 'division',
+        fkField: 'UserGrpID'
+      }
+    }
   }
+  model.sqlBuilder = new SqlBuilder(model.schema)
 
   const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}, registryMock})
-
-  // mock for testing
-  apiWrappedModel._hasManyRelations = [
-    new DescHasMany('users', model.schema.users),
-    /*
-    {
-      relationModelName: model.schema.users.hasMany, // 'user'
-      fkField: model.schema.users.fkField, // 'GrpID'
-      modelFieldName: 'users' // model.schema.users
-    },
-    */
-    new DescHasMany('divisions', model.schema.divisions)
-    /*
-    {
-      relationModelName: model.schema.divisions.hasMany, // 'division'
-      fkField: model.schema.divisions.fkField, // 'UserGrpID'
-      modelFieldName: 'divisions' // model.schema.users
-    }
-    */
-  ]
 
   const parentWhere = {someField: 'parent where constraints'}
 
