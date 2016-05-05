@@ -348,7 +348,7 @@ test('apiWrapper.apiFind()', (t) => {
   .then(() => t.end())
 })
 
-test('apiWrapper.apiFetchAll() without related', (t) => {
+test('apiWrapper.apiFetchMany() without related', (t) => {
   t.plan(4)
 
   const serializer = {
@@ -384,13 +384,13 @@ test('apiWrapper.apiFetchAll() without related', (t) => {
   }
   apiWrappedModel._fetchRelations = () => t.fail('this._fetchRelations() should not be called')
 
-  apiWrappedModel.apiFetchAll(/* no options */)
+  apiWrappedModel.apiFetchMany(/* no options */)
   .then((result) => t.equal(result, 'serialized data'))
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
 
-test('apiWrapper.apiFetchAll() with related', (t) => {
+test('apiWrapper.apiFetchMany() with related', (t) => {
   t.plan(4)
 
   const serializer = {
@@ -426,7 +426,7 @@ test('apiWrapper.apiFetchAll() with related', (t) => {
   }
   apiWrappedModel._joinBelongsToRelations = () => t.fail('this._joinBelongsToRelations() should not be called')
 
-  apiWrappedModel.apiFetchAll({withRelated: true})
+  apiWrappedModel.apiFetchMany({withRelated: true})
   .then((result) => t.equal(result, 'serialized data'))
   .catch((e) => t.fail(e))
   .then(() => t.end())
@@ -1052,7 +1052,7 @@ test('I&T apiWrapper.apiFind()', (t) => {
   .then(() => t.end())
 })
 
-test('I&T apiWrapper.apiFetchAll({withRelated: false})', (t) => {
+test('I&T apiWrapper.apiFetchMany({withRelated: false})', (t) => {
   t.plan(1)
 
   class UserModel extends BaseModel {
@@ -1074,7 +1074,7 @@ test('I&T apiWrapper.apiFetchAll({withRelated: false})', (t) => {
 
   const apiWrappedUserModel = new ApiWrapper(userModel, registryMock)
 
-  apiWrappedUserModel.apiFetchAll()
+  apiWrappedUserModel.apiFetchMany()
   .then((serialized) => {
     t.deepEqual(
       serialized,
@@ -1104,7 +1104,7 @@ test('I&T apiWrapper.apiFetchAll({withRelated: false})', (t) => {
   .then(() => t.end())
 })
 
-test('I&T apiWrapper.apiFetchAll({withRelated: true})', (t) => {
+test('I&T apiWrapper.apiFetchMany({withRelated: true})', (t) => {
   t.plan(1)
 
   const registryMock = {
@@ -1154,7 +1154,7 @@ test('I&T apiWrapper.apiFetchAll({withRelated: true})', (t) => {
 
   const apiWrappedUserModel = new ApiWrapper(userModel, registryMock)
 
-  apiWrappedUserModel.apiFetchAll({withRelated: true})
+  apiWrappedUserModel.apiFetchMany({withRelated: true})
   .then((serialized) => {
     t.deepEqual(
       serialized,
