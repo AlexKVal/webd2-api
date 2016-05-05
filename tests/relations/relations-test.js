@@ -447,11 +447,11 @@ test('relations._fetchBelongsTo()', (t) => {
     }
   }
 
-  const userGroupRelations = new Relations(userModel.name, userModel.schema, registryMock)
+  const userRelations = new Relations(userModel.name, userModel.schema, registryMock)
 
   const parentWhere = {someField: 'parent where constraints'}
 
-  userGroupRelations._fetchBelongsTo(parentWhere)
+  userRelations._fetchBelongsTo(parentWhere)
   .then((relationsData) => {
     t.deepEqual(
       relationsData,
@@ -498,9 +498,9 @@ test('relations._fetchBelongsTo() if relation model is not found in Registry', (
     }
   }
 
-  const userGroupRelations = new Relations(userModel.name, userModel.schema, registryMock)
+  const userRelations = new Relations(userModel.name, userModel.schema, registryMock)
 
-  userGroupRelations._fetchBelongsTo()
+  userRelations._fetchBelongsTo()
   .then(() => t.fail('should not be called'))
   .catch((e) => {
     t.equal(
@@ -611,6 +611,75 @@ test('I&T Relations _fetchHasMany() + _embedHasMany()', (t) => {
         }
       ],
       'fetches and embeds hasMany relations data'
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
+
+test('I&T Relations _fetchBelongsTo() + _embedBelongsTo()', (t) => {
+  t.plan(1)
+
+  const registryMock = {
+    _models: {
+      rights: {
+        selectMany () {
+          return Promise.resolve([
+            {id: '12', fullName: 'Full'},
+            {id: '13', fullName: 'Part'}
+          ])
+        }
+      },
+
+      userGroup: {
+        selectMany () {
+          return Promise.resolve([
+            {id: '101', shortName: 'Admins'},
+            {id: '102', shortName: 'Users'}
+          ])
+        }
+      }
+    },
+    model (modelName) {
+      return this._models[modelName]
+    }
+  }
+
+  const userModel = {
+    name: 'user',
+    schema: {
+      tableName: 'sPersonal',
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  }
+
+  const userRelations = new Relations(userModel.name, userModel.schema, registryMock)
+
+  const parentRows = [
+    {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+    {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+  ]
+
+  userRelations._fetchBelongsTo()
+  .then((relationsData) => userRelations._embedBelongsTo(parentRows, relationsData))
+  .then((parentRowsWithRelationsData) => {
+    t.deepEqual(
+      parentRowsWithRelationsData,
+      [
+        {
+          id: '1', name: 'John',
+          group: { id: '101', shortName: 'Admins' },
+          rights: {id: '12', fullName: 'Full'}
+        },
+        {
+          id: '2', name: 'Smith',
+          group: {id: '102', shortName: 'Users'},
+          rights: {id: '13', fullName: 'Part'}
+        }
+      ],
+      'embeds relations data'
     )
   })
   .catch((e) => t.fail(e))
