@@ -1,8 +1,6 @@
 'use strict'
 const test = require('tape')
 
-const DescBelongsTo = require('../../lib/sql-builder/desc-belongsto')
-
 const Relations = require('../../lib/relations/relations')
 
 test('Relations', (t) => {
@@ -124,12 +122,6 @@ test('relations._embedBelongsTo() with no relationsData provided', (t) => {
 
   const userRelations = new Relations(model.name, model.schema)
 
-  // mock
-  userRelations.belongsToDescriptors = [
-    new DescBelongsTo('group', model.schema.group),
-    new DescBelongsTo('rights', model.schema.rights)
-  ]
-
   t.deepEqual(
     userRelations._embedBelongsTo(parentRows /* no relationsData */),
     [
@@ -204,5 +196,31 @@ test('relations._embedBelongsTo() with relations data provided', (t) => {
     'embeds relations data'
   )
 
+  t.end()
+})
+
+test('Relations: findModelFieldName(modelName, relModelSchema)', (t) => {
+  const relationModelSchema = {
+    tableName: 'table-name',
+    group: {
+      belongsTo: 'userGroup'
+    },
+    rights: {
+      belongsTo: 'userRights'
+    },
+    tables: {
+      hasMany: 'table'
+    }
+  }
+
+  const findModelFieldName = Relations.findModelFieldName
+
+  t.equal(findModelFieldName('userRights', relationModelSchema), 'rights')
+  t.equal(findModelFieldName('userGroup', relationModelSchema), 'group')
+  t.throws(
+    () => findModelFieldName('table', relationModelSchema),
+    /there is no belongsTo descriptor for 'table'/,
+    'throws if attempted to get undescribed belongsTo model'
+  )
   t.end()
 })
