@@ -388,3 +388,126 @@ test('relations._fetchHasMany() if relation model is not found in Registry', (t)
   })
   .then(() => t.end())
 })
+
+test('relations._fetchBelongsTo()', (t) => {
+  t.plan(3)
+
+  const registryMock = {
+    _models: {
+      rights: {
+        selectMany (options) {
+          t.deepEqual(
+            options.whereIn,
+            {
+              parentFkName: 'rights',
+              parentTableName: 'sPersonal',
+              parentWhere: {someField: 'parent where constraints'}
+            },
+            'uses {whereIn} with relationFkName option'
+          )
+
+          return Promise.resolve([
+            {id: '12', fullName: 'Full'},
+            {id: '13', fullName: 'Part'}
+          ])
+        }
+      },
+
+      userGroup: {
+        selectMany (options) {
+          t.deepEqual(
+            options.whereIn,
+            {
+              parentFkName: 'userGroup',
+              parentTableName: 'sPersonal',
+              parentWhere: {someField: 'parent where constraints'}
+            },
+            'uses {whereIn} with relationFkName option'
+          )
+
+          return Promise.resolve([
+            {id: '101', shortName: 'Admins'},
+            {id: '102', shortName: 'Users'}
+          ])
+        }
+      }
+    },
+    model (modelName) {
+      return this._models[modelName]
+    }
+  }
+
+  const userModel = {
+    name: 'user',
+    schema: {
+      tableName: 'sPersonal',
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  }
+
+  const userGroupRelations = new Relations(userModel.name, userModel.schema, registryMock)
+
+  const parentWhere = {someField: 'parent where constraints'}
+
+  userGroupRelations._fetchBelongsTo(parentWhere)
+  .then((relationsData) => {
+    t.deepEqual(
+      relationsData,
+      [
+        {
+          modelFieldName: 'group',
+          fkAs: 'userGroupId',
+          rows: [
+            {id: '101', shortName: 'Admins'},
+            {id: '102', shortName: 'Users'}
+          ]
+        },
+        {
+          modelFieldName: 'rights',
+          fkAs: 'rightsId',
+          rows: [
+            {id: '12', fullName: 'Full'},
+            {id: '13', fullName: 'Part'}
+          ]
+        }
+      ],
+      'fetches relations data'
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
+
+test('relations._fetchBelongsTo() if relation model is not found in Registry', (t) => {
+  t.plan(1)
+
+  const registryMock = {
+    model (modelName) {
+      return undefined // simulate
+    }
+  }
+
+  const userModel = {
+    name: 'user',
+    schema: {
+      tableName: 'sPersonal',
+      name: 'string',
+      group: { belongsTo: 'userGroup' }
+    }
+  }
+
+  const userGroupRelations = new Relations(userModel.name, userModel.schema, registryMock)
+
+  userGroupRelations._fetchBelongsTo()
+  .then(() => t.fail('should not be called'))
+  .catch((e) => {
+    t.equal(
+      e.message,
+      "_fetchBelongsTo: there is no registered 'userGroup' model",
+      'it rejects with error'
+    )
+  })
+  .then(() => t.end())
+})
