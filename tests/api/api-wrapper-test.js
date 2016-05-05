@@ -2,6 +2,7 @@
 const test = require('tape')
 
 const SqlBuilder = require('../../lib/sql-builder/sql-builder')
+const DescHasMany = require('../../lib/sql-builder/desc-hasmany')
 
 const ApiWrapper = require('../../lib/api/api-wrapper')
 
@@ -821,16 +822,22 @@ test('apiWrapper._fetchHasManyRelations()', (t) => {
 
   // mock for testing
   apiWrappedModel._hasManyRelations = [
+    new DescHasMany('users', model.schema.users),
+    /*
     {
       relationModelName: model.schema.users.hasMany, // 'user'
       fkField: model.schema.users.fkField, // 'GrpID'
       modelFieldName: 'users' // model.schema.users
     },
+    */
+    new DescHasMany('divisions', model.schema.divisions)
+    /*
     {
       relationModelName: model.schema.divisions.hasMany, // 'division'
       fkField: model.schema.divisions.fkField, // 'UserGrpID'
       modelFieldName: 'divisions' // model.schema.users
     }
+    */
   ]
 
   const parentWhere = {someField: 'parent where constraints'}
