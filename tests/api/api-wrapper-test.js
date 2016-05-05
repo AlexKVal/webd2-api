@@ -822,12 +822,12 @@ test('apiWrapper._fetchHasManyRelations()', (t) => {
   // mock for testing
   apiWrappedModel._hasManyRelations = [
     {
-      modelName: model.schema.users.hasMany, // 'user'
+      relationModelName: model.schema.users.hasMany, // 'user'
       fkField: model.schema.users.fkField, // 'GrpID'
       modelFieldName: 'users' // model.schema.users
     },
     {
-      modelName: model.schema.divisions.hasMany, // 'division'
+      relationModelName: model.schema.divisions.hasMany, // 'division'
       fkField: model.schema.divisions.fkField, // 'UserGrpID'
       modelFieldName: 'divisions' // model.schema.users
     }
