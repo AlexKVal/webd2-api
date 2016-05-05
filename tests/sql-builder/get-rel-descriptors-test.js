@@ -3,10 +3,10 @@ const test = require('tape')
 
 const {
   attributesOfRelations,
-  getBelongsToRelations
-} = require('../../lib/sql-builder/belongsto-relations')
+  getBelongsToDescriptors
+} = require('../../lib/sql-builder/get-rel-descriptors')
 
-test('getBelongsToRelations()', (t) => {
+test('getBelongsToDescriptors()', (t) => {
   const schemaObject = {
     group: {
       belongsTo: 'userGroup',
@@ -18,7 +18,7 @@ test('getBelongsToRelations()', (t) => {
     }
   }
 
-  const relations = getBelongsToRelations(schemaObject)
+  const relations = getBelongsToDescriptors(schemaObject)
   t.equal(relations.length, 2)
   t.deepEqual(
     relations, [
