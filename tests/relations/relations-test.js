@@ -104,45 +104,7 @@ test('relations._embedHasMany()', (t) => {
   t.end()
 })
 
-test('relations._embedBelongsTo() with no relationsData provided', (t) => {
-  const model = {
-    name: 'user',
-    schema: {
-      tableName: 'sPepTree',
-      name: 'string',
-      group: { belongsTo: 'userGroup' },
-      rights: { belongsTo: 'rights' }
-    }
-  }
-
-  const parentRows = [
-    {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
-    {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
-  ]
-
-  const userRelations = new Relations(model.name, model.schema)
-
-  t.deepEqual(
-    userRelations._embedBelongsTo(parentRows /* no relationsData */),
-    [
-      {
-        id: '1', name: 'John',
-        group: { id: '101' },
-        rights: {id: '12'}
-      },
-      {
-        id: '2', name: 'Smith',
-        group: {id: '102'},
-        rights: {id: '13'}
-      }
-    ],
-    'just embeds empty belongsTo relations instead of beongsTo-fkAs`'
-  )
-
-  t.end()
-})
-
-test('relations._embedBelongsTo() with relations data provided', (t) => {
+test('relations._embedBelongsTo()', (t) => {
   const model = {
     name: 'user',
     schema: {
@@ -194,6 +156,44 @@ test('relations._embedBelongsTo() with relations data provided', (t) => {
       }
     ],
     'embeds relations data'
+  )
+
+  t.end()
+})
+
+test('relations.justTransformIDs()', (t) => {
+  const model = {
+    name: 'user',
+    schema: {
+      tableName: 'sPepTree',
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  }
+
+  const parentRows = [
+    {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+    {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+  ]
+
+  const userRelations = new Relations(model.name, model.schema)
+
+  t.deepEqual(
+    userRelations.justTransformIDs(parentRows),
+    [
+      {
+        id: '1', name: 'John',
+        group: { id: '101' },
+        rights: {id: '12'}
+      },
+      {
+        id: '2', name: 'Smith',
+        group: {id: '102'},
+        rights: {id: '13'}
+      }
+    ],
+    'embeds belongsTo IDs'
   )
 
   t.end()
