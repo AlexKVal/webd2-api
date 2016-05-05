@@ -511,3 +511,108 @@ test('relations._fetchBelongsTo() if relation model is not found in Registry', (
   })
   .then(() => t.end())
 })
+
+/**
+ * Integration testing
+ */
+test('I&T Relations _fetchHasMany() + _embedHasMany()', (t) => {
+  t.plan(1)
+
+  const registryMock = {
+    _models: {
+      user: {
+        schema: {
+          id: 'PersID',
+          tableName: 'sPersonal',
+          group: { belongsTo: 'userGroup' }
+        },
+        selectMany () {
+          return Promise.resolve([
+            { id: '101', name: 'John', cardcode: '123', hide: false, userGroupId: '1' },
+            { id: '102', name: 'Simona', cardcode: '455', hide: false, userGroupId: '1' },
+            { id: '103', name: 'Whatson', cardcode: '', hide: false, userGroupId: '2' },
+            { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, userGroupId: '2' }
+          ])
+        }
+      },
+
+      division: {
+        schema: {
+          id: 'DivID',
+          tableName: 'sDivisions',
+          someFancyFieldName: { belongsTo: 'userGroup' }
+        },
+        selectMany () {
+          return Promise.resolve([
+            { id: '23', name: 'Kitchen', hide: false, userGroupId: '1' },
+            { id: '24', name: 'Sad', hide: false, userGroupId: '1' },
+            { id: '25', name: 'Mangal', hide: false, userGroupId: '2' },
+            { id: '26', name: 'Tandyr', hide: false, userGroupId: '2' }
+          ])
+        }
+      }
+    },
+
+    model (modelName) {
+      return this._models[modelName]
+    }
+  }
+
+  const userGroupModel = {
+    name: 'userGroup',
+    schema: {
+      id: 'GroupID',
+      tableName: 'sPepTree',
+      users: {
+        hasMany: 'user',
+        fkField: 'GrpID'
+      },
+      divisions: {
+        hasMany: 'division',
+        fkField: 'UserGrpID'
+      }
+    }
+  }
+
+  const userGroupRelations = new Relations(userGroupModel.name, userGroupModel.schema, registryMock)
+
+  const parentRows = [
+    {id: '1', name: 'Bartenders', hide: false},
+    {id: '2', name: 'Waiters', hide: false}
+  ]
+
+  userGroupRelations._fetchHasMany()
+  .then((relationsData) => userGroupRelations._embedHasMany(parentRows, relationsData))
+  .then((parentRowsWithRelationsData) => {
+    t.deepEqual(
+      parentRowsWithRelationsData,
+      [
+        {
+          id: '1', name: 'Bartenders', hide: false,
+          users: [
+            { id: '101', name: 'John', cardcode: '123', hide: false, group: {id: '1'} },
+            { id: '102', name: 'Simona', cardcode: '455', hide: false, group: {id: '1'} }
+          ],
+          divisions: [
+            { id: '23', name: 'Kitchen', hide: false, someFancyFieldName: {id: '1'} },
+            { id: '24', name: 'Sad', hide: false, someFancyFieldName: {id: '1'} }
+          ]
+        },
+        {
+          id: '2', name: 'Waiters', hide: false,
+          users: [
+            { id: '103', name: 'Whatson', cardcode: '', hide: false, group: {id: '2'} },
+            { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, group: {id: '2'} }
+          ],
+          divisions: [
+            { id: '25', name: 'Mangal', hide: false, someFancyFieldName: {id: '2'} },
+            { id: '26', name: 'Tandyr', hide: false, someFancyFieldName: {id: '2'} }
+          ]
+        }
+      ],
+      'fetches and embeds hasMany relations data'
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
