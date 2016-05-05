@@ -1,6 +1,8 @@
 'use strict'
 const test = require('tape')
 
+const DescBelongsTo = require('../../lib/sql-builder/desc-belongsto')
+
 const Relations = require('../../lib/relations/relations')
 
 test('Relations', (t) => {
@@ -40,7 +42,7 @@ test('Relations', (t) => {
   t.end()
 })
 
-test('relations._joinHasMany()', (t) => {
+test('relations._embedHasMany()', (t) => {
   const model = {
     name: 'userGroup',
     schema: {
@@ -74,7 +76,7 @@ test('relations._joinHasMany()', (t) => {
   const userRelations = new Relations(model.name, model.schema)
 
   t.deepEqual(
-    userRelations._joinHasMany(parentRows, relationsData),
+    userRelations._embedHasMany(parentRows, relationsData),
     [
       {
         id: '1', name: 'Bartenders', hide: false,
@@ -92,6 +94,49 @@ test('relations._joinHasMany()', (t) => {
       }
     ],
     'joins in hasMany relations data'
+  )
+
+  t.end()
+})
+
+test('relations._embedBelongsTo() with no relationsData provided', (t) => {
+  const model = {
+    name: 'user',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  }
+
+  const parentRows = [
+    {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+    {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+  ]
+
+  const userRelations = new Relations(model.name, model.schema)
+
+  // mock
+  userRelations.belongsToDescriptors = [
+    new DescBelongsTo('group', model.schema.group),
+    new DescBelongsTo('rights', model.schema.rights)
+  ]
+
+  t.deepEqual(
+    userRelations._embedBelongsTo(parentRows /* no relationsData */),
+    [
+      {
+        id: '1', name: 'John',
+        group: { id: '101' },
+        rights: {id: '12'}
+      },
+      {
+        id: '2', name: 'Smith',
+        group: {id: '102'},
+        rights: {id: '13'}
+      }
+    ],
+    'just embeds empty belongsTo relations instead of beongsTo-fkAs`'
   )
 
   t.end()
