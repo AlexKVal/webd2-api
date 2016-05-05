@@ -141,3 +141,59 @@ test('relations._embedBelongsTo() with no relationsData provided', (t) => {
 
   t.end()
 })
+
+test('relations._embedBelongsTo() with relations data provided', (t) => {
+  const model = {
+    name: 'user',
+    schema: {
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
+  }
+
+  const parentRows = [
+    {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+    {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+  ]
+
+  const relationsData = [
+    {
+      modelFieldName: 'group',
+      fkAs: 'userGroupId',
+      rows: [
+        {id: '101', name: 'Admins'},
+        {id: '102', name: 'Users'}
+      ]
+    },
+    {
+      modelFieldName: 'rights',
+      fkAs: 'rightsId',
+      rows: [
+        {id: '12', name: 'Full'},
+        {id: '13', name: 'Part'}
+      ]
+    }
+  ]
+
+  const userRelations = new Relations(model.name, model.schema)
+
+  t.deepEqual(
+    userRelations._embedBelongsTo(parentRows, relationsData),
+    [
+      {
+        id: '1', name: 'John',
+        group: { id: '101', name: 'Admins' },
+        rights: {id: '12', name: 'Full'}
+      },
+      {
+        id: '2', name: 'Smith',
+        group: {id: '102', name: 'Users'},
+        rights: {id: '13', name: 'Part'}
+      }
+    ],
+    'embeds relations data'
+  )
+
+  t.end()
+})
