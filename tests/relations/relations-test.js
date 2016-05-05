@@ -224,3 +224,167 @@ test('Relations: findModelFieldName(modelName, relModelSchema)', (t) => {
   )
   t.end()
 })
+
+test('relations._fetchHasMany()', (t) => {
+  t.plan(3)
+
+  const registryMock = {
+    _models: {
+      user: {
+        schema: {
+          id: 'PersID',
+          tableName: 'sPersonal',
+          name: 'string',
+          cardcode: 'string',
+          hide: 'boolean',
+          group: {
+            belongsTo: 'userGroup'
+          }
+        },
+        selectMany (options) {
+          t.deepEqual(
+            options.whereIn,
+            {
+              relationFkName: 'GrpID',
+              parentIdFieldName: 'GroupID',
+              parentTableName: 'sPepTree',
+              parentWhere: {someField: 'parent where constraints'}
+            },
+            'uses {whereIn} with relationFkName option'
+          )
+
+          return Promise.resolve([
+            { id: '101', name: 'John', cardcode: '123', hide: false, userGroupId: '1' },
+            { id: '102', name: 'Simona', cardcode: '455', hide: false, userGroupId: '1' },
+            { id: '103', name: 'Whatson', cardcode: '', hide: false, userGroupId: '2' },
+            { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, userGroupId: '2' }
+          ])
+        }
+      },
+
+      division: {
+        schema: {
+          id: 'DivID',
+          tableName: 'sDivisions',
+          name: 'string',
+          hide: 'boolean',
+          someFancyFieldName: {
+            belongsTo: 'userGroup'
+          }
+        },
+        selectMany (options) {
+          t.deepEqual(
+            options.whereIn,
+            {
+              relationFkName: 'UserGrpID',
+              parentIdFieldName: 'GroupID',
+              parentTableName: 'sPepTree',
+              parentWhere: {someField: 'parent where constraints'}
+            },
+            'uses {whereIn} with relationFkName option'
+          )
+
+          return Promise.resolve([
+            { id: '23', name: 'Kitchen', hide: false, userGroupId: '1' },
+            { id: '24', name: 'Sad', hide: false, userGroupId: '1' },
+            { id: '25', name: 'Mangal', hide: false, userGroupId: '2' },
+            { id: '26', name: 'Tandyr', hide: false, userGroupId: '2' }
+          ])
+        }
+      }
+    },
+
+    model (modelName) {
+      return this._models[modelName]
+    }
+  }
+
+  const model = {
+    name: 'userGroup',
+    schema: {
+      id: 'GroupID',
+      tableName: 'sPepTree',
+      name: 'string',
+      users: {
+        hasMany: 'user',
+        fkField: 'GrpID'
+      },
+      divisions: {
+        hasMany: 'division',
+        fkField: 'UserGrpID'
+      }
+    }
+  }
+
+  const userGroupRelations = new Relations(model.name, model.schema, registryMock)
+
+  const parentWhere = {someField: 'parent where constraints'}
+
+  userGroupRelations._fetchHasMany(parentWhere)
+  .then((relationsData) => {
+    t.deepEqual(
+      relationsData,
+      [
+        {
+          modelFieldName: 'users',
+          parentModelFieldName: 'group',
+          rows: [
+            { id: '101', name: 'John', cardcode: '123', hide: false, userGroupId: '1' },
+            { id: '102', name: 'Simona', cardcode: '455', hide: false, userGroupId: '1' },
+            { id: '103', name: 'Whatson', cardcode: '', hide: false, userGroupId: '2' },
+            { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, userGroupId: '2' }
+          ]
+        },
+        {
+          modelFieldName: 'divisions',
+          parentModelFieldName: 'someFancyFieldName',
+          rows: [
+            { id: '23', name: 'Kitchen', hide: false, userGroupId: '1' },
+            { id: '24', name: 'Sad', hide: false, userGroupId: '1' },
+            { id: '25', name: 'Mangal', hide: false, userGroupId: '2' },
+            { id: '26', name: 'Tandyr', hide: false, userGroupId: '2' }
+          ]
+        }
+      ],
+      'fetches hasMany relations data'
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
+
+test('relations._fetchHasMany() if relation model is not found in Registry', (t) => {
+  t.plan(1)
+
+  const registryMock = {
+    model (modelName) {
+      return undefined // simulate
+    }
+  }
+
+  const model = {
+    name: 'userGroup',
+    schema: {
+      id: 'GroupID',
+      tableName: 'sPepTree',
+      name: 'string',
+      users: {
+        hasMany: 'user',
+        fkField: 'GrpID'
+      }
+    }
+  }
+
+  const userGroupRelations = new Relations(model.name, model.schema, registryMock)
+
+  userGroupRelations._fetchHasMany()
+  .then(() => t.fail('should not be called'))
+  .catch((e) => {
+    t.equal(
+      e.message,
+      "_fetchHasMany: there is no registered 'user' model",
+      'it rejects with error'
+    )
+  })
+  .then(() => t.end())
+})
