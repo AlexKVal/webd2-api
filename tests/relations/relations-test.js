@@ -21,9 +21,15 @@ test('Relations', (t) => {
     /modelSchema should be an object/
   )
 
+  t.throws(
+    () => new Relations('user', {/* tableName is undefined */}),
+    /modelSchema tableName is undefined/
+  )
+
   const model = {
     name: 'userGroup',
     schema: {
+      tableName: 'sPepTree',
       name: 'string',
       hide: 'boolean',
       users: {
@@ -46,6 +52,7 @@ test('relations._embedHasMany()', (t) => {
   const model = {
     name: 'userGroup',
     schema: {
+      tableName: 'sPepTree',
       name: 'string',
       hide: 'boolean',
       users: {
@@ -103,6 +110,7 @@ test('relations._embedBelongsTo() with no relationsData provided', (t) => {
   const model = {
     name: 'user',
     schema: {
+      tableName: 'sPepTree',
       name: 'string',
       group: { belongsTo: 'userGroup' },
       rights: { belongsTo: 'rights' }
@@ -146,6 +154,7 @@ test('relations._embedBelongsTo() with relations data provided', (t) => {
   const model = {
     name: 'user',
     schema: {
+      tableName: 'sPepTree',
       name: 'string',
       group: { belongsTo: 'userGroup' },
       rights: { belongsTo: 'rights' }
