@@ -769,8 +769,8 @@ test('I&T apiWrapper.apiFetchMany({withRelated: true})', (t) => {
     }
   })
 
-  divisionModel.attributesSerialize = ['name', 'hide'] // , 'staff']
-  clientModel.attributesSerialize = ['name', 'cardcode', 'hide'] // , 'manager']
+  // divisionModel.attributesSerialize = ['name', 'hide'] // , 'staff']
+  // clientModel.attributesSerialize = ['name', 'cardcode', 'hide'] // , 'manager']
 
   const registryMock = {
     model (modelName) {
