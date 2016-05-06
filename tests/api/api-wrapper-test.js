@@ -1,12 +1,20 @@
 'use strict'
 const test = require('tape')
 
+const SqlBuilder = require('../../lib/sql-builder/sql-builder')
+const DescHasMany = require('../../lib/sql-builder/desc-hasmany')
+
 const ApiWrapper = require('../../lib/api/api-wrapper')
 
 const registryMock = { model (modelName) { return {name: modelName} } }
 
 test('ApiWrapper', (t) => {
-  const someModelMock = { name: 'some-model-name' }
+  const someModelMock = {
+    name: 'some-model-name',
+    attributesSerialize: [],
+    sqlBuilder: new SqlBuilder({})
+  }
+
   const apiWrappedSomeModel = new ApiWrapper({
     model: someModelMock,
     serializer: {}, deserializer: {},
@@ -25,16 +33,15 @@ test('ApiWrapper', (t) => {
     'model should be with a name'
   )
 
-  const aModelMock = { name: 'modelName', attributesSerialize: [] }
   t.doesNotThrow(
-    () => new ApiWrapper(aModelMock),
+    () => new ApiWrapper(someModelMock),
     /ApiWrapper needs a model/,
     'model could be provided directly'
   )
 
   const aRegistryMock = {}
   t.doesNotThrow(
-    () => new ApiWrapper(aModelMock, aRegistryMock),
+    () => new ApiWrapper(someModelMock, aRegistryMock),
     'registry could be passed as a second argument for testing'
   )
 
@@ -59,7 +66,7 @@ test('apiWrapper.apiCreate()', (t) => {
 
   const model = {
     name: 'someModelName',
-
+    sqlBuilder: new SqlBuilder({}),
     create (deserialized) {
       t.equal(
         deserialized,
@@ -108,6 +115,7 @@ test('apiWrapper.apiCreate() returns error from deserializer', (t) => {
 
   const model = {
     name: 'someModelName',
+    sqlBuilder: new SqlBuilder({}),
     create (deserialized) {
       t.fail('model.create() should not be called')
     }
@@ -144,7 +152,7 @@ test('apiWrapper.apiCreate() returns error from model.create()', (t) => {
 
   const model = {
     name: 'someModelName',
-
+    sqlBuilder: new SqlBuilder({}),
     create (deserialized) {
       t.equal(
         deserialized,
@@ -191,7 +199,7 @@ test('apiWrapper.apiUpdate()', (t) => {
 
   const model = {
     name: 'someModelName',
-
+    sqlBuilder: new SqlBuilder({}),
     update (id, deserialized) {
       t.equal(id, 131, 'provides id to model`s update method')
       t.equal(
@@ -240,6 +248,7 @@ test('apiWrapper.apiUpdate() returns error from deserializer', (t) => {
 
   const model = {
     name: 'someModelName',
+    sqlBuilder: new SqlBuilder({}),
     update () {
       t.fail('model.update() should not be called')
     }
@@ -275,6 +284,7 @@ test('apiWrapper.apiUpdate() returns error from model.update()', (t) => {
 
   const model = {
     name: 'someModelName',
+    sqlBuilder: new SqlBuilder({}),
     update () {
       return Promise.reject(new Error('some update()`s error'))
     }
@@ -306,7 +316,7 @@ test('apiWrapper.apiFind()', (t) => {
 
   const model = {
     name: 'someModelName',
-
+    sqlBuilder: new SqlBuilder({}),
     selectOne ({id}) {
       t.equal(id, 1001, 'provides id to model`s selectOne() method')
       return Promise.resolve(dataFromSelect)
@@ -338,7 +348,7 @@ test('apiWrapper.apiFind()', (t) => {
   .then(() => t.end())
 })
 
-test('apiWrapper.apiFetchAll() without related', (t) => {
+test('apiWrapper.apiFetchMany() without related', (t) => {
   t.plan(4)
 
   const serializer = {
@@ -353,7 +363,7 @@ test('apiWrapper.apiFetchAll() without related', (t) => {
 
   const model = {
     name: 'someModelName',
-
+    sqlBuilder: new SqlBuilder({}),
     selectMany (options) {
       t.deepEqual(options, {}, 'options for model.selectMany()')
       return Promise.resolve('data from selectMany')
@@ -363,7 +373,7 @@ test('apiWrapper.apiFetchAll() without related', (t) => {
   const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}, registryMock})
 
   // mock it for testing
-  apiWrappedModel._joinRelations = (parentRows) => {
+  apiWrappedModel._joinBelongsToRelations = (parentRows) => {
     t.equal(
       parentRows,
       'data from selectMany',
@@ -374,13 +384,13 @@ test('apiWrapper.apiFetchAll() without related', (t) => {
   }
   apiWrappedModel._fetchRelations = () => t.fail('this._fetchRelations() should not be called')
 
-  apiWrappedModel.apiFetchAll(/* no options */)
+  apiWrappedModel.apiFetchMany(/* no options */)
   .then((result) => t.equal(result, 'serialized data'))
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
 
-test('apiWrapper.apiFetchAll() with related', (t) => {
+test('apiWrapper.apiFetchMany() with related', (t) => {
   t.plan(4)
 
   const serializer = {
@@ -395,7 +405,7 @@ test('apiWrapper.apiFetchAll() with related', (t) => {
 
   const model = {
     name: 'someModelName',
-
+    sqlBuilder: new SqlBuilder({}),
     selectMany (options) {
       t.deepEqual(options, {withRelated: true}, 'options for model.selectMany()')
       return Promise.resolve('data from selectMany')
@@ -414,24 +424,24 @@ test('apiWrapper.apiFetchAll() with related', (t) => {
 
     return '"joined" data'
   }
-  apiWrappedModel._joinRelations = () => t.fail('this._joinRelations() should not be called')
+  apiWrappedModel._joinBelongsToRelations = () => t.fail('this._joinBelongsToRelations() should not be called')
 
-  apiWrappedModel.apiFetchAll({withRelated: true})
+  apiWrappedModel.apiFetchMany({withRelated: true})
   .then((result) => t.equal(result, 'serialized data'))
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
 
-test('apiWrapper._joinRelations() with no "relations" provided', (t) => {
+test('apiWrapper._joinBelongsToRelations() with no "relations" provided', (t) => {
   t.plan(1)
 
   const model = {
     name: 'someModelName',
-    schema: {
+    sqlBuilder: new SqlBuilder({
       name: 'string',
       group: { belongsTo: 'userGroup' },
       rights: { belongsTo: 'rights' }
-    }
+    })
   }
 
   const parentRows = [
@@ -442,7 +452,7 @@ test('apiWrapper._joinRelations() with no "relations" provided', (t) => {
   const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}, registryMock})
 
   t.deepEqual(
-    apiWrappedModel._joinRelations(parentRows /*, no_relations_data */),
+    apiWrappedModel._joinBelongsToRelations(parentRows /*, no_relations_data */),
     [
       {
         id: '1', name: 'John',
@@ -461,7 +471,7 @@ test('apiWrapper._joinRelations() with no "relations" provided', (t) => {
   t.end()
 })
 
-test('apiWrapper._joinRelations() with "relations" data provided', (t) => {
+test('apiWrapper._joinBelongsToRelations() with "relations" data provided', (t) => {
   t.plan(1)
 
   const model = {
@@ -472,6 +482,7 @@ test('apiWrapper._joinRelations() with "relations" data provided', (t) => {
       rights: { belongsTo: 'rights' }
     }
   }
+  model.sqlBuilder = new SqlBuilder(model.schema)
 
   const parentRows = [
     {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
@@ -500,7 +511,7 @@ test('apiWrapper._joinRelations() with "relations" data provided', (t) => {
   const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}, registryMock})
 
   t.deepEqual(
-    apiWrappedModel._joinRelations(parentRows, relationsData),
+    apiWrappedModel._joinBelongsToRelations(parentRows, relationsData),
     [
       {
         id: '1', name: 'John',
@@ -519,6 +530,68 @@ test('apiWrapper._joinRelations() with "relations" data provided', (t) => {
   t.end()
 })
 
+test('apiWrapper._joinHasManyRelations() with "relations" data provided', (t) => {
+  t.plan(1)
+
+  const model = {
+    name: 'userGroup',
+    schema: {
+      name: 'string',
+      hide: 'boolean',
+      users: {
+        hasMany: 'user',
+        fkField: 'GrpID'
+      }
+    }
+  }
+  model.sqlBuilder = new SqlBuilder(model.schema)
+
+  const parentModelFieldName = 'group' // parent.modelFieldName
+
+  const relationsData = [
+    {
+      modelFieldName: 'users',
+      parentModelFieldName,
+      rows: [
+        { id: '101', name: 'John', cardcode: '123', hide: false, userGroupId: '1' },
+        { id: '102', name: 'Simona', cardcode: '455', hide: false, userGroupId: '1' },
+        { id: '103', name: 'Whatson', cardcode: '', hide: false, userGroupId: '2' },
+        { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, userGroupId: '2' }
+      ]
+    }
+  ]
+
+  const parentRows = [
+    {id: '1', name: 'Bartenders', hide: false},
+    {id: '2', name: 'Waiters', hide: false}
+  ]
+
+  const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}, registryMock})
+
+  t.deepEqual(
+    apiWrappedModel._joinHasManyRelations(parentRows, relationsData),
+    [
+      {
+        id: '1', name: 'Bartenders', hide: false,
+        users: [
+          { id: '101', name: 'John', cardcode: '123', hide: false, group: {id: '1'} },
+          { id: '102', name: 'Simona', cardcode: '455', hide: false, group: {id: '1'} }
+        ]
+      },
+      {
+        id: '2', name: 'Waiters', hide: false,
+        users: [
+          { id: '103', name: 'Whatson', cardcode: '', hide: false, group: {id: '2'} },
+          { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, group: {id: '2'} }
+        ]
+      }
+    ],
+    'joins in hasMany relations data'
+  )
+
+  t.end()
+})
+
 test('apiWrapper._joinRelationsAndSerialize()', (t) => {
   t.plan(3)
 
@@ -529,12 +602,12 @@ test('apiWrapper._joinRelationsAndSerialize()', (t) => {
     }
   }
 
-  const model = { name: 'someModelName' }
+  const model = { name: 'someModelName', sqlBuilder: new SqlBuilder({}) }
 
   const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}, registryMock})
 
   // mock it for testing
-  apiWrappedModel._joinRelations = (parentRows) => {
+  apiWrappedModel._joinBelongsToRelations = (parentRows) => {
     t.deepEqual(
       parentRows,
       [ 'parent`s row' ],
@@ -549,7 +622,7 @@ test('apiWrapper._joinRelationsAndSerialize()', (t) => {
     t.deepEqual(
       result,
       'serialized data',
-      'calls _joinRelations() and serializes without related data'
+      'calls _joinBelongsToRelations() and serializes without related data'
     )
   })
   .catch((e) => t.fail(e))
@@ -611,25 +684,20 @@ test('apiWrapper._fetchRelations()', (t) => {
     }
   }
 
+  const modelSchema = {
+    tableName: 'someTableName',
+    name: 'string',
+    group: { belongsTo: 'userGroup' },
+    rights: { belongsTo: 'rights' }
+  }
   const model = {
     name: 'someModelName',
     registry: registryMock,
-    sqlBuilder: {tableName: 'someTableName'},
-    schema: {
-      name: 'string',
-      group: { belongsTo: 'userGroup' },
-      rights: { belongsTo: 'rights' }
-    }
+    sqlBuilder: new SqlBuilder(modelSchema),
+    schema: modelSchema
   }
 
-  const serializer = {
-    withoutRelated (data) {
-      t.equal(data, 'joined-empty-relations row', 'passes row to serializer')
-      return Promise.resolve('serialized data')
-    }
-  }
-
-  const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}, registryMock})
+  const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}, registryMock})
 
   const parentRows = [
     {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
@@ -655,6 +723,136 @@ test('apiWrapper._fetchRelations()', (t) => {
         }
       ],
       'fetches relations data'
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
+
+test('apiWrapper._fetchHasManyRelations()', (t) => {
+  t.plan(3)
+
+  const registryMock = {
+    model (modelName) {
+      const _models = {
+        user: {
+          selectMany (options) {
+            t.deepEqual(
+              options.whereIn,
+              {
+                relationFkName: 'GrpID',
+                parentIdFieldName: 'GroupID',
+                parentTableName: 'sPepTree',
+                parentWhere: {someField: 'parent where constraints'}
+              },
+              'uses {whereIn} with relationFkName option'
+            )
+
+            return Promise.resolve([
+              { id: '101', name: 'John', cardcode: '123', hide: false, userGroupId: '1' },
+              { id: '102', name: 'Simona', cardcode: '455', hide: false, userGroupId: '1' },
+              { id: '103', name: 'Whatson', cardcode: '', hide: false, userGroupId: '2' },
+              { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, userGroupId: '2' }
+            ])
+          },
+          sqlBuilder: new SqlBuilder({
+            id: 'PersID',
+            tableName: 'sPersonal',
+            name: 'string',
+            cardcode: 'string',
+            hide: 'boolean',
+            group: {
+              belongsTo: 'userGroup'
+            }
+          })
+        },
+
+        division: {
+          selectMany (options) {
+            t.deepEqual(
+              options.whereIn,
+              {
+                relationFkName: 'UserGrpID',
+                parentIdFieldName: 'GroupID',
+                parentTableName: 'sPepTree',
+                parentWhere: {someField: 'parent where constraints'}
+              },
+              'uses {whereIn} with relationFkName option'
+            )
+
+            return Promise.resolve([
+              { id: '23', name: 'Kitchen', hide: false, userGroupId: '1' },
+              { id: '24', name: 'Sad', hide: false, userGroupId: '1' },
+              { id: '25', name: 'Mangal', hide: false, userGroupId: '2' },
+              { id: '26', name: 'Tandyr', hide: false, userGroupId: '2' }
+            ])
+          },
+          sqlBuilder: new SqlBuilder({
+            id: 'DivID',
+            tableName: 'sDivisions',
+            name: 'string',
+            hide: 'boolean',
+            someFancyFieldName: {
+              belongsTo: 'userGroup'
+            }
+          })
+        }
+      }
+
+      return _models[modelName]
+    }
+  }
+
+  const model = {
+    name: 'userGroup',
+    registry: registryMock,
+    schema: {
+      id: 'GroupID',
+      tableName: 'sPepTree',
+      name: 'string',
+      users: {
+        hasMany: 'user',
+        fkField: 'GrpID'
+      },
+      divisions: {
+        hasMany: 'division',
+        fkField: 'UserGrpID'
+      }
+    }
+  }
+  model.sqlBuilder = new SqlBuilder(model.schema)
+
+  const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}, registryMock})
+
+  const parentWhere = {someField: 'parent where constraints'}
+
+  apiWrappedModel._fetchHasManyRelations(parentWhere)
+  .then((data) => {
+    t.deepEqual(
+      data,
+      [
+        {
+          modelFieldName: 'users',
+          parentModelFieldName: 'group',
+          rows: [
+            { id: '101', name: 'John', cardcode: '123', hide: false, userGroupId: '1' },
+            { id: '102', name: 'Simona', cardcode: '455', hide: false, userGroupId: '1' },
+            { id: '103', name: 'Whatson', cardcode: '', hide: false, userGroupId: '2' },
+            { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, userGroupId: '2' }
+          ]
+        },
+        {
+          modelFieldName: 'divisions',
+          parentModelFieldName: 'someFancyFieldName',
+          rows: [
+            { id: '23', name: 'Kitchen', hide: false, userGroupId: '1' },
+            { id: '24', name: 'Sad', hide: false, userGroupId: '1' },
+            { id: '25', name: 'Mangal', hide: false, userGroupId: '2' },
+            { id: '26', name: 'Tandyr', hide: false, userGroupId: '2' }
+          ]
+        }
+      ],
+      'fetches hasMany relations data'
     )
   })
   .catch((e) => t.fail(e))
@@ -854,7 +1052,7 @@ test('I&T apiWrapper.apiFind()', (t) => {
   .then(() => t.end())
 })
 
-test('I&T apiWrapper.apiFetchAll({withRelated: false})', (t) => {
+test('I&T apiWrapper.apiFetchMany({withRelated: false})', (t) => {
   t.plan(1)
 
   class UserModel extends BaseModel {
@@ -876,7 +1074,7 @@ test('I&T apiWrapper.apiFetchAll({withRelated: false})', (t) => {
 
   const apiWrappedUserModel = new ApiWrapper(userModel, registryMock)
 
-  apiWrappedUserModel.apiFetchAll()
+  apiWrappedUserModel.apiFetchMany()
   .then((serialized) => {
     t.deepEqual(
       serialized,
@@ -906,7 +1104,7 @@ test('I&T apiWrapper.apiFetchAll({withRelated: false})', (t) => {
   .then(() => t.end())
 })
 
-test('I&T apiWrapper.apiFetchAll({withRelated: true})', (t) => {
+test('I&T apiWrapper.apiFetchMany({withRelated: true})', (t) => {
   t.plan(1)
 
   const registryMock = {
@@ -956,7 +1154,7 @@ test('I&T apiWrapper.apiFetchAll({withRelated: true})', (t) => {
 
   const apiWrappedUserModel = new ApiWrapper(userModel, registryMock)
 
-  apiWrappedUserModel.apiFetchAll({withRelated: true})
+  apiWrappedUserModel.apiFetchMany({withRelated: true})
   .then((serialized) => {
     t.deepEqual(
       serialized,
