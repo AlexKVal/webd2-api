@@ -378,14 +378,16 @@ test('apiWrapper.apiFetchMany() without related', (t) => {
   const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}, registryMock})
 
   // mock it for testing
-  apiWrappedModel._joinBelongsToRelations = (parentRows) => {
-    t.equal(
-      parentRows,
-      'data from selectMany',
-      'joins relations and serializes the result from model.update()'
-    )
+  apiWrappedModel.relations = {
+    justTransformIDs (parentRows) {
+      t.equal(
+        parentRows,
+        'data from selectMany',
+        'joins relations and serializes the result from model.update()'
+      )
 
-    return '"joined" data'
+      return '"joined" data'
+    }
   }
   apiWrappedModel._fetchRelations = () => t.fail('this._fetchRelations() should not be called')
 
@@ -420,14 +422,16 @@ test('apiWrapper.apiFetchMany() with related', (t) => {
   const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}, registryMock})
 
   // mock it for testing
-  apiWrappedModel._fetchRelations = (parentRows) => {
-    t.equal(
-      parentRows,
-      'data from selectMany',
-      'joins relations and serializes the result from model.update()'
-    )
+  apiWrappedModel.relations = {
+    fetchAndEmbed (parentRows) {
+      t.equal(
+        parentRows,
+        'data from selectMany',
+        'joins relations and serializes the result from model.update()'
+      )
 
-    return '"joined" data'
+      return '"joined" data'
+    }
   }
   apiWrappedModel._joinBelongsToRelations = () => t.fail('this._joinBelongsToRelations() should not be called')
 
