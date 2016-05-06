@@ -626,14 +626,16 @@ test('apiWrapper._joinRelationsAndSerialize()', (t) => {
   const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}, registryMock})
 
   // mock it for testing
-  apiWrappedModel._joinBelongsToRelations = (parentRows) => {
-    t.deepEqual(
-      parentRows,
-      [ 'parent`s row' ],
-      'changes relations ids into empty relations with ids'
-    )
+  apiWrappedModel.relations = {
+    justTransformIDs (parentRows) {
+      t.deepEqual(
+        parentRows,
+        [ 'parent`s row' ],
+        'changes relations ids into empty relations with ids'
+      )
 
-    return [ 'joined-empty-relations row' ]
+      return [ 'joined-empty-relations row' ]
+    }
   }
 
   apiWrappedModel._joinRelationsAndSerialize('parent`s row')
