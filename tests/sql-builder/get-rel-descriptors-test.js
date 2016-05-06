@@ -6,6 +6,8 @@ const {
   getHasManyDescriptors,
   getBelongsToDescriptors
 } = require('../../lib/sql-builder/get-rel-descriptors')
+const DescBelongsTo = require('../../lib/sql-builder/desc-belongsto')
+const DescHasMany = require('../../lib/sql-builder/desc-hasmany')
 
 test('getBelongsToDescriptors()', (t) => {
   const schemaObject = {
@@ -86,30 +88,34 @@ test('attributesOfRelations()', (t) => {
     model (modelName) {
       const _models = {
         userGroup: { attributesSerialize: ['shortName', 'hide'] },
-        rights: { attributesSerialize: ['fullName', 'enabled', 'group'] }
+        rights: { attributesSerialize: ['fullName', 'enabled', 'group'] },
+        division: { attributesSerialize: ['name', 'hide', 'staff'] },
+        client: { attributesSerialize: ['name', 'hide', 'cardcode', 'manager'] }
       }
 
       return _models[modelName]
     }
   }
 
-  const belongsToRelations = [
-    {
-      relationModelName: 'userGroup',
-      modelFieldName: 'group'
-    }, {
-      relationModelName: 'rights',
-      modelFieldName: 'rights'
-    }
+  const belongsToDescriptors = [
+    new DescBelongsTo('group', { belongsTo: 'userGroup' }),
+    new DescBelongsTo('rights', { belongsTo: 'rights' })
+  ]
+
+  const hasManyDescriptors = [
+    new DescHasMany('divisions', { hasMany: 'division', fkField: 'UserID' }),
+    new DescHasMany('clients', { hasMany: 'client', fkField: 'UserID' })
   ]
 
   t.deepEqual(
-    attributesOfRelations(registryMock, belongsToRelations),
+    attributesOfRelations(registryMock, belongsToDescriptors, hasManyDescriptors),
     {
       group: ['shortName', 'hide'],
-      rights: ['fullName', 'enabled', 'group']
+      rights: ['fullName', 'enabled', 'group'],
+      divisions: ['name', 'hide', 'staff'],
+      clients: ['name', 'hide', 'cardcode', 'manager']
     },
-    'returns attributes for all belongsTo relations'
+    'returns attributes of all relations'
   )
   t.end()
 })
