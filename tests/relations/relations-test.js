@@ -722,3 +722,134 @@ test('I&T Relations _fetchBelongsTo() + _embedBelongsTo()', (t) => {
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
+
+test('I&T relations.fetchAndEmbed()', (t) => {
+  t.plan(1)
+
+  const userModel = {
+    name: 'user',
+    schema: {
+      id: 'PersID',
+      tableName: 'sPersonal',
+
+      group: {
+        belongsTo: 'userGroup',
+        fkField: 'GrpID'
+      },
+      rights: {
+        belongsTo: 'rights'
+      },
+
+      divisions: {
+        hasMany: 'division',
+        fkField: 'UserID'
+      },
+      clients: {
+        hasMany: 'client',
+        fkField: 'UserID'
+      }
+    }
+  }
+
+  const registryMock = {
+    _models: {
+      rights: {
+        selectMany () {
+          return Promise.resolve([
+            {id: '12', fullName: 'Full'},
+            {id: '13', fullName: 'Part'}
+          ])
+        }
+      },
+
+      userGroup: {
+        selectMany () {
+          return Promise.resolve([
+            {id: '101', shortName: 'Admins'},
+            {id: '102', shortName: 'Users'}
+          ])
+        }
+      },
+
+      division: {
+        schema: {
+          id: 'DivID',
+          tableName: 'sDivisions',
+          staff: { belongsTo: 'user' }
+        },
+        selectMany () {
+          return Promise.resolve([
+            { id: '23', name: 'Kitchen', hide: false, userId: '1' },
+            { id: '24', name: 'Sad', hide: false, userId: '1' },
+            { id: '25', name: 'Mangal', hide: false, userId: '2' },
+            { id: '26', name: 'Tandyr', hide: false, userId: '2' }
+          ])
+        }
+      },
+
+      client: {
+        schema: {
+          id: 'CliID',
+          tableName: 'sClients',
+          manager: { belongsTo: 'user' }
+        },
+        selectMany () {
+          return Promise.resolve([
+            { id: '101', name: 'John', cardcode: '123', hide: false, userId: '1' },
+            { id: '102', name: 'Simona', cardcode: '455', hide: false, userId: '1' },
+            { id: '103', name: 'Whatson', cardcode: '', hide: false, userId: '2' },
+            { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, userId: '2' }
+          ])
+        }
+      }
+    },
+    model (modelName) {
+      return this._models[modelName]
+    }
+  }
+
+  const userRelations = new Relations(userModel.name, userModel.schema, registryMock)
+
+  const parentRows = [
+    {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+    {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+  ]
+
+  userRelations.fetchAndEmbed(parentRows)
+  .then((parentRowsWithRelationsData) => {
+    t.deepEqual(
+      parentRowsWithRelationsData,
+      [
+        {
+          id: '1', name: 'John',
+          group: { id: '101', shortName: 'Admins' },
+          rights: {id: '12', fullName: 'Full'},
+          divisions: [
+            { id: '23', name: 'Kitchen', hide: false, staff: {id: '1'} },
+            { id: '24', name: 'Sad', hide: false, staff: {id: '1'} }
+          ],
+          clients: [
+            { id: '101', name: 'John', cardcode: '123', hide: false, manager: {id: '1'} },
+            { id: '102', name: 'Simona', cardcode: '455', hide: false, manager: {id: '1'} }
+          ]
+        },
+        {
+          id: '2', name: 'Smith',
+          group: {id: '102', shortName: 'Users'},
+          rights: {id: '13', fullName: 'Part'},
+          divisions: [
+            { id: '25', name: 'Mangal', hide: false, staff: {id: '2'} },
+            { id: '26', name: 'Tandyr', hide: false, staff: {id: '2'} }
+          ],
+          clients: [
+            { id: '103', name: 'Whatson', cardcode: '', hide: false, manager: {id: '2'} },
+            { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, manager: {id: '2'} }
+          ]
+        }
+      ],
+      'fetches and embeds belongsTo relations data'
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
