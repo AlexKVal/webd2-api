@@ -723,29 +723,6 @@ test('sqlBuilder._wherePart() generates clauses for WHERE part', (t) => {
   t.end()
 })
 
-test('sqlBuilder.getModelFieldName(modelName)', (t) => {
-  const sqlBuilder = new SqlBuilder({
-    group: {
-      belongsTo: 'userGroup'
-    },
-    rights: {
-      belongsTo: 'userRights'
-    },
-    tables: {
-      hasMany: 'table'
-    }
-  })
-
-  t.equal(sqlBuilder.getModelFieldName('userRights'), 'rights')
-  t.equal(sqlBuilder.getModelFieldName('userGroup'), 'group')
-  t.throws(
-    () => sqlBuilder.getModelFieldName('table'),
-    /there is no belongsTo relation for "table"/,
-    'throws if attempted to get not defined belongsTo model'
-  )
-  t.end()
-})
-
 /**
  * customizable generators
  * instead of sqlAll sqlOne etc
