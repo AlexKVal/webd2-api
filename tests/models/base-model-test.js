@@ -49,6 +49,84 @@ test('BaseModel constructor requires parameters', (t) => {
   t.end()
 })
 
+test('baseModel.attributesSerialize', (t) => {
+  class CustomModel extends BaseModel {}
+  const model = new CustomModel({db: dbMock, name: 'user', schema: {
+    tableName: 'sPersonal',
+    id: 'PersID',
+
+    enabled: 'boolean',
+    hide: 'boolean',
+    counter: 'integer',
+
+    group: {
+      belongsTo: 'userGroup'
+    },
+    rights: {
+      belongsTo: 'rights'
+    },
+
+    divisions: {
+      hasMany: 'division',
+      fkField: 'UserID'
+    },
+    clients: {
+      hasMany: 'client',
+      fkField: 'UsrID'
+    }
+  }})
+
+  t.deepEqual(
+    model.attributesSerialize,
+    [
+      'enabled', 'hide', 'counter',
+      'group', 'rights',
+      'divisions', 'clients'
+    ],
+    'returns data fields` names including all relations'
+  )
+
+  t.end()
+})
+
+test('baseModel.asRelationAttributesSerialize', (t) => {
+  class CustomModel extends BaseModel {}
+  const model = new CustomModel({db: dbMock, name: 'user', schema: {
+    tableName: 'sPersonal',
+    id: 'PersID',
+
+    enabled: 'boolean',
+    hide: 'boolean',
+    counter: 'integer',
+
+    group: {
+      belongsTo: 'userGroup'
+    },
+    rights: {
+      belongsTo: 'rights'
+    },
+
+    divisions: {
+      hasMany: 'division',
+      fkField: 'UserID'
+    },
+    clients: {
+      hasMany: 'client',
+      fkField: 'UsrID'
+    }
+  }})
+
+  t.deepEqual(
+    model.asRelationAttributesSerialize,
+    [
+      'enabled', 'hide', 'counter'
+    ],
+    'returns only data fields` names'
+  )
+
+  t.end()
+})
+
 /**
  * selectMany(options)
  */
