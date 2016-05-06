@@ -556,6 +556,8 @@ test('relations.getAttributesOfRelations()', (t) => {
         rights: { attributesSerialize: ['fullName', 'enabled', 'group'] },
         division: { attributesSerialize: ['name', 'hide', 'staff'] },
         client: { attributesSerialize: ['name', 'hide', 'cardcode', 'manager'] }
+        /* no noNameHasManyModel */
+        /* no noNameBelongsToModel */
       }
 
       return _models[modelName]
@@ -586,6 +588,35 @@ test('relations.getAttributesOfRelations()', (t) => {
     },
     'returns attributes of all relations'
   )
+
+  const model1 = {
+    name: 'user',
+    schema: {
+      tableName: 'sPersonal',
+      noName: { hasMany: 'noNameHasManyModel', fkField: 'UserID' }
+    }
+  }
+  const model1Relations = new Relations(model1.name, model1.schema, registryMock)
+  t.throws(
+    () => model1Relations.getAttributesOfRelations(),
+    /there is no registered 'noNameHasManyModel' model/,
+    'throws if no hasMany relation model registered in Registry'
+  )
+
+  const model2 = {
+    name: 'user',
+    schema: {
+      tableName: 'sPersonal',
+      noName: { belongsTo: 'noNameBelongsToModel' }
+    }
+  }
+  const model2Relations = new Relations(model2.name, model2.schema, registryMock)
+  t.throws(
+    () => model2Relations.getAttributesOfRelations(),
+    /there is no registered 'noNameBelongsToModel' model/,
+    'throws if no belongsTo relation model registered in Registry'
+  )
+
   t.end()
 })
 
