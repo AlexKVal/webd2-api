@@ -2,12 +2,18 @@
 const test = require('tape')
 
 const {
-  attributesOfRelations,
   getHasManyDescriptors,
   getBelongsToDescriptors
 } = require('../../lib/sql-builder/get-rel-descriptors')
+const DescBelongsTo = require('../../lib/sql-builder/desc-belongsto')
+const DescHasMany = require('../../lib/sql-builder/desc-hasmany')
 
 test('getBelongsToDescriptors()', (t) => {
+  t.throws(
+    () => getBelongsToDescriptors(undefined),
+    /getBelongsToDescriptors: schemaObject is undefined/
+  )
+
   const schemaObject = {
     group: {
       belongsTo: 'userGroup',
@@ -42,6 +48,11 @@ test('getBelongsToDescriptors()', (t) => {
 })
 
 test('getHasManyDescriptors()', (t) => {
+  t.throws(
+    () => getHasManyDescriptors(undefined),
+    /getHasManyDescriptors: schemaObject is undefined/
+  )
+
   const schemaObject = {
     users: {
       hasMany: 'user',
@@ -77,39 +88,6 @@ test('getHasManyDescriptors()', (t) => {
       }
     ],
     'returns collection of "hasMany" descriptors'
-  )
-  t.end()
-})
-
-test('attributesOfRelations()', (t) => {
-  const registryMock = {
-    model (modelName) {
-      const _models = {
-        userGroup: { attributesSerialize: ['shortName', 'hide'] },
-        rights: { attributesSerialize: ['fullName', 'enabled', 'group'] }
-      }
-
-      return _models[modelName]
-    }
-  }
-
-  const belongsToRelations = [
-    {
-      relationModelName: 'userGroup',
-      modelFieldName: 'group'
-    }, {
-      relationModelName: 'rights',
-      modelFieldName: 'rights'
-    }
-  ]
-
-  t.deepEqual(
-    attributesOfRelations(registryMock, belongsToRelations),
-    {
-      group: ['shortName', 'hide'],
-      rights: ['fullName', 'enabled', 'group']
-    },
-    'returns attributes for all belongsTo relations'
   )
   t.end()
 })
