@@ -652,7 +652,9 @@ test('I&T apiWrapper.apiFetchMany({withRelated: false})', (t) => {
       tableName: 'some',
       name: 'string',
       group: { belongsTo: 'userGroup' },
-      rights: { belongsTo: 'rights' }
+      rights: { belongsTo: 'rights' },
+      divisions: { hasMany: 'division', fkField: 'UserID' },
+      clients: { hasMany: 'client', fkField: 'UserID' }
     }
   })
 
@@ -691,28 +693,92 @@ test('I&T apiWrapper.apiFetchMany({withRelated: false})', (t) => {
 test('I&T apiWrapper.apiFetchMany({withRelated: true})', (t) => {
   t.plan(1)
 
+  class RightsModel extends BaseModel {
+    selectMany () {
+      return Promise.resolve([
+        {id: '12', fullName: 'Full'},
+        {id: '13', fullName: 'Part'}
+      ])
+    }
+  }
+  const rightsModel = new RightsModel({
+    db: dbMock, name: 'rights',
+    schema: {
+      tableName: 'rights',
+      fullName: 'string'
+    }
+  })
+
+  class UserGroupModel extends BaseModel {
+    selectMany () {
+      return Promise.resolve([
+        {id: '101', shortName: 'Admins'},
+        {id: '102', shortName: 'Users'}
+      ])
+    }
+  }
+  const userGroupModel = new UserGroupModel({
+    db: dbMock, name: 'userGroup',
+    schema: {
+      id: 'GrpID',
+      tableName: 'sPepTree',
+      shortName: 'string'
+    }
+  })
+
+  class DivisionModel extends BaseModel {
+    selectMany () {
+      return Promise.resolve([
+        { id: '23', name: 'Kitchen', hide: false, userId: '1' },
+        { id: '24', name: 'Sad', hide: false, userId: '1' },
+        { id: '25', name: 'Mangal', hide: false, userId: '2' },
+        { id: '26', name: 'Tandyr', hide: false, userId: '2' }
+      ])
+    }
+  }
+  const divisionModel = new DivisionModel({
+    db: dbMock, name: 'userGroup',
+    schema: {
+      id: 'DivID',
+      tableName: 'sDivisions',
+      name: 'string',
+      hide: 'boolean',
+      staff: { belongsTo: 'user' }
+    }
+  })
+
+  class ClientModel extends BaseModel {
+    selectMany () {
+      return Promise.resolve([
+        { id: '101', name: 'John', cardcode: '123', hide: false, userId: '1' },
+        { id: '102', name: 'Simona', cardcode: '455', hide: false, userId: '1' },
+        { id: '103', name: 'Whatson', cardcode: '', hide: false, userId: '2' },
+        { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, userId: '2' }
+      ])
+    }
+  }
+  const clientModel = new ClientModel({
+    db: dbMock, name: 'userGroup',
+    schema: {
+      id: 'CliID',
+      tableName: 'sClients',
+      name: 'string',
+      cardcode: 'string',
+      hide: 'boolean',
+      manager: { belongsTo: 'user' }
+    }
+  })
+
+  divisionModel.attributesSerialize = ['name', 'hide'] // , 'staff']
+  clientModel.attributesSerialize = ['name', 'cardcode', 'hide'] // , 'manager']
+
   const registryMock = {
     model (modelName) {
       const _models = {
-        rights: {
-          selectMany () {
-            return Promise.resolve([
-              {id: '12', fullName: 'Full'},
-              {id: '13', fullName: 'Part'}
-            ])
-          },
-          attributesSerialize: ['fullName']
-        },
-
-        userGroup: {
-          selectMany () {
-            return Promise.resolve([
-              {id: '101', shortName: 'Admins'},
-              {id: '102', shortName: 'Users'}
-            ])
-          },
-          attributesSerialize: ['shortName']
-        }
+        rights: rightsModel,
+        userGroup: userGroupModel,
+        division: divisionModel,
+        client: clientModel
       }
 
       return _models[modelName]
@@ -733,7 +799,9 @@ test('I&T apiWrapper.apiFetchMany({withRelated: true})', (t) => {
       tableName: 'some',
       name: 'string',
       group: { belongsTo: 'userGroup' },
-      rights: { belongsTo: 'rights' }
+      rights: { belongsTo: 'rights' },
+      divisions: { hasMany: 'division', fkField: 'UserID' },
+      clients: { hasMany: 'client', fkField: 'UserID' }
     }
   })
 
@@ -749,7 +817,9 @@ test('I&T apiWrapper.apiFetchMany({withRelated: true})', (t) => {
           id: '1',
           relationships: {
             group: { data: { id: '101', type: 'groups' } },
-            rights: { data: { id: '12', type: 'rights' } }
+            rights: { data: { id: '12', type: 'rights' } },
+            clients: { data: [ { id: '101', type: 'clients' }, { id: '102', type: 'clients' } ] },
+            divisions: { data: [ { id: '23', type: 'divisions' }, { id: '24', type: 'divisions' } ] }
           },
           type: 'users'
         }, {
@@ -757,26 +827,56 @@ test('I&T apiWrapper.apiFetchMany({withRelated: true})', (t) => {
           id: '2',
           relationships: {
             group: { data: { id: '102', type: 'groups' } },
-            rights: { data: { id: '13', type: 'rights' } }
+            rights: { data: { id: '13', type: 'rights' } },
+            clients: { data: [ { id: '103', type: 'clients' }, { id: '104', type: 'clients' } ] },
+            divisions: { data: [ { id: '25', type: 'divisions' }, { id: '26', type: 'divisions' } ] }
           },
           type: 'users'
         }],
         included: [{
           attributes: { 'short-name': 'Admins' },
-          id: '101',
-          type: 'groups'
+          id: '101', type: 'groups'
         }, {
           attributes: { 'full-name': 'Full' },
-          id: '12',
-          type: 'rights'
+          id: '12', type: 'rights'
+        }, {
+          // attributes: { hide: false, name: 'Kitchen', staff: { id: '1' } },
+          attributes: { hide: false, name: 'Kitchen' },
+          id: '23', type: 'divisions'
+        }, {
+          // attributes: { hide: false, name: 'Sad', staff: { id: '1' } },
+          attributes: { hide: false, name: 'Sad' },
+          id: '24', type: 'divisions'
+        }, {
+          // attributes: { cardcode: '123', hide: false, manager: { id: '1' }, name: 'John' },
+          attributes: { cardcode: '123', hide: false, name: 'John' },
+          id: '101', type: 'clients'
+        }, {
+          // attributes: { cardcode: '455', hide: false, manager: { id: '1' }, name: 'Simona' },
+          attributes: { cardcode: '455', hide: false, name: 'Simona' },
+          id: '102', type: 'clients'
         }, {
           attributes: { 'short-name': 'Users' },
-          id: '102',
-          type: 'groups'
+          id: '102', type: 'groups'
         }, {
           attributes: { 'full-name': 'Part' },
-          id: '13',
-          type: 'rights'
+          id: '13', type: 'rights'
+        }, {
+          // attributes: { hide: false, name: 'Mangal', staff: { id: '2' } },
+          attributes: { hide: false, name: 'Mangal' },
+          id: '25', type: 'divisions'
+        }, {
+          // attributes: { hide: false, name: 'Tandyr', staff: { id: '2' } },
+          attributes: { hide: false, name: 'Tandyr' },
+          id: '26', type: 'divisions'
+        }, {
+          // attributes: { cardcode: '', hide: false, manager: { id: '2' }, name: 'Whatson' },
+          attributes: { cardcode: '', hide: false, name: 'Whatson' },
+          id: '103', type: 'clients'
+        }, {
+          // attributes: { cardcode: '9022', hide: false, manager: { id: '2' }, name: 'Vaschev' },
+          attributes: { cardcode: '9022', hide: false, name: 'Vaschev' },
+          id: '104', type: 'clients'
         }]
       },
       'returns serialized rows with relations data included'
