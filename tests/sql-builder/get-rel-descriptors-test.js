@@ -10,6 +10,11 @@ const DescBelongsTo = require('../../lib/sql-builder/desc-belongsto')
 const DescHasMany = require('../../lib/sql-builder/desc-hasmany')
 
 test('getBelongsToDescriptors()', (t) => {
+  t.throws(
+    () => getBelongsToDescriptors(undefined),
+    /getBelongsToDescriptors: schemaObject is undefined/
+  )
+
   const schemaObject = {
     group: {
       belongsTo: 'userGroup',
@@ -44,6 +49,11 @@ test('getBelongsToDescriptors()', (t) => {
 })
 
 test('getHasManyDescriptors()', (t) => {
+  t.throws(
+    () => getHasManyDescriptors(undefined),
+    /getHasManyDescriptors: schemaObject is undefined/
+  )
+
   const schemaObject = {
     users: {
       hasMany: 'user',
