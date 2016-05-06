@@ -2,7 +2,6 @@
 const test = require('tape')
 
 const SqlBuilder = require('../../lib/sql-builder/sql-builder')
-const DescHasMany = require('../../lib/sql-builder/desc-hasmany')
 
 const ApiWrapper = require('../../lib/api/api-wrapper')
 
@@ -12,7 +11,7 @@ test('ApiWrapper', (t) => {
   const someModelMock = {
     name: 'some-model-name',
     attributesSerialize: [],
-    sqlBuilder: new SqlBuilder({})
+    schema: { tableName: 'some' }
   }
 
   const apiWrappedSomeModel = new ApiWrapper({
@@ -29,13 +28,19 @@ test('ApiWrapper', (t) => {
 
   t.throws(
     () => new ApiWrapper({ model: {} }),
-    /ApiWrapper needs a model/,
+    /ApiWrapper needs a model with 'name' and 'schema' fields/,
     'model should be with a name'
+  )
+
+  t.throws(
+    () => new ApiWrapper({ model: {name: 'some-name'} }),
+    /ApiWrapper needs a model with 'name' and 'schema' fields/,
+    'and model should be with a schema'
   )
 
   t.doesNotThrow(
     () => new ApiWrapper(someModelMock),
-    /ApiWrapper needs a model/,
+    /ApiWrapper needs a model with 'name' and 'schema' fields/,
     'model could be provided directly'
   )
 
@@ -66,7 +71,7 @@ test('apiWrapper.apiCreate()', (t) => {
 
   const model = {
     name: 'someModelName',
-    sqlBuilder: new SqlBuilder({}),
+    schema: { tableName: 'some' },
     create (deserialized) {
       t.equal(
         deserialized,
@@ -115,7 +120,7 @@ test('apiWrapper.apiCreate() returns error from deserializer', (t) => {
 
   const model = {
     name: 'someModelName',
-    sqlBuilder: new SqlBuilder({}),
+    schema: { tableName: 'some' },
     create (deserialized) {
       t.fail('model.create() should not be called')
     }
@@ -152,7 +157,7 @@ test('apiWrapper.apiCreate() returns error from model.create()', (t) => {
 
   const model = {
     name: 'someModelName',
-    sqlBuilder: new SqlBuilder({}),
+    schema: { tableName: 'some' },
     create (deserialized) {
       t.equal(
         deserialized,
@@ -199,7 +204,7 @@ test('apiWrapper.apiUpdate()', (t) => {
 
   const model = {
     name: 'someModelName',
-    sqlBuilder: new SqlBuilder({}),
+    schema: { tableName: 'some' },
     update (id, deserialized) {
       t.equal(id, 131, 'provides id to model`s update method')
       t.equal(
@@ -248,7 +253,7 @@ test('apiWrapper.apiUpdate() returns error from deserializer', (t) => {
 
   const model = {
     name: 'someModelName',
-    sqlBuilder: new SqlBuilder({}),
+    schema: { tableName: 'some' },
     update () {
       t.fail('model.update() should not be called')
     }
@@ -284,7 +289,7 @@ test('apiWrapper.apiUpdate() returns error from model.update()', (t) => {
 
   const model = {
     name: 'someModelName',
-    sqlBuilder: new SqlBuilder({}),
+    schema: { tableName: 'some' },
     update () {
       return Promise.reject(new Error('some update()`s error'))
     }
@@ -316,7 +321,7 @@ test('apiWrapper.apiFind()', (t) => {
 
   const model = {
     name: 'someModelName',
-    sqlBuilder: new SqlBuilder({}),
+    schema: { tableName: 'some' },
     selectOne ({id}) {
       t.equal(id, 1001, 'provides id to model`s selectOne() method')
       return Promise.resolve(dataFromSelect)
@@ -363,7 +368,7 @@ test('apiWrapper.apiFetchMany() without related', (t) => {
 
   const model = {
     name: 'someModelName',
-    sqlBuilder: new SqlBuilder({}),
+    schema: { tableName: 'some' },
     selectMany (options) {
       t.deepEqual(options, {}, 'options for model.selectMany()')
       return Promise.resolve('data from selectMany')
@@ -405,7 +410,7 @@ test('apiWrapper.apiFetchMany() with related', (t) => {
 
   const model = {
     name: 'someModelName',
-    sqlBuilder: new SqlBuilder({}),
+    schema: { tableName: 'some' },
     selectMany (options) {
       t.deepEqual(options, {withRelated: true}, 'options for model.selectMany()')
       return Promise.resolve('data from selectMany')
@@ -437,12 +442,14 @@ test('apiWrapper._joinBelongsToRelations() with no "relations" provided', (t) =>
 
   const model = {
     name: 'someModelName',
-    sqlBuilder: new SqlBuilder({
+    schema: {
+      tableName: 'some',
       name: 'string',
       group: { belongsTo: 'userGroup' },
       rights: { belongsTo: 'rights' }
-    })
+    }
   }
+  model.sqlBuilder = new SqlBuilder(model.schema)
 
   const parentRows = [
     {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
@@ -477,6 +484,7 @@ test('apiWrapper._joinBelongsToRelations() with "relations" data provided', (t) 
   const model = {
     name: 'someModelName',
     schema: {
+      tableName: 'some',
       name: 'string',
       group: { belongsTo: 'userGroup' },
       rights: { belongsTo: 'rights' }
@@ -536,6 +544,7 @@ test('apiWrapper._joinHasManyRelations() with "relations" data provided', (t) =>
   const model = {
     name: 'userGroup',
     schema: {
+      tableName: 'some',
       name: 'string',
       hide: 'boolean',
       users: {
@@ -602,7 +611,13 @@ test('apiWrapper._joinRelationsAndSerialize()', (t) => {
     }
   }
 
-  const model = { name: 'someModelName', sqlBuilder: new SqlBuilder({}) }
+  const model = {
+    name: 'someModelName',
+    schema: {
+      tableName: 'some'
+    }
+  }
+  model.sqlBuilder = new SqlBuilder(model.schema)
 
   const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}, registryMock})
 
@@ -684,18 +699,17 @@ test('apiWrapper._fetchRelations()', (t) => {
     }
   }
 
-  const modelSchema = {
-    tableName: 'someTableName',
-    name: 'string',
-    group: { belongsTo: 'userGroup' },
-    rights: { belongsTo: 'rights' }
-  }
   const model = {
     name: 'someModelName',
     registry: registryMock,
-    sqlBuilder: new SqlBuilder(modelSchema),
-    schema: modelSchema
+    schema: {
+      tableName: 'someTableName',
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' }
+    }
   }
+  model.sqlBuilder = new SqlBuilder(model.schema)
 
   const apiWrappedModel = new ApiWrapper({model, serializer: {}, deserializer: {}, registryMock})
 
@@ -755,7 +769,7 @@ test('apiWrapper._fetchHasManyRelations()', (t) => {
               { id: '104', name: 'Vaschev', cardcode: '9022', hide: false, userGroupId: '2' }
             ])
           },
-          sqlBuilder: new SqlBuilder({
+          schema: {
             id: 'PersID',
             tableName: 'sPersonal',
             name: 'string',
@@ -764,7 +778,7 @@ test('apiWrapper._fetchHasManyRelations()', (t) => {
             group: {
               belongsTo: 'userGroup'
             }
-          })
+          }
         },
 
         division: {
@@ -787,7 +801,7 @@ test('apiWrapper._fetchHasManyRelations()', (t) => {
               { id: '26', name: 'Tandyr', hide: false, userGroupId: '2' }
             ])
           },
-          sqlBuilder: new SqlBuilder({
+          schema: {
             id: 'DivID',
             tableName: 'sDivisions',
             name: 'string',
@@ -795,9 +809,11 @@ test('apiWrapper._fetchHasManyRelations()', (t) => {
             someFancyFieldName: {
               belongsTo: 'userGroup'
             }
-          })
+          }
         }
       }
+      _models.user.sqlBuilder = new SqlBuilder(_models.user.schema)
+      _models.division.sqlBuilder = new SqlBuilder(_models.division.schema)
 
       return _models[modelName]
     }
@@ -805,7 +821,6 @@ test('apiWrapper._fetchHasManyRelations()', (t) => {
 
   const model = {
     name: 'userGroup',
-    registry: registryMock,
     schema: {
       id: 'GroupID',
       tableName: 'sPepTree',
@@ -892,6 +907,7 @@ test('I&T apiWrapper.apiCreate()', (t) => {
   const userModel = new UserModel({
     db: dbMock, name: 'user',
     schema: {
+      tableName: 'some',
       name: 'string',
       userGroup: { belongsTo: 'userGroup' },
       rights: { belongsTo: 'rights' }
@@ -964,6 +980,7 @@ test('I&T apiWrapper.apiUpdate()', (t) => {
   const userModel = new UserModel({
     db: dbMock, name: 'user',
     schema: {
+      tableName: 'some',
       name: 'string',
       userGroup: { belongsTo: 'userGroup' },
       rights: { belongsTo: 'rights' }
@@ -1022,6 +1039,7 @@ test('I&T apiWrapper.apiFind()', (t) => {
   const userModel = new UserModel({
     db: dbMock, name: 'user',
     schema: {
+      tableName: 'some',
       name: 'string',
       group: { belongsTo: 'userGroup' },
       rights: { belongsTo: 'rights' }
@@ -1066,6 +1084,7 @@ test('I&T apiWrapper.apiFetchMany({withRelated: false})', (t) => {
   const userModel = new UserModel({
     db: dbMock, name: 'user',
     schema: {
+      tableName: 'some',
       name: 'string',
       group: { belongsTo: 'userGroup' },
       rights: { belongsTo: 'rights' }
@@ -1146,6 +1165,7 @@ test('I&T apiWrapper.apiFetchMany({withRelated: true})', (t) => {
   const userModel = new UserModel({
     db: dbMock, registry: registryMock, name: 'user',
     schema: {
+      tableName: 'some',
       name: 'string',
       group: { belongsTo: 'userGroup' },
       rights: { belongsTo: 'rights' }
