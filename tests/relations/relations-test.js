@@ -41,7 +41,6 @@ test('Relations', (t) => {
 
   t.equal(userRelations.modelName, 'userGroup')
   t.equal(userRelations.modelSchema, model.schema)
-  // TODO t.equal(userRelations.attributesToSerialize, [''])
 
   t.end()
 })
@@ -547,6 +546,47 @@ test('relations.fetchAndEmbed()', (t) => {
   })
   .catch((e) => t.fail(e))
   .then(() => t.end())
+})
+
+test('relations.getAttributesOfRelations()', (t) => {
+  const registryMock = {
+    model (modelName) {
+      const _models = {
+        userGroup: { attributesSerialize: ['shortName', 'hide'] },
+        rights: { attributesSerialize: ['fullName', 'enabled', 'group'] },
+        division: { attributesSerialize: ['name', 'hide', 'staff'] },
+        client: { attributesSerialize: ['name', 'hide', 'cardcode', 'manager'] }
+      }
+
+      return _models[modelName]
+    }
+  }
+
+  const model = {
+    name: 'user',
+    schema: {
+      tableName: 'sPersonal',
+      name: 'string',
+      group: { belongsTo: 'userGroup' },
+      rights: { belongsTo: 'rights' },
+      divisions: { hasMany: 'division', fkField: 'UserID' },
+      clients: { hasMany: 'client', fkField: 'UserID' }
+    }
+  }
+
+  const modelRelations = new Relations(model.name, model.schema, registryMock)
+
+  t.deepEqual(
+    modelRelations.getAttributesOfRelations(),
+    {
+      group: ['shortName', 'hide'],
+      rights: ['fullName', 'enabled', 'group'],
+      divisions: ['name', 'hide', 'staff'],
+      clients: ['name', 'hide', 'cardcode', 'manager']
+    },
+    'returns attributes of all relations'
+  )
+  t.end()
 })
 
 /**

@@ -2,7 +2,6 @@
 const test = require('tape')
 
 const {
-  attributesOfRelations,
   getHasManyDescriptors,
   getBelongsToDescriptors
 } = require('../../lib/sql-builder/get-rel-descriptors')
@@ -89,43 +88,6 @@ test('getHasManyDescriptors()', (t) => {
       }
     ],
     'returns collection of "hasMany" descriptors'
-  )
-  t.end()
-})
-
-test('attributesOfRelations()', (t) => {
-  const registryMock = {
-    model (modelName) {
-      const _models = {
-        userGroup: { attributesSerialize: ['shortName', 'hide'] },
-        rights: { attributesSerialize: ['fullName', 'enabled', 'group'] },
-        division: { attributesSerialize: ['name', 'hide', 'staff'] },
-        client: { attributesSerialize: ['name', 'hide', 'cardcode', 'manager'] }
-      }
-
-      return _models[modelName]
-    }
-  }
-
-  const belongsToDescriptors = [
-    new DescBelongsTo('group', { belongsTo: 'userGroup' }),
-    new DescBelongsTo('rights', { belongsTo: 'rights' })
-  ]
-
-  const hasManyDescriptors = [
-    new DescHasMany('divisions', { hasMany: 'division', fkField: 'UserID' }),
-    new DescHasMany('clients', { hasMany: 'client', fkField: 'UserID' })
-  ]
-
-  t.deepEqual(
-    attributesOfRelations(registryMock, belongsToDescriptors, hasManyDescriptors),
-    {
-      group: ['shortName', 'hide'],
-      rights: ['fullName', 'enabled', 'group'],
-      divisions: ['name', 'hide', 'staff'],
-      clients: ['name', 'hide', 'cardcode', 'manager']
-    },
-    'returns attributes of all relations'
   )
   t.end()
 })
