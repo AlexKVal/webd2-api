@@ -549,13 +549,17 @@ test('relations.fetchAndEmbed()', (t) => {
 })
 
 test('relations.getAttributesOfRelations()', (t) => {
+  /**
+   * 'group', 'staff', and 'manager' are relations of relations
+   * as for now they are ignored
+   */
   const registryMock = {
     model (modelName) {
       const _models = {
-        userGroup: { attributesSerialize: ['shortName', 'hide'] },
-        rights: { attributesSerialize: ['fullName', 'enabled', 'group'] },
-        division: { attributesSerialize: ['name', 'hide', 'staff'] },
-        client: { attributesSerialize: ['name', 'hide', 'cardcode', 'manager'] }
+        userGroup: { asRelationAttributesSerialize: ['shortName', 'hide'] },
+        rights: { asRelationAttributesSerialize: ['fullName', 'enabled'] }, // 'group'
+        division: { asRelationAttributesSerialize: ['name', 'hide'] }, // 'staff'
+        client: { asRelationAttributesSerialize: ['name', 'hide', 'cardcode'] } // 'manager'
         /* no noNameHasManyModel */
         /* no noNameBelongsToModel */
       }
@@ -582,9 +586,9 @@ test('relations.getAttributesOfRelations()', (t) => {
     modelRelations.getAttributesOfRelations(),
     {
       group: ['shortName', 'hide'],
-      rights: ['fullName', 'enabled', 'group'],
-      divisions: ['name', 'hide', 'staff'],
-      clients: ['name', 'hide', 'cardcode', 'manager']
+      rights: ['fullName', 'enabled'], // 'group'
+      divisions: ['name', 'hide'], // 'staff'
+      clients: ['name', 'hide', 'cardcode'] // 'manager'
     },
     'returns attributes of all relations'
   )
