@@ -128,16 +128,38 @@ test('sqlBuilder._generateForeignKeysLines()', (t) => {
     rights: {
       belongsTo: 'rights'
     },
+
     posts: {
-      belongsTo: 'user-post'
+      hasMany: 'user-post', fkField: 'UserId'
+    },
+    divisions: {
+      hasMany: 'division', fkField: 'UserId'
     }
   })
 
   const lines = sqlBuilder._generateForeignKeysLines()
-  t.equal(lines.length, 3)
+  t.equal(lines.length, 2, 'hasMany have no meaning here')
   t.equal(lines[0], 'GrpID as userGroupId')
   t.equal(lines[1], 'rights as rightsId', 'uses foreign table name if no fkField provided')
-  t.equal(lines[2], 'userPost as userPostId', 'uses camelCased foreign table name')
+
+  t.deepEqual(
+    sqlBuilder._generateForeignKeysLines(['id', 'group']),
+    ['GrpID as userGroupId'],
+    'is able to filter belongsTo relations too'
+  )
+
+  t.deepEqual(
+    sqlBuilder._generateForeignKeysLines('rights'),
+    ['rights as rightsId'],
+    'is OK with a string parameter'
+  )
+
+  t.deepEqual(
+    sqlBuilder._generateForeignKeysLines('id'),
+    [],
+    'returns empty if we need only "id" field'
+  )
+
   t.end()
 })
 
