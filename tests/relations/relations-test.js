@@ -352,6 +352,140 @@ test('relations._fetchHasMany()', (t) => {
   .then(() => t.end())
 })
 
+test('relations._fetchHasMany() with `onlyIDs` option', (t) => {
+  t.plan(3)
+
+  const registryMock = {
+    _models: {
+      user: {
+        schema: {
+          id: 'PersID',
+          tableName: 'sPersonal',
+          name: 'string',
+          cardcode: 'string',
+          hide: 'boolean',
+          group: {
+            belongsTo: 'userGroup'
+          }
+        },
+        selectMany (options) {
+          t.deepEqual(
+            options,
+            {
+              fieldsOnly: 'idAndRelations', // onlyIDs option
+              whereIn: {
+                relationFkName: 'GrpID',
+                parentIdFieldName: 'GroupID',
+                parentTableName: 'sPepTree',
+                parentWhere: {someField: 'parent where constraints'}
+              }
+            },
+            'uses {whereIn} with relationFkName option'
+          )
+
+          return Promise.resolve([ // returns only id and belongsTo relations
+            { id: '101', userGroupId: '1' },
+            { id: '102', userGroupId: '1' },
+            { id: '103', userGroupId: '2' },
+            { id: '104', userGroupId: '2' }
+          ])
+        }
+      },
+
+      division: {
+        schema: {
+          id: 'DivID',
+          tableName: 'sDivisions',
+          name: 'string',
+          hide: 'boolean',
+          someFancyFieldName: {
+            belongsTo: 'userGroup'
+          }
+        },
+        selectMany (options) {
+          t.deepEqual(
+            options,
+            {
+              fieldsOnly: 'idAndRelations', // onlyIDs option
+              whereIn: {
+                relationFkName: 'UserGrpID',
+                parentIdFieldName: 'GroupID',
+                parentTableName: 'sPepTree',
+                parentWhere: {someField: 'parent where constraints'}
+              }
+            },
+            'uses {whereIn} with relationFkName option'
+          )
+
+          return Promise.resolve([ // returns only id and belongsTo relations
+            { id: '23', userGroupId: '1' },
+            { id: '24', userGroupId: '1' },
+            { id: '25', userGroupId: '2' },
+            { id: '26', userGroupId: '2' }
+          ])
+        }
+      }
+    },
+
+    model (modelName) {
+      return this._models[modelName]
+    }
+  }
+
+  const model = {
+    name: 'userGroup',
+    schema: {
+      id: 'GroupID',
+      tableName: 'sPepTree',
+      name: 'string',
+      users: {
+        hasMany: 'user',
+        fkField: 'GrpID'
+      },
+      divisions: {
+        hasMany: 'division',
+        fkField: 'UserGrpID'
+      }
+    }
+  }
+
+  const userGroupRelations = new Relations(model.name, model.schema, registryMock)
+
+  const parentWhere = {someField: 'parent where constraints'}
+
+  userGroupRelations._fetchHasMany(parentWhere, {onlyIDs: true})
+  .then((relationsData) => {
+    t.deepEqual(
+      relationsData,
+      [
+        {
+          modelFieldName: 'users',
+          parentModelFieldName: 'group',
+          rows: [
+            { id: '101', userGroupId: '1' },
+            { id: '102', userGroupId: '1' },
+            { id: '103', userGroupId: '2' },
+            { id: '104', userGroupId: '2' }
+          ]
+        },
+        {
+          modelFieldName: 'divisions',
+          parentModelFieldName: 'someFancyFieldName',
+          rows: [
+            { id: '23', userGroupId: '1' },
+            { id: '24', userGroupId: '1' },
+            { id: '25', userGroupId: '2' },
+            { id: '26', userGroupId: '2' }
+          ]
+        }
+      ],
+      'fetches hasMany relations data'
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
+
 test('relations._fetchHasMany() if relation model is not found in Registry', (t) => {
   t.plan(1)
 
