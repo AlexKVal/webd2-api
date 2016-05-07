@@ -1062,3 +1062,142 @@ test('I&T relations.fetchAndEmbed()', (t) => {
   .catch((e) => t.fail(e))
   .then(() => t.end())
 })
+
+test('I&T relations.justEmbedIds()', (t) => {
+  t.plan(5)
+
+  const userModel = {
+    name: 'user',
+    schema: {
+      id: 'PersID',
+      tableName: 'sPersonal',
+
+      group: {
+        belongsTo: 'userGroup',
+        fkField: 'GrpID'
+      },
+      rights: {
+        belongsTo: 'rights'
+      },
+
+      divisions: {
+        hasMany: 'division',
+        fkField: 'UserID'
+      },
+      clients: {
+        hasMany: 'client',
+        fkField: 'UserID'
+      }
+    }
+  }
+
+  const registryMock = {
+    _models: {
+      rights: {
+        selectMany () {
+          return Promise.resolve([
+            {id: '12', fullName: 'Full'},
+            {id: '13', fullName: 'Part'}
+          ])
+        }
+      },
+
+      userGroup: {
+        selectMany () {
+          return Promise.resolve([
+            {id: '101', shortName: 'Admins'},
+            {id: '102', shortName: 'Users'}
+          ])
+        }
+      },
+
+      division: {
+        schema: {
+          id: 'DivID',
+          tableName: 'sDivisions',
+          staff: { belongsTo: 'user' }
+        },
+        selectMany (options) {
+          t.equal(options.fieldsOnly, 'idAndRelations', 'gets only id and relations')
+          t.equal(options.whereIn.parentWhere, 'parent`s contraints for hasMany relations')
+
+          return Promise.resolve([
+            { id: '23', userId: '1' },
+            { id: '24', userId: '1' },
+            { id: '25', userId: '2' },
+            { id: '26', userId: '2' }
+          ])
+        }
+      },
+
+      client: {
+        schema: {
+          id: 'CliID',
+          tableName: 'sClients',
+          manager: { belongsTo: 'user' }
+        },
+        selectMany (options) {
+          t.equal(options.fieldsOnly, 'idAndRelations', 'gets only id and relations')
+          t.equal(options.whereIn.parentWhere, 'parent`s contraints for hasMany relations')
+
+          return Promise.resolve([
+            { id: '101', userId: '1' },
+            { id: '102', userId: '1' },
+            { id: '103', userId: '2' },
+            { id: '104', userId: '2' }
+          ])
+        }
+      }
+    },
+    model (modelName) {
+      return this._models[modelName]
+    }
+  }
+
+  const userRelations = new Relations(userModel.name, userModel.schema, registryMock)
+
+  const parentRows = [
+    {id: '1', name: 'John', userGroupId: '101', rightsId: '12'},
+    {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
+  ]
+
+  const parentWhere = 'parent`s contraints for hasMany relations'
+
+  userRelations.justEmbedIds(parentRows, parentWhere)
+  .then((parentRowsWithRelationsIDs) => {
+    t.deepEqual(
+      parentRowsWithRelationsIDs,
+      [
+        {
+          id: '1', name: 'John',
+          group: { id: '101' },
+          rights: { id: '12' },
+          divisions: [
+            { id: '23', staff: {id: '1'} },
+            { id: '24', staff: {id: '1'} }
+          ],
+          clients: [
+            { id: '101', manager: {id: '1'} },
+            { id: '102', manager: {id: '1'} }
+          ]
+        },
+        {
+          id: '2', name: 'Smith',
+          group: { id: '102' },
+          rights: { id: '13' },
+          divisions: [
+            { id: '25', staff: {id: '2'} },
+            { id: '26', staff: {id: '2'} }
+          ],
+          clients: [
+            { id: '103', manager: {id: '2'} },
+            { id: '104', manager: {id: '2'} }
+          ]
+        }
+      ],
+      'embeds only IDs'
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
