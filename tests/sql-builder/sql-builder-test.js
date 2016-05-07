@@ -163,7 +163,7 @@ test('sqlBuilder._generateForeignKeysLines()', (t) => {
   t.end()
 })
 
-test('sqlBuilder.generateSelectFieldsPart()', (t) => {
+test.only('sqlBuilder.generateSelectFieldsPart()', (t) => {
   const sbDefaultId = new SqlBuilder({
     /* no custom id provided */
     name: 'string'
@@ -217,6 +217,12 @@ test('sqlBuilder.generateSelectFieldsPart()', (t) => {
     sbFieldsOnly.generateSelectFieldsPart('id'),
     'UserID as id',
     'only `id`'
+  )
+
+  t.equal(
+    sbFieldsOnly.generateSelectFieldsPart(['id', 'group']),
+    'UserID as id, GrpID as userGroupId',
+    'filters relations` fields too'
   )
 
   t.end()
