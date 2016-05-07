@@ -163,7 +163,7 @@ test('sqlBuilder._generateForeignKeysLines()', (t) => {
   t.end()
 })
 
-test.only('sqlBuilder.generateSelectFieldsPart()', (t) => {
+test('sqlBuilder.generateSelectFieldsPart()', (t) => {
   const sbDefaultId = new SqlBuilder({
     /* no custom id provided */
     name: 'string'
@@ -751,10 +751,6 @@ test('sqlBuilder._wherePart() generates clauses for WHERE part', (t) => {
   t.end()
 })
 
-/**
- * customizable generators
- * instead of sqlAll sqlOne etc
- */
 test('sqlBuilder.selectMany() generates SELECT query for fetching many rows', (t) => {
   const sqlBuilder = new SqlBuilder({
     tableName: 'sPersonal',
@@ -767,6 +763,9 @@ test('sqlBuilder.selectMany() generates SELECT query for fetching many rows', (t
     },
     rights: {
       belongsTo: 'rights'
+    },
+    divisions: {
+      hasMany: 'division', fkField: 'UserID'
     }
   })
 
@@ -818,6 +817,13 @@ test('sqlBuilder.selectMany() generates SELECT query for fetching many rows', (t
     'SELECT PersID as id' +
     ' FROM sPersonal',
     'fieldsOnly: `id` special case'
+  )
+
+  t.equal(
+    sqlBuilder.selectMany({fieldsOnly: ['id', 'groups', 'divisions']}),
+    'SELECT PersID as id, GrpID as userGroupId' +
+    ' FROM sPersonal',
+    'fieldsOnly filters out relations too. hasMany are ignored'
   )
 
   t.equal(
@@ -1038,6 +1044,9 @@ test('sqlBuilder.selectOne() generates SELECT query for fetching one row', (t) =
     },
     rights: {
       belongsTo: 'rights'
+    },
+    divisions: {
+      hasMany: 'division', fkField: 'UserID'
     }
   })
 
@@ -1110,6 +1119,14 @@ test('sqlBuilder.selectOne() generates SELECT query for fetching one row', (t) =
     ' FROM sPersonal' +
     ' WHERE PersID=134',
     'fieldsOnly: `id` special case'
+  )
+
+  t.equal(
+    sqlBuilder.selectOne({id: '134', fieldsOnly: ['id', 'group']}),
+    'SELECT PersID as id, GrpID as userGroupId' +
+    ' FROM sPersonal' +
+    ' WHERE PersID=134',
+    'fieldsOnly filters out relations too'
   )
 
   t.equal(
