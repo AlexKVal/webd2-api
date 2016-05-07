@@ -4,9 +4,7 @@ const test = require('tape')
 const {
   getHasManyDescriptors,
   getBelongsToDescriptors
-} = require('../../lib/sql-builder/get-rel-descriptors')
-const DescBelongsTo = require('../../lib/sql-builder/desc-belongsto')
-const DescHasMany = require('../../lib/sql-builder/desc-hasmany')
+} = require('../../lib/relations/get-descriptors')
 
 test('getBelongsToDescriptors()', (t) => {
   t.throws(
