@@ -227,7 +227,7 @@ test('BaseModel#selectOne(options) accepts `options` for sqlBuilder.selectOne()'
 
   t.throws(() => model.selectOne(/* no id */), /either `id` or `data` option should be provided/)
 
-  model.selectOne({id: 1, fieldsOnly: ['enabled']})
+  model.selectOne({id: 1, fieldsOnly: ['id', 'enabled']})
   .then((castData) => {
     t.pass('returns a Promise')
     t.deepEqual(

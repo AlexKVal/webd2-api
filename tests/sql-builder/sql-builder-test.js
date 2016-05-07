@@ -202,14 +202,20 @@ test('sqlBuilder.generateSelectFieldsPart()', (t) => {
   )
 
   t.equal(
-    sbFieldsOnly.generateSelectFieldsPart(['hide', 'counter']),
+    sbFieldsOnly.generateSelectFieldsPart(['id', 'hide', 'counter']),
     'UserID as id, hide, counter',
     'with `fieldsOnly` provided'
   )
 
   t.equal(
+    sbFieldsOnly.generateSelectFieldsPart(['hide', 'counter']),
+    'hide, counter',
+    'with `fieldsOnly` provided. w/o `id`'
+  )
+
+  t.equal(
     sbFieldsOnly.generateSelectFieldsPart('hide'),
-    'UserID as id, hide',
+    'hide',
     'fieldsOnly as a string option'
   )
 
@@ -223,6 +229,12 @@ test('sqlBuilder.generateSelectFieldsPart()', (t) => {
     sbFieldsOnly.generateSelectFieldsPart(['id', 'group']),
     'UserID as id, GrpID as userGroupId',
     'filters relations` fields too'
+  )
+
+  t.equal(
+    sbFieldsOnly.generateSelectFieldsPart('group'),
+    'GrpID as userGroupId',
+    'filters relations` fields too. w/o `id`'
   )
 
   t.end()
@@ -757,7 +769,7 @@ test('sqlBuilder.selectMany() generates SELECT query for fetching many rows', (t
     id: 'PersID',
     name: 'string',
     hide: 'boolean',
-    groups: {
+    group: {
       belongsTo: 'userGroup',
       fkField: 'GrpID'
     },
@@ -807,9 +819,9 @@ test('sqlBuilder.selectMany() generates SELECT query for fetching many rows', (t
 
   t.equal(
     sqlBuilder.selectMany({fieldsOnly: ['name']}),
-    'SELECT PersID as id, name' +
+    'SELECT name' +
     ' FROM sPersonal',
-    'fieldsOnly filters out data fields. `id` is returned always'
+    'fieldsOnly filters out data fields'
   )
 
   t.equal(
@@ -820,7 +832,7 @@ test('sqlBuilder.selectMany() generates SELECT query for fetching many rows', (t
   )
 
   t.equal(
-    sqlBuilder.selectMany({fieldsOnly: ['id', 'groups', 'divisions']}),
+    sqlBuilder.selectMany({fieldsOnly: ['id', 'group', 'divisions']}),
     'SELECT PersID as id, GrpID as userGroupId' +
     ' FROM sPersonal',
     'fieldsOnly filters out relations too. hasMany are ignored'
@@ -844,11 +856,11 @@ test('sqlBuilder.selectMany() generates SELECT query for fetching many rows', (t
 
   t.equal(
     sqlBuilder.selectMany({
-      fieldsOnly: ['name'],
+      fieldsOnly: ['id', 'name', 'group'],
       where: {hide: false, name: 'Vasya'},
       orderBy: 'name DESC'
     }),
-    'SELECT PersID as id, name' +
+    'SELECT PersID as id, name, GrpID as userGroupId' +
     ' FROM sPersonal' +
     " WHERE hide=false AND name='Vasya'" +
     ' ORDER BY name DESC',
@@ -1107,10 +1119,10 @@ test('sqlBuilder.selectOne() generates SELECT query for fetching one row', (t) =
 
   t.equal(
     sqlBuilder.selectOne({id: '134', fieldsOnly: 'name'}),
-    'SELECT PersID as id, name' +
+    'SELECT name' +
     ' FROM sPersonal' +
     ' WHERE PersID=134',
-    'fieldsOnly filters out data fields. `id` is returned always'
+    'fieldsOnly filters out data fields'
   )
 
   t.equal(
