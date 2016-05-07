@@ -160,7 +160,7 @@ test('relations._embedBelongsTo()', (t) => {
   t.end()
 })
 
-test('relations.justTransformIDs()', (t) => {
+test('relations.transformBelongsToIDs()', (t) => {
   const model = {
     name: 'user',
     schema: {
@@ -179,7 +179,7 @@ test('relations.justTransformIDs()', (t) => {
   const userRelations = new Relations(model.name, model.schema)
 
   t.deepEqual(
-    userRelations.justTransformIDs(parentRows),
+    userRelations.transformBelongsToIDs(parentRows),
     [
       {
         id: '1', name: 'John',

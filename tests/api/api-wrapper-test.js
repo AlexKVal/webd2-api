@@ -377,7 +377,7 @@ test('apiWrapper.apiFetchMany() without related', (t) => {
 
   // mock it for testing
   apiWrappedModel.relations = {
-    justTransformIDs (parentRows) {
+    transformBelongsToIDs (parentRows) {
       t.equal(
         parentRows,
         'data from selectMany',
