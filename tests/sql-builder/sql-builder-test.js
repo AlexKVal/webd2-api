@@ -232,6 +232,12 @@ test('sqlBuilder.generateSelectFieldsPart()', (t) => {
   )
 
   t.equal(
+    sbFieldsOnly.generateSelectFieldsPart('idAndRelations'),
+    'UserID as id, GrpID as userGroupId',
+    'idAndRelations special case: returns `id` and relations'
+  )
+
+  t.equal(
     sbFieldsOnly.generateSelectFieldsPart('group'),
     'GrpID as userGroupId',
     'filters relations` fields too. w/o `id`'
@@ -836,6 +842,13 @@ test('sqlBuilder.selectMany() generates SELECT query for fetching many rows', (t
     'SELECT PersID as id, GrpID as userGroupId' +
     ' FROM sPersonal',
     'fieldsOnly filters out relations too. hasMany are ignored'
+  )
+
+  t.equal(
+    sqlBuilder.selectMany({fieldsOnly: 'idAndRelations'}),
+    'SELECT PersID as id, GrpID as userGroupId, rights as rightsId' +
+    ' FROM sPersonal',
+    '`idAndRelations` special case: ID and belongsTo relations'
   )
 
   t.equal(
