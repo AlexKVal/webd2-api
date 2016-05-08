@@ -438,6 +438,86 @@ test('apiWrapper.apiFetchMany() with related', (t) => {
   .then(() => t.end())
 })
 
+test('apiWrapper.apiFetchMany(options) with options for relations', (t) => {
+  t.plan(5)
+
+  const serializer = {
+    withRelated (data) {
+      t.equal(data, '"joined" data', 'passes to serializer data after joining')
+      return Promise.resolve('serialized data')
+    },
+    withoutRelated () {
+      t.fail('serializer.withoutRelated() should no be called')
+    }
+  }
+
+  const model = {
+    name: 'someModelName',
+    schema: { tableName: 'some' },
+    selectMany (options) {
+      t.deepEqual(
+        options,
+        {
+          withRelated: true,
+
+          fieldsOnly: ['name', 'active', 'hide', 'group'],
+          where: {active: true},
+          orderBy: 'name'
+        },
+        'options for parent`s model.selectMany()'
+      )
+      return Promise.resolve('data from selectMany')
+    }
+  }
+
+  const apiWrappedModel = new ApiWrapper({model, serializer, deserializer: {}, registryMock})
+
+  // mock it for testing
+  apiWrappedModel.relations = {
+    fetchAndEmbed (parentRows, options) {
+      t.deepEqual(
+        options,
+        {
+          parentWhere: {active: true},
+
+          // additional constraints for relations` models
+          group: { where: {hide: false} },
+          divisions: { fieldsOnly: ['name', 'manager'], where: {hide: false} }
+        },
+        'it passes options for relations'
+      )
+
+      t.equal(
+        parentRows,
+        'data from selectMany',
+        'joins relations and serializes the result from model.update()'
+      )
+
+      return '"joined" data'
+    }
+  }
+
+  const options = {
+    withRelated: true, // main testing option
+
+    // constraints for parent model
+    fieldsOnly: ['name', 'active', 'hide', 'group'],
+    where: {active: true},
+    orderBy: 'name',
+
+    // constraints for relations` models
+    relationsOptions: {
+      group: { where: {hide: false} },
+      divisions: { fieldsOnly: ['name', 'manager'], where: {hide: false} }
+    }
+  }
+
+  apiWrappedModel.apiFetchMany(options)
+  .then((result) => t.equal(result, 'serialized data'))
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
+
 /**
  * Integration testing
  */
@@ -830,8 +910,8 @@ test('I&T apiWrapper.apiFetchMany({withRelated: true})', (t) => {
   .then(() => t.end())
 })
 
-test('I&T apiWrapper.apiFetchMany({withRelated: false})', (t) => {
-  t.plan(3)
+test('I&T apiWrapper.apiFetchMany() with options for relations', (t) => {
+  t.plan(4)
 
   class RightsModel extends BaseModel {}
   const rightsModel = new RightsModel({
@@ -855,6 +935,25 @@ test('I&T apiWrapper.apiFetchMany({withRelated: false})', (t) => {
   class DivisionModel extends BaseModel {
     selectMany (opts) {
       t.equal(opts.fieldsOnly, 'idAndRelations', 'it needs only hasMany IDs')
+
+      t.deepEqual(
+        opts,
+        {
+          fieldsOnly: 'idAndRelations',
+
+          where: { hide: false }, // passes relation's model constraints
+
+          whereIn: {
+            parentIdFieldName: 'id',
+            parentTableName: 'some',
+            relationFkName: 'UserID',
+
+            parentWhere: { hide: false } // passes parent's 'where'
+          }
+        },
+        'passes relations` constraints'
+      )
+
       return Promise.resolve([
         { id: '23', userId: '1' },
         { id: '24', userId: '1' },
@@ -932,7 +1031,21 @@ test('I&T apiWrapper.apiFetchMany({withRelated: false})', (t) => {
 
   const apiWrappedUserModel = new ApiWrapper(userModel, registryMock)
 
-  apiWrappedUserModel.apiFetchMany({withRelated: false})
+  const options = {
+    withRelated: false,
+
+    fieldsOnly: ['id', 'name', 'group', 'rights'],
+    where: {hide: false},
+    orderBy: 'name',
+
+    relationsOptions: {
+      division: {
+        where: {hide: false}
+      }
+    }
+  }
+
+  apiWrappedUserModel.apiFetchMany(options)
   .then((serialized) => {
     t.deepEqual(
       serialized,
