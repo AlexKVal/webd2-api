@@ -555,6 +555,36 @@ test('apiWrapper.create()', (t) => {
   )
 })
 
+test('apiWrapper.update()', (t) => {
+  t.plan(6)
+
+  const wrapper = getMinimalWrapper()
+
+  wrapper.apiUpdate = (id, body) => {
+    t.pass('it calls apiUpdate()')
+    t.equal(id, 123, 'passes parsed req.id')
+    t.equal(body, 'request body data', 'passes req.body')
+    return Promise.resolve({data: {field: 'serialized data'}})
+  }
+
+  const next = () => t.fail('next() should not be called')
+  const req = { id: 123, body: 'request body data' }
+  const res = {}
+  res.status = (code) => {
+    t.equal(code, 201, 'calls status with 201')
+    return res
+  }
+  res.json = (serialized) => {
+    t.deepEqual(serialized, {data: {field: 'serialized data'}}, 'calls json')
+    t.end()
+  }
+
+  t.doesNotThrow(
+    () => wrapper.update(req, res, next),
+    'additional check'
+  )
+})
+
 /**
  * apiWrapper.connect(router) connects REST api to router
  */
