@@ -626,6 +626,32 @@ test('apiWrapper.readOne()', (t) => {
   )
 })
 
+test('apiWrapper.readMany()', (t) => {
+  t.plan(3)
+
+  const wrapper = getMinimalWrapper()
+
+  wrapper.apiFetchMany = (options) => {
+    t.pass('it calls apiFetchMany()')
+
+    return Promise.resolve({data: {field: 'serialized data'}})
+  }
+
+  const next = () => t.fail('next() should not be called')
+  const req = {}
+  const res = {
+    json (serialized) {
+      t.deepEqual(serialized, {data: {field: 'serialized data'}}, 'calls json')
+      t.end()
+    }
+  }
+
+  t.doesNotThrow(
+    () => wrapper.readMany(req, res, next),
+    'additional check'
+  )
+})
+
 /**
  * apiWrapper.connect(router) connects REST api to router
  */
