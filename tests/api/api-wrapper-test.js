@@ -518,6 +518,48 @@ test('apiWrapper.apiFetchMany(options) with options for relations', (t) => {
   .then(() => t.end())
 })
 
+test('apiWrapper.connect(router) connects REST api to router', (t) => {
+  t.plan(7)
+
+  const model = {
+    name: 'someModelName',
+    schema: { tableName: 'some' }
+  }
+
+  const mw = new ApiWrapper({model, deserializer: {}, serializer: {}, registryMock})
+
+  const forMany = {}
+  forMany.get = (method) => { t.equal(method, mw.readAll, 'get / readAll'); return forMany }
+  forMany.post = (method) => { t.equal(method, mw.create, 'post / create'); return forMany }
+
+  const forOne = {}
+  forOne.get = (method) => { t.equal(method, mw.readOne, 'get /:id readOne'); return forOne }
+  forOne.patch = (method) => { t.equal(method, mw.update, 'patch /:id update'); return forOne }
+  forOne.delete = (method) => { t.equal(method, mw.delete, 'delete /:id delete'); return forOne }
+
+  const routerMock = {
+    param (id, idParamParser) {
+      t.equal(id, 'id', 'connects id param parser')
+      t.equal((typeof idParamParser), 'function', 'second parameter is middleware')
+    },
+
+    route (path) {
+      const paths = {
+        '/': forMany,
+        '/:id': forOne
+      }
+
+      const pathObject = paths[path]
+      if (!pathObject) t.fail(`router.route(${path}) has been called`)
+      return pathObject
+    }
+  }
+
+  mw.connect(routerMock)
+
+  t.end()
+})
+
 /**
  * Integration testing
  */
