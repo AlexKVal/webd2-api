@@ -585,6 +585,21 @@ test('apiWrapper.update()', (t) => {
   )
 })
 
+test('apiWrapper.delete()', (t) => {
+  t.plan(2)
+
+  const wrapper = getMinimalWrapper()
+
+  const next = (err) => t.equal(err.message, 'REST delete() is not implemented')
+
+  t.doesNotThrow(
+    () => wrapper.delete({}, {}, next),
+    'additional check'
+  )
+
+  t.end()
+})
+
 /**
  * apiWrapper.connect(router) connects REST api to router
  */
