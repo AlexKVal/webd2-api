@@ -387,7 +387,6 @@ test('apiWrapper.apiFetchMany() without related', (t) => {
       return '"joined" data'
     }
   }
-  apiWrappedModel._fetchRelations = () => t.fail('this._fetchRelations() should not be called')
 
   apiWrappedModel.apiFetchMany(/* no options */)
   .then((result) => t.equal(result, 'serialized data'))
