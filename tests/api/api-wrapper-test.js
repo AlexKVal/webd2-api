@@ -519,6 +519,43 @@ test('apiWrapper.apiFetchMany(options) with options for relations', (t) => {
 })
 
 /**
+ * REST Api methods
+ */
+function getMinimalWrapper () {
+  const model = { name: 'someModelName', schema: { tableName: 'some' } }
+  return new ApiWrapper({model, deserializer: {}, serializer: {}, registryMock})
+}
+
+test('apiWrapper.create()', (t) => {
+  t.plan(5)
+
+  const wrapper = getMinimalWrapper()
+
+  wrapper.apiCreate = (body) => {
+    t.pass('it calls apiCreate()')
+    t.equal(body, 'request body data', 'passes req.body')
+    return Promise.resolve({data: {field: 'serialized data'}})
+  }
+
+  const next = () => t.fail('next() should not be called')
+  const req = { body: 'request body data' }
+  const res = {}
+  res.status = (code) => {
+    t.equal(code, 201, 'calls status with 201')
+    return res
+  }
+  res.json = (serialized) => {
+    t.deepEqual(serialized, {data: {field: 'serialized data'}}, 'calls json')
+    t.end()
+  }
+
+  t.doesNotThrow(
+    () => wrapper.create(req, res, next),
+    'additional check'
+  )
+})
+
+/**
  * apiWrapper.connect(router) connects REST api to router
  */
 function getRouterMock (t) {
