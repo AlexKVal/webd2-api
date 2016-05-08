@@ -242,14 +242,19 @@ test('relations._fetchHasMany()', (t) => {
         },
         selectMany (options) {
           t.deepEqual(
-            options.whereIn,
+            options,
             {
-              relationFkName: 'GrpID',
-              parentIdFieldName: 'GroupID',
-              parentTableName: 'sPepTree',
-              parentWhere: {someField: 'parent where constraints'}
+              whereIn: {
+                relationFkName: 'GrpID',
+                parentIdFieldName: 'GroupID',
+                parentTableName: 'sPepTree',
+                parentWhere: {someField: 'parent where constraints'}
+              },
+              // additional constraints for 'user' relation
+              where: {hide: false},
+              orderBy: 'name'
             },
-            'uses {whereIn} with relationFkName option'
+            'uses {whereIn} with relationFkName option and passes options for relation model'
           )
 
           return Promise.resolve([
@@ -273,14 +278,19 @@ test('relations._fetchHasMany()', (t) => {
         },
         selectMany (options) {
           t.deepEqual(
-            options.whereIn,
+            options,
             {
-              relationFkName: 'UserGrpID',
-              parentIdFieldName: 'GroupID',
-              parentTableName: 'sPepTree',
-              parentWhere: {someField: 'parent where constraints'}
+              whereIn: {
+                relationFkName: 'UserGrpID',
+                parentIdFieldName: 'GroupID',
+                parentTableName: 'sPepTree',
+                parentWhere: {someField: 'parent where constraints'}
+              },
+              // additional constraints for 'division' relation
+              where: {hide: false},
+              orderBy: 'name DESC'
             },
-            'uses {whereIn} with relationFkName option'
+            'uses {whereIn} with relationFkName option and passes options for relation model'
           )
 
           return Promise.resolve([
@@ -319,7 +329,23 @@ test('relations._fetchHasMany()', (t) => {
 
   const parentWhere = {someField: 'parent where constraints'}
 
-  userGroupRelations._fetchHasMany(parentWhere)
+  const options = {
+    parentWhere,
+
+    // additional constraints for 'division' relation
+    division: {
+      where: {hide: false},
+      orderBy: 'name DESC'
+    },
+
+    // additional constraints for 'user' relation
+    user: {
+      where: {hide: false},
+      orderBy: 'name'
+    }
+  }
+
+  userGroupRelations._fetchHasMany(options)
   .then((relationsData) => {
     t.deepEqual(
       relationsData,
@@ -378,7 +404,10 @@ test('relations._fetchHasMany() with `onlyIDs` option', (t) => {
                 parentIdFieldName: 'GroupID',
                 parentTableName: 'sPepTree',
                 parentWhere: {someField: 'parent where constraints'}
-              }
+              },
+              // additional constraints for 'user' relation
+              where: {hide: false},
+              orderBy: 'name'
             },
             'uses {whereIn} with relationFkName option'
           )
@@ -453,7 +482,19 @@ test('relations._fetchHasMany() with `onlyIDs` option', (t) => {
 
   const parentWhere = {someField: 'parent where constraints'}
 
-  userGroupRelations._fetchHasMany(parentWhere, {onlyIDs: true})
+  const options = {
+    onlyIDs: true, // special case when we need just relatins' IDs
+
+    parentWhere,
+
+    // additional constraints for 'user' relation
+    user: {
+      where: {hide: false},
+      orderBy: 'name'
+    }
+  }
+
+  userGroupRelations._fetchHasMany(options)
   .then((relationsData) => {
     t.deepEqual(
       relationsData,
@@ -530,13 +571,16 @@ test('relations._fetchBelongsTo()', (t) => {
       rights: {
         selectMany (options) {
           t.deepEqual(
-            options.whereIn,
+            options,
             {
-              parentFkName: 'rights',
-              parentTableName: 'sPersonal',
-              parentWhere: {someField: 'parent where constraints'}
+              where: {hide: false}, // options for 'rights' relation model
+              whereIn: {
+                parentFkName: 'rights',
+                parentTableName: 'sPersonal',
+                parentWhere: {someField: 'parent where constraints'}
+              }
             },
-            'uses {whereIn} with relationFkName option'
+            'uses {whereIn} with parentFkName option and passes options for relation model'
           )
 
           return Promise.resolve([
@@ -549,13 +593,18 @@ test('relations._fetchBelongsTo()', (t) => {
       userGroup: {
         selectMany (options) {
           t.deepEqual(
-            options.whereIn,
+            options,
             {
-              parentFkName: 'userGroup',
-              parentTableName: 'sPersonal',
-              parentWhere: {someField: 'parent where constraints'}
+              whereIn: {
+                parentFkName: 'userGroup',
+                parentTableName: 'sPersonal',
+                parentWhere: {someField: 'parent where constraints'}
+              },
+              // options for 'rights' relation model
+              where: {hide: false},
+              orderBy: 'shortName'
             },
-            'uses {whereIn} with relationFkName option'
+            'uses {whereIn} with parentFkName option and passes options for relation model'
           )
 
           return Promise.resolve([
@@ -584,7 +633,22 @@ test('relations._fetchBelongsTo()', (t) => {
 
   const parentWhere = {someField: 'parent where constraints'}
 
-  userRelations._fetchBelongsTo(parentWhere)
+  const options = {
+    parentWhere,
+
+    // additional constraints for 'rights' relation
+    rights: {
+      where: {hide: false}
+    },
+
+    // additional constraints for 'userGroup' relation
+    userGroup: {
+      where: {hide: false},
+      orderBy: 'shortName'
+    }
+  }
+
+  userRelations._fetchBelongsTo(options)
   .then((relationsData) => {
     t.deepEqual(
       relationsData,
@@ -651,8 +715,8 @@ test('relations.fetchAndEmbed()', (t) => {
   const modelRelations = new Relations('model-name', {tableName: 'table-name'})
 
   // mock everything for the test
-  modelRelations._fetchBelongsTo = function _fetchBelongsTo (parentWhere) {
-    t.equal(parentWhere, 'custom parentWhere')
+  modelRelations._fetchBelongsTo = function _fetchBelongsTo (options) {
+    t.equal(options, 'custom options')
     return Promise.resolve('fetched belongsTo relations data')
   }
   modelRelations._embedBelongsTo = function _embedBelongsTo (parentRows, relationsData) {
@@ -660,8 +724,8 @@ test('relations.fetchAndEmbed()', (t) => {
     t.equal(relationsData, 'fetched belongsTo relations data')
     return 'parent`s rows with belongsTo relations data embedded'
   }
-  modelRelations._fetchHasMany = function _fetchHasMany (parentWhere) {
-    t.equal(parentWhere, 'custom parentWhere')
+  modelRelations._fetchHasMany = function _fetchHasMany (options) {
+    t.equal(options, 'custom options')
     return Promise.resolve('fetched hasMany relations data')
   }
   modelRelations._embedHasMany = function _embedHasMany (parentRows, relationsData) {
@@ -670,7 +734,7 @@ test('relations.fetchAndEmbed()', (t) => {
     return 'parent`s rows with all relations data embedded'
   }
 
-  modelRelations.fetchAndEmbed('some parentRows', 'custom parentWhere')
+  modelRelations.fetchAndEmbed('some parentRows', 'custom options')
   .then((parentRowsWithRelationsData) => {
     t.equal(
       parentRowsWithRelationsData,
@@ -1119,7 +1183,22 @@ test('I&T relations.justEmbedIds()', (t) => {
         },
         selectMany (options) {
           t.equal(options.fieldsOnly, 'idAndRelations', 'gets only id and relations')
-          t.equal(options.whereIn.parentWhere, 'parent`s contraints for hasMany relations')
+
+          t.deepEqual(
+            options,
+            {
+              fieldsOnly: 'idAndRelations',
+              whereIn: {
+                parentIdFieldName: 'PersID',
+                parentTableName: 'sPersonal',
+                relationFkName: 'UserID',
+                parentWhere: 'parent`s contraints for hasMany relations'
+              },
+              where: {hide: false},
+              orderBy: 'name'
+            },
+            'and passes additional constraints'
+          )
 
           return Promise.resolve([
             { id: '23', userId: '1' },
@@ -1163,7 +1242,17 @@ test('I&T relations.justEmbedIds()', (t) => {
 
   const parentWhere = 'parent`s contraints for hasMany relations'
 
-  userRelations.justEmbedIds(parentRows, parentWhere)
+  const options = {
+    parentWhere,
+
+    // additional constraints for "division"
+    division: {
+      where: {hide: false},
+      orderBy: 'name'
+    }
+  }
+
+  userRelations.justEmbedIds(parentRows, options)
   .then((parentRowsWithRelationsIDs) => {
     t.deepEqual(
       parentRowsWithRelationsIDs,
