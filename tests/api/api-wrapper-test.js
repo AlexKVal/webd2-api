@@ -793,6 +793,35 @@ test('apiWrapper.connect(router) "delete" option', (t) => {
   t.end()
 })
 
+test('apiWrapper.connect(router) binds methods to wrapper', (t) => {
+  t.plan(11)
+
+  const { routerMock, wrapper, forMany, forOne } = getRouterMock(t)
+
+  wrapper.readMany = function () { t.equal(this, wrapper, 'readMany.bind(this)'); return 'readMany' }
+  wrapper.readOne = function () { t.equal(this, wrapper, 'readOne.bind(this)'); return 'readOne' }
+  wrapper.create = function () { t.equal(this, wrapper, 'create.bind(this)'); return 'create' }
+  wrapper.update = function () { t.equal(this, wrapper, 'update.bind(this)'); return 'update' }
+  wrapper.delete = function () { t.equal(this, wrapper, 'delete.bind(this)'); return 'delete' }
+
+  forMany.get = (m) => { t.equal(m(), 'readMany', 'get / readMany'); return forMany }
+  forMany.post = (m) => { t.equal(m(), 'create', 'post / create'); return forMany }
+
+  forOne.get = (m) => { t.equal(m(), 'readOne', 'get /:id readOne'); return forOne }
+  forOne.patch = (m) => { t.equal(m(), 'update', 'patch /:id update'); return forOne }
+  forOne.delete = (m) => { t.equal(m(), 'delete', 'delete /:id delete'); return forOne }
+
+  wrapper.connect(routerMock, 'read')
+
+  wrapper.readMany()
+  wrapper.readOne()
+  wrapper.create()
+  wrapper.update()
+  wrapper.delete()
+
+  t.end()
+})
+
 /**
  * Integration testing
  */
