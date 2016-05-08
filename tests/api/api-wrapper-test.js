@@ -600,6 +600,32 @@ test('apiWrapper.delete()', (t) => {
   t.end()
 })
 
+test('apiWrapper.readOne()', (t) => {
+  t.plan(4)
+
+  const wrapper = getMinimalWrapper()
+
+  wrapper.apiFind = (id) => {
+    t.pass('it calls apiFind()')
+    t.equal(id, 123, 'passes parsed req.id')
+    return Promise.resolve({data: {field: 'serialized data'}})
+  }
+
+  const next = () => t.fail('next() should not be called')
+  const req = { id: 123 }
+  const res = {
+    json (serialized) {
+      t.deepEqual(serialized, {data: {field: 'serialized data'}}, 'calls json')
+      t.end()
+    }
+  }
+
+  t.doesNotThrow(
+    () => wrapper.readOne(req, res, next),
+    'additional check'
+  )
+})
+
 /**
  * apiWrapper.connect(router) connects REST api to router
  */
