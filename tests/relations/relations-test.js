@@ -1183,7 +1183,22 @@ test('I&T relations.justEmbedIds()', (t) => {
         },
         selectMany (options) {
           t.equal(options.fieldsOnly, 'idAndRelations', 'gets only id and relations')
-          t.equal(options.whereIn.parentWhere, 'parent`s contraints for hasMany relations')
+
+          t.deepEqual(
+            options,
+            {
+              fieldsOnly: 'idAndRelations',
+              whereIn: {
+                parentIdFieldName: 'PersID',
+                parentTableName: 'sPersonal',
+                relationFkName: 'UserID',
+                parentWhere: 'parent`s contraints for hasMany relations'
+              },
+              where: {hide: false},
+              orderBy: 'name'
+            },
+            'and passes additional constraints'
+          )
 
           return Promise.resolve([
             { id: '23', userId: '1' },
@@ -1227,7 +1242,17 @@ test('I&T relations.justEmbedIds()', (t) => {
 
   const parentWhere = 'parent`s contraints for hasMany relations'
 
-  userRelations.justEmbedIds(parentRows, parentWhere)
+  const options = {
+    parentWhere,
+
+    // additional constraints for "division"
+    division: {
+      where: {hide: false},
+      orderBy: 'name'
+    }
+  }
+
+  userRelations.justEmbedIds(parentRows, options)
   .then((parentRowsWithRelationsIDs) => {
     t.deepEqual(
       parentRowsWithRelationsIDs,
