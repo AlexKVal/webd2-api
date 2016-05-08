@@ -519,6 +519,336 @@ test('apiWrapper.apiFetchMany(options) with options for relations', (t) => {
 })
 
 /**
+ * REST Api methods
+ */
+function getMinimalWrapper () {
+  const model = { name: 'someModelName', schema: { tableName: 'some' } }
+  return new ApiWrapper({model, deserializer: {}, serializer: {}, registryMock})
+}
+
+test('apiWrapper.create()', (t) => {
+  t.plan(5)
+
+  const wrapper = getMinimalWrapper()
+
+  wrapper.apiCreate = (body) => {
+    t.pass('it calls apiCreate()')
+    t.equal(body, 'request body data', 'passes req.body')
+    return Promise.resolve({data: {field: 'serialized data'}})
+  }
+
+  const next = () => t.fail('next() should not be called')
+  const req = { body: 'request body data' }
+  const res = {}
+  res.status = (code) => {
+    t.equal(code, 201, 'calls status with 201')
+    return res
+  }
+  res.json = (serialized) => {
+    t.deepEqual(serialized, {data: {field: 'serialized data'}}, 'calls json')
+    t.end()
+  }
+
+  t.doesNotThrow(
+    () => wrapper.create(req, res, next),
+    'additional check'
+  )
+})
+
+test('apiWrapper.update()', (t) => {
+  t.plan(6)
+
+  const wrapper = getMinimalWrapper()
+
+  wrapper.apiUpdate = (id, body) => {
+    t.pass('it calls apiUpdate()')
+    t.equal(id, 123, 'passes parsed req.id')
+    t.equal(body, 'request body data', 'passes req.body')
+    return Promise.resolve({data: {field: 'serialized data'}})
+  }
+
+  const next = () => t.fail('next() should not be called')
+  const req = { id: 123, body: 'request body data' }
+  const res = {}
+  res.status = (code) => {
+    t.equal(code, 201, 'calls status with 201')
+    return res
+  }
+  res.json = (serialized) => {
+    t.deepEqual(serialized, {data: {field: 'serialized data'}}, 'calls json')
+    t.end()
+  }
+
+  t.doesNotThrow(
+    () => wrapper.update(req, res, next),
+    'additional check'
+  )
+})
+
+test('apiWrapper.delete()', (t) => {
+  t.plan(2)
+
+  const wrapper = getMinimalWrapper()
+
+  const next = (err) => t.equal(err.message, 'REST delete() is not implemented')
+
+  t.doesNotThrow(
+    () => wrapper.delete({}, {}, next),
+    'additional check'
+  )
+
+  t.end()
+})
+
+test('apiWrapper.readOne()', (t) => {
+  t.plan(4)
+
+  const wrapper = getMinimalWrapper()
+
+  wrapper.apiFind = (id) => {
+    t.pass('it calls apiFind()')
+    t.equal(id, 123, 'passes parsed req.id')
+    return Promise.resolve({data: {field: 'serialized data'}})
+  }
+
+  const next = () => t.fail('next() should not be called')
+  const req = { id: 123 }
+  const res = {
+    json (serialized) {
+      t.deepEqual(serialized, {data: {field: 'serialized data'}}, 'calls json')
+      t.end()
+    }
+  }
+
+  t.doesNotThrow(
+    () => wrapper.readOne(req, res, next),
+    'additional check'
+  )
+})
+
+test('apiWrapper.readMany() default', (t) => {
+  t.plan(4)
+
+  const wrapper = getMinimalWrapper()
+
+  wrapper.apiFetchMany = (options) => {
+    t.pass('it calls apiFetchMany()')
+
+    t.deepEqual(
+      options,
+      { withRelated: false },
+      'by default client will get data w/o related data'
+    )
+
+    return Promise.resolve({data: {field: 'serialized data'}})
+  }
+
+  const next = () => t.fail('next() should not be called')
+  const req = { query: {} }
+  const res = {
+    json (serialized) {
+      t.deepEqual(serialized, {data: {field: 'serialized data'}}, 'calls json')
+      t.end()
+    }
+  }
+
+  t.doesNotThrow(
+    () => wrapper.readMany(req, res, next), 'additional check'
+  )
+})
+
+test('apiWrapper.readMany() with /?related=true', (t) => {
+  t.plan(2)
+
+  const wrapper = getMinimalWrapper()
+
+  wrapper.apiFetchMany = (options) => {
+    t.deepEqual(
+      options,
+      { withRelated: true },
+      'with /?related=true'
+    )
+    return Promise.resolve()
+  }
+
+  const next = () => t.fail('next() should not be called')
+  const req = { query: { related: true } } // /?related=true
+  const res = { json (serialized) { t.end() } }
+
+  t.doesNotThrow(
+    () => wrapper.readMany(req, res, next), 'additional check'
+  )
+})
+
+/**
+ * apiWrapper.connect(router) connects REST api to router
+ */
+function getRouterMock (t) {
+  const model = { name: 'someModelName', schema: { tableName: 'some' } }
+  const wrapper = new ApiWrapper({model, deserializer: {}, serializer: {}, registryMock})
+
+  const paths = {
+    '/': {},
+    '/:id': {}
+  }
+
+  const routerMock = {
+    param (id, idParamParser) {
+      t.equal(id, 'id', 'connects id param parser')
+      t.equal((typeof idParamParser), 'function', 'second parameter is middleware')
+    },
+
+    route (path) {
+      const pathObject = paths[path]
+      if (!pathObject) t.fail(`router.route(${path}) has been called`)
+      return pathObject
+    }
+  }
+
+  return { routerMock, wrapper, forMany: paths['/'], forOne: paths['/:id'] }
+}
+
+test('apiWrapper.connect(router) connects REST api to router', (t) => {
+  t.plan(7)
+
+  const { routerMock, wrapper, forMany, forOne } = getRouterMock(t)
+
+  wrapper.readMany = () => 'readMany'
+  wrapper.readOne = () => 'readOne'
+  wrapper.create = () => 'create'
+  wrapper.update = () => 'update'
+  wrapper.delete = () => 'delete'
+
+  forMany.get = (m) => { t.equal(m(), 'readMany', 'get / readMany'); return forMany }
+  forMany.post = (m) => { t.equal(m(), 'create', 'post / create'); return forMany }
+
+  forOne.get = (m) => { t.equal(m(), 'readOne', 'get /:id readOne'); return forOne }
+  forOne.patch = (m) => { t.equal(m(), 'update', 'patch /:id update'); return forOne }
+  forOne.delete = (m) => { t.equal(m(), 'delete', 'delete /:id delete'); return forOne }
+
+  wrapper.connect(routerMock, 'create read update delete')
+
+  wrapper.readMany()
+  wrapper.readOne()
+  wrapper.create()
+  wrapper.update()
+  wrapper.delete()
+
+  t.end()
+})
+
+test('apiWrapper.connect(router) by default connects only read methods', (t) => {
+  t.plan(4)
+
+  const { routerMock, wrapper, forMany, forOne } = getRouterMock(t)
+
+  wrapper.readMany = () => 'readMany'
+  wrapper.readOne = () => 'readOne'
+
+  forMany.get = (m) => { t.equal(m(), 'readMany', 'get / readMany'); return forMany }
+  forMany.post = (m) => { t.fail('post / create should not be connected'); return forMany }
+
+  forOne.get = (m) => { t.equal(m(), 'readOne', 'get /:id readOne'); return forOne }
+  forOne.patch = (m) => { t.fail('patch /:id update should not be connected'); return forOne }
+  forOne.delete = (m) => { t.fail('delete /:id delete should not be connected'); return forOne }
+
+  wrapper.connect(routerMock /* no options */)
+  wrapper.readMany()
+  wrapper.readOne()
+
+  t.end()
+})
+
+test('apiWrapper.connect(router) "update" option', (t) => {
+  t.plan(3)
+
+  const { routerMock, wrapper, forMany, forOne } = getRouterMock(t)
+
+  wrapper.update = () => 'update'
+
+  forMany.get = (m) => { t.fail('get / readMany should not be connected'); return forMany }
+  forMany.post = (m) => { t.fail('post / create should not be connected'); return forMany }
+
+  forOne.get = (m) => { t.fail('get /:id readOne should not be connected'); return forOne }
+  forOne.patch = (m) => { t.equal(m(), 'update', 'patch /:id update'); return forOne }
+  forOne.delete = (m) => { t.fail('delete /:id delete should not be connected'); return forOne }
+
+  wrapper.connect(routerMock, 'update')
+  wrapper.update()
+
+  t.end()
+})
+
+test('apiWrapper.connect(router) "create" option', (t) => {
+  t.plan(3)
+
+  const { routerMock, wrapper, forMany, forOne } = getRouterMock(t)
+
+  wrapper.create = () => 'create'
+
+  forMany.get = (m) => { t.fail('get / readMany should not be connected'); return forMany }
+  forMany.post = (m) => { t.equal(m(), 'create', 'post / create'); return forMany }
+
+  forOne.get = (m) => { t.fail('get /:id readOne should not be connected'); return forOne }
+  forOne.patch = (m) => { t.fail('patch /:id update should not be connected'); return forOne }
+  forOne.delete = (m) => { t.fail('delete /:id delete should not be connected'); return forOne }
+
+  wrapper.connect(routerMock, 'create')
+  wrapper.create()
+
+  t.end()
+})
+
+test('apiWrapper.connect(router) "delete" option', (t) => {
+  t.plan(3)
+
+  const { routerMock, wrapper, forMany, forOne } = getRouterMock(t)
+
+  wrapper.delete = () => 'delete'
+
+  forMany.get = (m) => { t.fail('get / readMany should not be connected'); return forMany }
+  forMany.post = (m) => { t.fail('post / create should not be connected'); return forMany }
+
+  forOne.get = (m) => { t.fail('get /:id readOne should not be connected'); return forOne }
+  forOne.patch = (m) => { t.fail('patch /:id update should not be connected'); return forOne }
+  forOne.delete = (m) => { t.equal(m(), 'delete', 'delete /:id delete'); return forOne }
+
+  wrapper.connect(routerMock, 'delete')
+  wrapper.delete()
+
+  t.end()
+})
+
+test('apiWrapper.connect(router) binds methods to wrapper', (t) => {
+  t.plan(11)
+
+  const { routerMock, wrapper, forMany, forOne } = getRouterMock(t)
+
+  wrapper.readMany = function () { t.equal(this, wrapper, 'readMany.bind(this)'); return 'readMany' }
+  wrapper.readOne = function () { t.equal(this, wrapper, 'readOne.bind(this)'); return 'readOne' }
+  wrapper.create = function () { t.equal(this, wrapper, 'create.bind(this)'); return 'create' }
+  wrapper.update = function () { t.equal(this, wrapper, 'update.bind(this)'); return 'update' }
+  wrapper.delete = function () { t.equal(this, wrapper, 'delete.bind(this)'); return 'delete' }
+
+  forMany.get = (m) => { t.equal(m(), 'readMany', 'get / readMany'); return forMany }
+  forMany.post = (m) => { t.equal(m(), 'create', 'post / create'); return forMany }
+
+  forOne.get = (m) => { t.equal(m(), 'readOne', 'get /:id readOne'); return forOne }
+  forOne.patch = (m) => { t.equal(m(), 'update', 'patch /:id update'); return forOne }
+  forOne.delete = (m) => { t.equal(m(), 'delete', 'delete /:id delete'); return forOne }
+
+  wrapper.connect(routerMock, 'read')
+
+  wrapper.readMany()
+  wrapper.readOne()
+  wrapper.create()
+  wrapper.update()
+  wrapper.delete()
+
+  t.end()
+})
+
+/**
  * Integration testing
  */
 const BaseModel = require('../../lib/models/base-model')
