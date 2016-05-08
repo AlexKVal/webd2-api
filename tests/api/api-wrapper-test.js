@@ -626,19 +626,25 @@ test('apiWrapper.readOne()', (t) => {
   )
 })
 
-test('apiWrapper.readMany()', (t) => {
-  t.plan(3)
+test('apiWrapper.readMany() default', (t) => {
+  t.plan(4)
 
   const wrapper = getMinimalWrapper()
 
   wrapper.apiFetchMany = (options) => {
     t.pass('it calls apiFetchMany()')
 
+    t.deepEqual(
+      options,
+      { withRelated: false },
+      'by default client will get data w/o related data'
+    )
+
     return Promise.resolve({data: {field: 'serialized data'}})
   }
 
   const next = () => t.fail('next() should not be called')
-  const req = {}
+  const req = { query: {} }
   const res = {
     json (serialized) {
       t.deepEqual(serialized, {data: {field: 'serialized data'}}, 'calls json')
@@ -647,8 +653,30 @@ test('apiWrapper.readMany()', (t) => {
   }
 
   t.doesNotThrow(
-    () => wrapper.readMany(req, res, next),
-    'additional check'
+    () => wrapper.readMany(req, res, next), 'additional check'
+  )
+})
+
+test('apiWrapper.readMany() with /?related=true', (t) => {
+  t.plan(2)
+
+  const wrapper = getMinimalWrapper()
+
+  wrapper.apiFetchMany = (options) => {
+    t.deepEqual(
+      options,
+      { withRelated: true },
+      'with /?related=true'
+    )
+    return Promise.resolve()
+  }
+
+  const next = () => t.fail('next() should not be called')
+  const req = { query: { related: true } } // /?related=true
+  const res = { json (serialized) { t.end() } }
+
+  t.doesNotThrow(
+    () => wrapper.readMany(req, res, next), 'additional check'
   )
 })
 
