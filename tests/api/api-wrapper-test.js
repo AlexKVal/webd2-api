@@ -713,14 +713,26 @@ test('apiWrapper.connect(router) connects REST api to router', (t) => {
 
   const { routerMock, wrapper, forMany, forOne } = getRouterMock(t)
 
-  forMany.get = (m) => { t.equal(m, wrapper.readMany, 'get / readMany'); return forMany }
-  forMany.post = (m) => { t.equal(m, wrapper.create, 'post / create'); return forMany }
+  wrapper.readMany = () => 'readMany'
+  wrapper.readOne = () => 'readOne'
+  wrapper.create = () => 'create'
+  wrapper.update = () => 'update'
+  wrapper.delete = () => 'delete'
 
-  forOne.get = (m) => { t.equal(m, wrapper.readOne, 'get /:id readOne'); return forOne }
-  forOne.patch = (m) => { t.equal(m, wrapper.update, 'patch /:id update'); return forOne }
-  forOne.delete = (m) => { t.equal(m, wrapper.delete, 'delete /:id delete'); return forOne }
+  forMany.get = (m) => { t.equal(m(), 'readMany', 'get / readMany'); return forMany }
+  forMany.post = (m) => { t.equal(m(), 'create', 'post / create'); return forMany }
+
+  forOne.get = (m) => { t.equal(m(), 'readOne', 'get /:id readOne'); return forOne }
+  forOne.patch = (m) => { t.equal(m(), 'update', 'patch /:id update'); return forOne }
+  forOne.delete = (m) => { t.equal(m(), 'delete', 'delete /:id delete'); return forOne }
 
   wrapper.connect(routerMock, 'create read update delete')
+
+  wrapper.readMany()
+  wrapper.readOne()
+  wrapper.create()
+  wrapper.update()
+  wrapper.delete()
 
   t.end()
 })
@@ -730,14 +742,19 @@ test('apiWrapper.connect(router) by default connects only read methods', (t) => 
 
   const { routerMock, wrapper, forMany, forOne } = getRouterMock(t)
 
-  forMany.get = (m) => { t.equal(m, wrapper.readMany, 'get / readMany'); return forMany }
+  wrapper.readMany = () => 'readMany'
+  wrapper.readOne = () => 'readOne'
+
+  forMany.get = (m) => { t.equal(m(), 'readMany', 'get / readMany'); return forMany }
   forMany.post = (m) => { t.fail('post / create should not be connected'); return forMany }
 
-  forOne.get = (m) => { t.equal(m, wrapper.readOne, 'get /:id readOne'); return forOne }
+  forOne.get = (m) => { t.equal(m(), 'readOne', 'get /:id readOne'); return forOne }
   forOne.patch = (m) => { t.fail('patch /:id update should not be connected'); return forOne }
   forOne.delete = (m) => { t.fail('delete /:id delete should not be connected'); return forOne }
 
   wrapper.connect(routerMock /* no options */)
+  wrapper.readMany()
+  wrapper.readOne()
 
   t.end()
 })
@@ -747,14 +764,17 @@ test('apiWrapper.connect(router) "update" option', (t) => {
 
   const { routerMock, wrapper, forMany, forOne } = getRouterMock(t)
 
+  wrapper.update = () => 'update'
+
   forMany.get = (m) => { t.fail('get / readMany should not be connected'); return forMany }
   forMany.post = (m) => { t.fail('post / create should not be connected'); return forMany }
 
   forOne.get = (m) => { t.fail('get /:id readOne should not be connected'); return forOne }
-  forOne.patch = (m) => { t.equal(m, wrapper.update, 'patch /:id update'); return forOne }
+  forOne.patch = (m) => { t.equal(m(), 'update', 'patch /:id update'); return forOne }
   forOne.delete = (m) => { t.fail('delete /:id delete should not be connected'); return forOne }
 
   wrapper.connect(routerMock, 'update')
+  wrapper.update()
 
   t.end()
 })
@@ -764,14 +784,17 @@ test('apiWrapper.connect(router) "create" option', (t) => {
 
   const { routerMock, wrapper, forMany, forOne } = getRouterMock(t)
 
+  wrapper.create = () => 'create'
+
   forMany.get = (m) => { t.fail('get / readMany should not be connected'); return forMany }
-  forMany.post = (m) => { t.equal(m, wrapper.create, 'post / create'); return forMany }
+  forMany.post = (m) => { t.equal(m(), 'create', 'post / create'); return forMany }
 
   forOne.get = (m) => { t.fail('get /:id readOne should not be connected'); return forOne }
   forOne.patch = (m) => { t.fail('patch /:id update should not be connected'); return forOne }
   forOne.delete = (m) => { t.fail('delete /:id delete should not be connected'); return forOne }
 
   wrapper.connect(routerMock, 'create')
+  wrapper.create()
 
   t.end()
 })
@@ -781,14 +804,17 @@ test('apiWrapper.connect(router) "delete" option', (t) => {
 
   const { routerMock, wrapper, forMany, forOne } = getRouterMock(t)
 
+  wrapper.delete = () => 'delete'
+
   forMany.get = (m) => { t.fail('get / readMany should not be connected'); return forMany }
   forMany.post = (m) => { t.fail('post / create should not be connected'); return forMany }
 
   forOne.get = (m) => { t.fail('get /:id readOne should not be connected'); return forOne }
   forOne.patch = (m) => { t.fail('patch /:id update should not be connected'); return forOne }
-  forOne.delete = (m) => { t.equal(m, wrapper.delete, 'delete /:id delete'); return forOne }
+  forOne.delete = (m) => { t.equal(m(), 'delete', 'delete /:id delete'); return forOne }
 
   wrapper.connect(routerMock, 'delete')
+  wrapper.delete()
 
   t.end()
 })
