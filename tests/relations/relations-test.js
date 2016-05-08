@@ -530,13 +530,16 @@ test('relations._fetchBelongsTo()', (t) => {
       rights: {
         selectMany (options) {
           t.deepEqual(
-            options.whereIn,
+            options,
             {
-              parentFkName: 'rights',
-              parentTableName: 'sPersonal',
-              parentWhere: {someField: 'parent where constraints'}
+              where: {hide: false}, // options for 'rights' relation model
+              whereIn: {
+                parentFkName: 'rights',
+                parentTableName: 'sPersonal',
+                parentWhere: {someField: 'parent where constraints'}
+              }
             },
-            'uses {whereIn} with relationFkName option'
+            'uses {whereIn} with parentFkName option and passes options for relation model'
           )
 
           return Promise.resolve([
@@ -549,13 +552,18 @@ test('relations._fetchBelongsTo()', (t) => {
       userGroup: {
         selectMany (options) {
           t.deepEqual(
-            options.whereIn,
+            options,
             {
-              parentFkName: 'userGroup',
-              parentTableName: 'sPersonal',
-              parentWhere: {someField: 'parent where constraints'}
+              whereIn: {
+                parentFkName: 'userGroup',
+                parentTableName: 'sPersonal',
+                parentWhere: {someField: 'parent where constraints'}
+              },
+              // options for 'rights' relation model
+              where: {hide: false},
+              orderBy: 'shortName'
             },
-            'uses {whereIn} with relationFkName option'
+            'uses {whereIn} with parentFkName option and passes options for relation model'
           )
 
           return Promise.resolve([
@@ -584,7 +592,22 @@ test('relations._fetchBelongsTo()', (t) => {
 
   const parentWhere = {someField: 'parent where constraints'}
 
-  userRelations._fetchBelongsTo(parentWhere)
+  const options = {
+    parentWhere,
+
+    // additional constraints for 'rights' relation
+    rights: {
+      where: {hide: false}
+    },
+
+    // additional constraints for 'userGroup' relation
+    userGroup: {
+      where: {hide: false},
+      orderBy: 'shortName'
+    }
+  }
+
+  userRelations._fetchBelongsTo(options)
   .then((relationsData) => {
     t.deepEqual(
       relationsData,
@@ -651,8 +674,8 @@ test('relations.fetchAndEmbed()', (t) => {
   const modelRelations = new Relations('model-name', {tableName: 'table-name'})
 
   // mock everything for the test
-  modelRelations._fetchBelongsTo = function _fetchBelongsTo (parentWhere) {
-    t.equal(parentWhere, 'custom parentWhere')
+  modelRelations._fetchBelongsTo = function _fetchBelongsTo (options) {
+    t.equal(options, 'custom options')
     return Promise.resolve('fetched belongsTo relations data')
   }
   modelRelations._embedBelongsTo = function _embedBelongsTo (parentRows, relationsData) {
@@ -670,7 +693,7 @@ test('relations.fetchAndEmbed()', (t) => {
     return 'parent`s rows with all relations data embedded'
   }
 
-  modelRelations.fetchAndEmbed('some parentRows', 'custom parentWhere')
+  modelRelations.fetchAndEmbed('some parentRows', 'custom options')
   .then((parentRowsWithRelationsData) => {
     t.equal(
       parentRowsWithRelationsData,
