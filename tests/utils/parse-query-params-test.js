@@ -8,7 +8,7 @@ test('parseQueryParams()', (t) => {
   const query = {
     related: 'true',
     fields: ['id', 'name', 'group'],
-    filter: { hide: false },
+    filter: { hide: 'false' },
     order: 'name',
 
     someUnknownOption: 'value' // it will be ignored
@@ -68,8 +68,10 @@ test('parseQueryParams()', (t) => {
   validateParsing({order: ''}, {})
   validateParsing({order: []}, {})
 
-  validateParsing({filter: {hide: false}}, {where: {hide: false}})
-  validateParsing({filter: {hide: false, some: 'some'}}, {where: {hide: false, some: 'some'}})
+  validateParsing({filter: {hide: 'false'}}, {where: {hide: false}})
+  validateParsing({filter: {hide: 'true', some: 'some'}}, {where: {hide: true, some: 'some'}})
+  validateParsing({filter: {hide: false}}, {})
+  validateParsing({filter: {some: 123, hide: 'false'}}, {})
   validateParsing({filter: {'wrong_name': false}}, {})
   validateParsing({filter: {name: {some: 'wrong-value'}}}, {})
   validateParsing({filter: {name: ['va', 'lkl']}}, {})
