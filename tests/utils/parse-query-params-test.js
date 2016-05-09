@@ -37,12 +37,13 @@ test.only('parseQueryParams()', (t) => {
     )
   }
 
-  validateParsing({related: 'any text value'}, {withRelated: true})
-  validateParsing({related: ''}, {withRelated: false})
-  validateParsing({related: []}, {withRelated: true})
-  validateParsing({/* related is undefined */}, {})
   validateParsing({related: true}, {withRelated: true})
   validateParsing({related: false}, {withRelated: false})
+  validateParsing({related: 'any text value'}, {})
+  validateParsing({related: 123}, {})
+  validateParsing({related: ''}, {})
+  validateParsing({related: []}, {})
+  validateParsing({/* related is undefined */}, {})
 
   validateParsing({fields: 'anyString'}, {fieldsOnly: ['anyString']})
   validateParsing({fields: 'id'}, {fieldsOnly: 'id'})
