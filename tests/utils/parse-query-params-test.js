@@ -6,7 +6,7 @@ const parseQueryParams = require('../../lib/utils/parse-query-params')
 
 test('parseQueryParams()', (t) => {
   const query = {
-    related: true,
+    related: 'true',
     fields: ['id', 'name', 'group'],
     filter: { hide: false },
     order: 'name',
@@ -37,8 +37,10 @@ test('parseQueryParams()', (t) => {
     )
   }
 
-  validateParsing({related: true}, {withRelated: true})
-  validateParsing({related: false}, {withRelated: false})
+  validateParsing({related: 'true'}, {withRelated: true})
+  validateParsing({related: 'false'}, {withRelated: false})
+  validateParsing({related: true}, {})
+  validateParsing({related: false}, {})
   validateParsing({related: 'any text value'}, {})
   validateParsing({related: 123}, {})
   validateParsing({related: ''}, {})
