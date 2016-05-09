@@ -4,7 +4,7 @@ const test = require('tape')
 
 const parseQueryParams = require('../../lib/utils/parse-query-params')
 
-test.only('parseQueryParams()', (t) => {
+test('parseQueryParams()', (t) => {
   const query = {
     related: true,
     fields: ['id', 'name', 'group'],
@@ -65,6 +65,13 @@ test.only('parseQueryParams()', (t) => {
   validateParsing({order: 'name SOME'}, {})
   validateParsing({order: ''}, {})
   validateParsing({order: []}, {})
+
+  validateParsing({filter: {hide: false}}, {where: {hide: false}})
+  validateParsing({filter: {hide: false, some: 'some'}}, {where: {hide: false, some: 'some'}})
+  validateParsing({filter: {'wrong_name': false}}, {})
+  validateParsing({filter: {name: {some: 'wrong-value'}}}, {})
+  validateParsing({filter: {name: ['va', 'lkl']}}, {})
+  validateParsing({filter: {}}, {})
 
   t.end()
 })
