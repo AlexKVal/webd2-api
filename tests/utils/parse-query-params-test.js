@@ -48,6 +48,10 @@ test.only('parseQueryParams()', (t) => {
   validateParsing({fields: 'anyString'}, {fieldsOnly: ['anyString']})
   validateParsing({fields: 'id'}, {fieldsOnly: 'id'})
   validateParsing({fields: ['id', 'name', 'group']}, {fieldsOnly: ['id', 'name', 'group']})
+  validateParsing({fields: '; select *'}, {})
+  validateParsing({fields: 'id, name'}, {})
+  validateParsing({fields: 'id name'}, {})
+  validateParsing({fields: ['id', 'name,', 'evil group']}, {})
   validateParsing({fields: ''}, {})
   validateParsing({fields: []}, {})
 
