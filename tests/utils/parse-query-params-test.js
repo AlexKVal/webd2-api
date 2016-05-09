@@ -4,7 +4,7 @@ const test = require('tape')
 
 const parseQueryParams = require('../../lib/utils/parse-query-params')
 
-test('parseQueryParams()', (t) => {
+test.only('parseQueryParams()', (t) => {
   const query = {
     related: true,
     fields: ['id', 'name', 'group'],
@@ -33,14 +33,20 @@ test('parseQueryParams()', (t) => {
     t.deepEqual(
       parseQueryParams(incoming),
       expected,
-      `${incoming} parses to ${expected}`
+      `${JSON.stringify(incoming)} parses to ${JSON.stringify(expected)}`
     )
   }
 
   validateParsing({related: 'any text value'}, {withRelated: true})
-  validateParsing({/* related is undefined */}, {withRelated: false})
+  validateParsing({related: ''}, {withRelated: false})
+  validateParsing({/* related is undefined */}, {})
   validateParsing({related: true}, {withRelated: true})
   validateParsing({related: false}, {withRelated: false})
+
+  validateParsing({fields: 'anyString'}, {fieldsOnly: ['anyString']})
+  validateParsing({fields: 'id'}, {fieldsOnly: 'id'})
+  validateParsing({fields: ['id', 'name', 'group']}, {fieldsOnly: ['id', 'name', 'group']})
+  validateParsing({fields: []}, {})
 
   t.end()
 })
