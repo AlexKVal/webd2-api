@@ -636,7 +636,7 @@ test('apiWrapper.readMany() default', (t) => {
 
     t.deepEqual(
       options,
-      { withRelated: false },
+      {},
       'by default client will get data w/o related data'
     )
 
@@ -672,7 +672,7 @@ test('apiWrapper.readMany() with /?related=true', (t) => {
   }
 
   const next = () => t.fail('next() should not be called')
-  const req = { query: { related: true } } // /?related=true
+  const req = { query: { related: 'true' } } // /?related=true
   const res = { json (serialized) { t.end() } }
 
   t.doesNotThrow(
