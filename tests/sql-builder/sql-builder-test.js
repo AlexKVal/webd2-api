@@ -514,7 +514,7 @@ test('quoteValueIfString() throws if value is "null" or "undefined"', (t) => {
   t.end()
 })
 
-test('sqlBuilder._fieldsNamesForInsert(data) only names that are present in data and schema', (t) => {
+test('sqlBuilder._fieldsNamesForInsert() only intersection of data and schema fields', (t) => {
   const sqlBuilder = new SqlBuilder({
     tableName: 'sPersonal',
     id: 'PersID',
@@ -582,6 +582,29 @@ test('sqlBuilder._fieldsNamesForInsert(data) only names that are present in data
     ['name', 'hide', 'counter', 'GrpID', 'rights', 'PostID'],
     'extra data fields got cut'
   )
+
+  const privateFields = {
+    /* no id because the row is new */
+    name: 'new one'
+  }
+
+  /* additional data are mixed in on the server */
+  /* these fields are not public */
+  privateFields.private1 = 'extra-data'
+  privateFields.parentid = 1
+
+  /* for those private fields to be written schemaMixin has to be provided */
+  const localSchemaMixin = {
+    private1: 'string',
+    parentid: 'integer'
+  }
+
+  t.deepEqual(
+    sqlBuilder._fieldsNamesForInsert(privateFields, localSchemaMixin),
+    ['name', 'private1', 'parentid'],
+    'schemaMixin extends schema and it allows for additional data fields'
+  )
+
   t.end()
 })
 
