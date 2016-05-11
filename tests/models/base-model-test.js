@@ -420,3 +420,48 @@ test('BaseModel#create calls db.exec and returns saved model with cast types', (
   .catch((e) => t.fail(`should not be called ${e}`))
   .then(() => t.end())
 })
+
+test('baseModel.create(data, schemaMixin) allows local schema extending', (t) => {
+  t.plan(2)
+
+  const db = {
+    exec (sql) { return Promise.resolve([{id: '1', name: 'new name', parentid: '1'}]) }
+  }
+
+  class SomeModel extends BaseModel {}
+  const model = new SomeModel({db, name: 'someModel', schema: {
+    tableName: 'someTable',
+    name: 'string'
+  }})
+
+  // mocks
+  model.sqlBuilder = {
+    create (data, schemaMixin) {
+      t.deepEqual(
+        schemaMixin,
+        { parentid: 'integer' },
+        'passes schemaMixin to sqlBuilder.create()'
+      )
+      return Promise.resolve('sql query')
+    },
+    selectOne () { return Promise.resolve('sql query') }
+  }
+
+  const externalData = {
+    name: 'new name'
+  }
+
+// the field we don't want to be accessed from the outside
+  const someSchemaMixin = { parentid: 'integer' }
+  externalData.parentid = 1
+
+  model.create(externalData, someSchemaMixin)
+  .then((castData) => {
+    t.deepEqual(
+      castData,
+      { id: '1', name: 'new name', parentid: '1' }
+    )
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
