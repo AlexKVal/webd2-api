@@ -608,7 +608,7 @@ test('sqlBuilder._fieldsNamesForInsert() only intersection of data and schema fi
   t.end()
 })
 
-test('sqlBuilder._fieldsValuesForInsert(data)', (t) => {
+test('sqlBuilder._fieldsValuesForInsert()', (t) => {
   const sqlBuilder = new SqlBuilder({
     tableName: 'sPersonal',
     id: 'PersID',
@@ -677,10 +677,32 @@ test('sqlBuilder._fieldsValuesForInsert(data)', (t) => {
     'extra data fields got cut'
   )
 
+  const privateFields = {
+    /* no id because the row is new */
+    name: 'new one'
+  }
+
+  /* additional data are mixed in on the server */
+  /* these fields are not public */
+  privateFields.private1 = 'extra-data'
+  privateFields.parentid = 1
+
+  /* for those private fields to be written schemaMixin has to be provided */
+  const localSchemaMixin = {
+    private1: 'string',
+    parentid: 'integer'
+  }
+
+  t.deepEqual(
+    sqlBuilder._fieldsValuesForInsert(privateFields, localSchemaMixin),
+    ["'new one'", "'extra-data'", 1],
+    'schemaMixin extends schema and it allows for additional data fields'
+  )
+
   t.end()
 })
 
-test.skip('sqlBuilder.create(data) returns sql query for INSERT-ing new row', (t) => {
+test('sqlBuilder.create(data) returns sql query for INSERT-ing new row', (t) => {
   const sqlBuilder = new SqlBuilder({
     tableName: 'sPersonal',
     id: 'PersID',
