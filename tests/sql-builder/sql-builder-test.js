@@ -473,6 +473,47 @@ test('sqlBuilder.update(id, data) can generate sql query with partial data', (t)
   t.end()
 })
 
+const quoteValueIfString = SqlBuilder.quoteValueIfString
+
+test('quoteValueIfString() returns as is "boolean" and "integer" types', (t) => {
+  t.equal(quoteValueIfString('boolean', false), false)
+  t.equal(quoteValueIfString('integer', 3), 3)
+  t.end()
+})
+
+test('quoteValueIfString() strings are escaped and single-quoted', (t) => {
+  t.equal(quoteValueIfString('string', 'some name'), "'some name'")
+  t.equal(quoteValueIfString('string', 'input with \'quotes\''), "'input with  quotes '")
+  t.end()
+})
+
+test('quoteValueIfString() other data types are converted to strings', (t) => {
+  t.equal(quoteValueIfString('string', 123), "'123'")
+  t.equal(quoteValueIfString('string', false), "'false'")
+  t.end()
+})
+
+test('quoteValueIfString() treats unknown data as strings', (t) => {
+  t.equal(quoteValueIfString(undefined, 123), "'123'")
+  t.equal(quoteValueIfString(undefined, false), "'false'")
+  t.equal(quoteValueIfString(undefined, 'some string'), "'some string'")
+  t.end()
+})
+
+test('quoteValueIfString() throws if value is "null" or "undefined"', (t) => {
+  const fn0 = function () {
+    quoteValueIfString('string', null)
+  }
+
+  const fn1 = function () {
+    quoteValueIfString('string', undefined)
+  }
+
+  t.throws(fn0, /value for SQL query cannot be null or undefined/)
+  t.throws(fn1, /value for SQL query cannot be null or undefined/)
+  t.end()
+})
+
 test('sqlBuilder._fieldsNamesForInsert(data) only names that are present in data and schema', (t) => {
   const sqlBuilder = new SqlBuilder({
     tableName: 'sPersonal',
@@ -541,47 +582,6 @@ test('sqlBuilder._fieldsNamesForInsert(data) only names that are present in data
     ['name', 'hide', 'counter', 'GrpID', 'rights', 'PostID'],
     'extra data fields got cut'
   )
-  t.end()
-})
-
-const quoteValueIfString = SqlBuilder.quoteValueIfString
-
-test('quoteValueIfString() returns as is "boolean" and "integer" types', (t) => {
-  t.equal(quoteValueIfString('boolean', false), false)
-  t.equal(quoteValueIfString('integer', 3), 3)
-  t.end()
-})
-
-test('quoteValueIfString() strings are escaped and single-quoted', (t) => {
-  t.equal(quoteValueIfString('string', 'some name'), "'some name'")
-  t.equal(quoteValueIfString('string', 'input with \'quotes\''), "'input with  quotes '")
-  t.end()
-})
-
-test('quoteValueIfString() other data types are converted to strings', (t) => {
-  t.equal(quoteValueIfString('string', 123), "'123'")
-  t.equal(quoteValueIfString('string', false), "'false'")
-  t.end()
-})
-
-test('quoteValueIfString() treats unknown data as strings', (t) => {
-  t.equal(quoteValueIfString(undefined, 123), "'123'")
-  t.equal(quoteValueIfString(undefined, false), "'false'")
-  t.equal(quoteValueIfString(undefined, 'some string'), "'some string'")
-  t.end()
-})
-
-test('quoteValueIfString() throws if value is "null" or "undefined"', (t) => {
-  const fn0 = function () {
-    quoteValueIfString('string', null)
-  }
-
-  const fn1 = function () {
-    quoteValueIfString('string', undefined)
-  }
-
-  t.throws(fn0, /value for SQL query cannot be null or undefined/)
-  t.throws(fn1, /value for SQL query cannot be null or undefined/)
   t.end()
 })
 
@@ -657,7 +657,7 @@ test('sqlBuilder._fieldsValuesForInsert(data)', (t) => {
   t.end()
 })
 
-test('sqlBuilder.create(data) returns sql query for INSERT-ing new row', (t) => {
+test.skip('sqlBuilder.create(data) returns sql query for INSERT-ing new row', (t) => {
   const sqlBuilder = new SqlBuilder({
     tableName: 'sPersonal',
     id: 'PersID',
@@ -694,8 +694,7 @@ test('sqlBuilder.create(data) returns sql query for INSERT-ing new row', (t) => 
     'INSERT INTO sPersonal' +
     ' (name, hide, counter, GrpID, rights, PostID)' +
     " VALUES ('new one', false, 445, 12, 101, 23)",
-    'generates INSERT with all data fields provided',
-    'full data'
+    'w/ full data: generates INSERT with all data fields provided'
   )
 
   const partialData = {
@@ -710,8 +709,7 @@ test('sqlBuilder.create(data) returns sql query for INSERT-ing new row', (t) => 
     'INSERT INTO sPersonal' +
     ' (name, GrpID, PostID)' +
     " VALUES ('new one', 12, 23)",
-    'generates INSERT with all data fields provided',
-    'partial data'
+    'w/ partial data: generates INSERT with all data fields provided'
   )
 
   const extraDataFields = {
@@ -731,8 +729,31 @@ test('sqlBuilder.create(data) returns sql query for INSERT-ing new row', (t) => 
     'INSERT INTO sPersonal' +
     ' (name, hide, counter, GrpID, rights, PostID)' +
     " VALUES ('new one', false, 445, 12, 101, 23)",
-    'generates INSERT with all data fields provided',
-    'extra data fields got cut'
+    'w/ extra data: generates INSERT with only schema fields provided; extra fields are ignored'
+  )
+
+  const privateFields = {
+    /* no id because the row is new */
+    name: 'new one'
+  }
+
+  /* additional data are mixed in on the server */
+  /* these fields are not public */
+  privateFields.private1 = 'extra-data'
+  privateFields.parentid = 1
+
+  /* for those private fields to be written schemaMixin has to be provided */
+  const localSchemaMixin = {
+    private1: 'string',
+    parentid: 'integer'
+  }
+
+  t.deepEqual(
+    sqlBuilder.create(privateFields, localSchemaMixin),
+    'INSERT INTO sPersonal' +
+    ' (name, private1, parentid)' +
+    " VALUES ('new one', 'extra-data', 1)",
+    'schemaMixin extends schema and it allows for additional data fields'
   )
 
   t.end()
