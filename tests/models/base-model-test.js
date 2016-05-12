@@ -425,7 +425,17 @@ test('baseModel.create(data, schemaMixin) allows local schema extending', (t) =>
   t.plan(2)
 
   const db = {
-    exec (sql) { return Promise.resolve([{id: '1', name: 'new name', parentid: '1'}]) }
+    exec (sql) {
+      return Promise.resolve([{
+        id: '1',
+        name: 'new name',
+
+        // these should be type-casted
+        parentid: '1', // => 1
+        enabled: '0', // => false
+        hide: '1' // => true
+      }])
+    }
   }
 
   class SomeModel extends BaseModel {}
@@ -439,7 +449,7 @@ test('baseModel.create(data, schemaMixin) allows local schema extending', (t) =>
     create (data, schemaMixin) {
       t.deepEqual(
         schemaMixin,
-        { parentid: 'integer' },
+        { parentid: 'integer', enabled: 'boolean', hide: 'boolean' },
         'passes schemaMixin to sqlBuilder.create()'
       )
       return Promise.resolve('sql query')
@@ -452,14 +462,20 @@ test('baseModel.create(data, schemaMixin) allows local schema extending', (t) =>
   }
 
   // the field we don't want to be accessed from the outside
-  const someSchemaMixin = { parentid: 'integer' }
+  const someSchemaMixin = { parentid: 'integer', enabled: 'boolean', hide: 'boolean' }
   externalData.parentid = 1
 
   model.create(externalData, someSchemaMixin)
   .then((castData) => {
     t.deepEqual(
       castData,
-      { id: '1', name: 'new name', parentid: '1' }
+      {
+        // main schema fields
+        id: '1', name: 'new name',
+        // schemaMixin fields
+        parentid: 1, enabled: false, hide: true
+      },
+      'fields with schemaMixin should be type-casted too'
     )
   })
   .catch((e) => t.fail(e))
