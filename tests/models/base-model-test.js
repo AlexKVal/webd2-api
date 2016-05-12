@@ -359,7 +359,7 @@ test('BaseModel#update calls db.exec, calls selectOne(), and returns a result fr
 })
 
 /**
- * create(data)
+ * create(data, schemaMixin)
  */
 test('BaseModel#create calls db.exec and returns saved model with cast types', (t) => {
   t.plan(4)
@@ -451,7 +451,7 @@ test('baseModel.create(data, schemaMixin) allows local schema extending', (t) =>
     name: 'new name'
   }
 
-// the field we don't want to be accessed from the outside
+  // the field we don't want to be accessed from the outside
   const someSchemaMixin = { parentid: 'integer' }
   externalData.parentid = 1
 
@@ -463,5 +463,67 @@ test('baseModel.create(data, schemaMixin) allows local schema extending', (t) =>
     )
   })
   .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
+
+test('baseModel.validateBeforeUpdate()', (t) => {
+  t.plan(4)
+
+  class SomeModel extends BaseModel {}
+
+  const db = { exec () { return Promise.resolve([{some: 'data'}]) } }
+  const model = new SomeModel({db, name: 'name', schema: { tableName: 'some' }})
+
+  // mocks
+  model.sqlBuilder = {
+    sqlIsRowExist () { return 'sql query' },
+    update () { return 'sql query' }
+  }
+  model.selectOne = (options) => Promise.resolve([{some: 'result'}])
+
+  model.validateBeforeUpdate = (id, data) => {
+    t.equal(id, 12, 'passes id')
+    t.deepEqual(data, {name: 'new name'})
+    t.pass('update() calls validateBeforeUpdate()')
+
+    return true // OK
+  }
+
+  model.update(12, {name: 'new name'})
+  .then((castData) => {
+    t.deepEqual(castData, [{ some: 'result' }])
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
+
+test('baseModel.validateBeforeUpdate() update() rejects if validation throws', (t) => {
+  t.plan(3)
+
+  class SomeModel extends BaseModel {}
+
+  const db = { exec () { return Promise.resolve([{some: 'data'}]) } }
+  const model = new SomeModel({db, name: 'name', schema: { tableName: 'some' }})
+
+  // mocks
+  model.sqlBuilder = {
+    sqlIsRowExist () {
+      t.pass('it is called before validateBeforeUpdate()')
+      return 'sql query'
+    },
+    update () { t.fail('sqlBuilder.update() should not be called') }
+  }
+  model.selectOne = (options) => t.fail('selectOne() should not be called')
+
+  model.validateBeforeUpdate = (id, data) => {
+    t.pass('validateBeforeUpdate() is called')
+    throw new Error('some validation error')
+  }
+
+  model.update(12, {name: 'new name'})
+  .then((castData) => t.fail('result should not be OK'))
+  .catch((e) => {
+    t.equal(e.message, 'some validation error', 'it returns validation error')
+  })
   .then(() => t.end())
 })
