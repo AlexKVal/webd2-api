@@ -479,7 +479,7 @@ test('baseModel.validateBeforeUpdate()', (t) => {
     sqlIsRowExist () { return 'sql query' },
     update () { return 'sql query' }
   }
-  model.selectOne = (options) => Promise.resolve([{some: 'result'}])
+  model.selectOne = (options) => Promise.resolve({some: 'result'})
 
   model.validateBeforeUpdate = (id, data) => {
     t.equal(id, 12, 'passes id')
@@ -491,7 +491,7 @@ test('baseModel.validateBeforeUpdate()', (t) => {
 
   model.update(12, {name: 'new name'})
   .then((castData) => {
-    t.deepEqual(castData, [{ some: 'result' }])
+    t.deepEqual(castData, { some: 'result' })
   })
   .catch((e) => t.fail(e))
   .then(() => t.end())
@@ -525,5 +525,77 @@ test('baseModel.validateBeforeUpdate() update() rejects if validation throws', (
   .catch((e) => {
     t.equal(e.message, 'some validation error', 'it returns validation error')
   })
+  .then(() => t.end())
+})
+
+test('baseModel.validateBeforeCreate()', (t) => {
+  t.plan(4)
+
+  class SomeModel extends BaseModel {}
+
+  const db = {
+    exec () { return Promise.resolve([{name: 'new name', privateField: 'private data'}]) }
+  }
+
+  const model = new SomeModel({db, name: 'name', schema: {
+    tableName: 'some',
+    name: 'string'
+  }})
+
+  // mocks
+  model.sqlBuilder = {
+    create () { return 'sql query' },
+    selectOne () { return 'sql query' }
+  }
+
+  model.validateBeforeCreate = (data, schemaMixin) => {
+    t.pass('create() calls validateBeforeCreate()')
+
+    t.deepEqual(data, {name: 'new name', privateField: 'private data'})
+    t.deepEqual(schemaMixin, {privateField: 'string'})
+
+    return true // OK
+  }
+
+  model.create({name: 'new name', privateField: 'private data'}, {privateField: 'string'})
+  .then((castData) => {
+    t.deepEqual(castData, {name: 'new name', privateField: 'private data'})
+  })
+  .catch((e) => t.fail(e))
+  .then(() => t.end())
+})
+
+test('baseModel.validateBeforeCreate() create() rejects if validation throws', (t) => {
+  t.plan(4)
+
+  class SomeModel extends BaseModel {}
+
+  const db = {
+    exec () { return Promise.resolve([{name: 'new name', privateField: 'private data'}]) }
+  }
+
+  const model = new SomeModel({db, name: 'name', schema: {
+    tableName: 'some',
+    name: 'string'
+  }})
+
+  // mocks
+  model.sqlBuilder = {
+    create () { t.fail('create() should not be called') },
+    selectOne () { t.fail('selectOne() should not be called') }
+  }
+
+  model.validateBeforeCreate = (data, schemaMixin) => {
+    t.pass('create() calls validateBeforeCreate()')
+
+    t.deepEqual(data, {name: 'new name', privateField: 'private data'})
+    t.deepEqual(schemaMixin, {privateField: 'string'})
+
+    throw new Error('some validation error')
+  }
+
+  model.create({name: 'new name', privateField: 'private data'}, {privateField: 'string'})
+  .then((castData) => t.fail('result should not be OK'))
+  .catch((e) => t.equal(e.message, 'some validation error'))
   .then(() => t.end())
 })
