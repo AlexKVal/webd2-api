@@ -283,7 +283,11 @@ test('BaseModel#update rejects with error if no row with "id" exists', (t) => {
     sqlQueryCounter: 0,
     exec (sql) {
       if (this.sqlQueryCounter === 0) {
-        t.equal(sql, 'SELECT id FROM some WHERE id=1', '"is row exists" query')
+        t.equal(
+          sql,
+          'SELECT id, name, hide, GrpID as userGroupId FROM some WHERE id=1',
+          '"get previous data" query'
+        )
         this.sqlQueryCounter += 1
         return Promise.resolve([/* no row with id has been found */])
       } else if (this.sqlQueryCounter === 1) {
@@ -297,8 +301,17 @@ test('BaseModel#update rejects with error if no row with "id" exists', (t) => {
   }
 
   class ModelForUpdate extends BaseModel {}
-  const model = new ModelForUpdate({db, name: 'name', schema: {tableName: 'some'}})
-  model.update(1, {name: 'new'})
+  const model = new ModelForUpdate({db, name: 'name', schema: {
+    tableName: 'some',
+    name: 'string',
+    hide: 'false',
+    group: {
+      belongsTo: 'userGroup',
+      fkField: 'GrpID'
+    }
+  }})
+
+  model.update(1, {name: 'new', hide: false, group: 23})
   .catch((e) => {
     t.pass('catch error')
     t.assert(/row with id: 1 does not exist/.test(e.message), 'assert error message')
@@ -313,7 +326,11 @@ test('BaseModel#update calls db.exec, calls selectOne(), and returns a result fr
     sqlQueryCounter: 0,
     exec (sql) {
       if (this.sqlQueryCounter === 0) {
-        t.equal(sql, 'SELECT id FROM some WHERE id=12', 'sends sql-query to db layer')
+        t.equal(
+          sql,
+          'SELECT id, enabled, disabled, counter FROM some WHERE id=12',
+          '"get previous data" query'
+        )
         this.sqlQueryCounter += 1
         return Promise.resolve([{some: 'data exists'}])
       } else if (this.sqlQueryCounter === 1) {
@@ -326,24 +343,24 @@ test('BaseModel#update calls db.exec, calls selectOne(), and returns a result fr
     }
   }
 
-  class ModelForFullUpdate extends BaseModel {
-    selectOne (options) {
-      // overriden for the test
-      t.pass('selectOne() has been called')
-      t.equal(options.id, 12)
-      return Promise.resolve([{
-        enabled: false,
-        disabled: true,
-        counter: 0
-      }])
-    }
-  }
+  class ModelForFullUpdate extends BaseModel {}
   const model = new ModelForFullUpdate({db, name: 'name', schema: {
     tableName: 'some',
     enabled: 'boolean',
     disabled: 'boolean',
     counter: 'integer'
   }})
+
+  // mock
+  model.selectOne = function selectOne (options) {
+    t.pass('selectOne() has been called')
+    t.equal(options.id, 12)
+    return Promise.resolve([{
+      enabled: false,
+      disabled: true,
+      counter: 0
+    }])
+  }
 
   model.update(12, {counter: 0})
   .then((castData) => {
@@ -354,7 +371,7 @@ test('BaseModel#update calls db.exec, calls selectOne(), and returns a result fr
       counter: 0
     }])
   })
-  .catch((e) => t.fail(`should not be called ${e}`))
+  .catch((e) => t.fail(e))
   .then(() => t.end())
 })
 
@@ -487,7 +504,7 @@ test('baseModel.create(data, schemaMixin) allows local schema extending', (t) =>
 })
 
 test('baseModel.validateBeforeUpdate()', (t) => {
-  t.plan(4)
+  t.plan(5)
 
   class SomeModel extends BaseModel {}
 
@@ -496,15 +513,17 @@ test('baseModel.validateBeforeUpdate()', (t) => {
 
   // mocks
   model.sqlBuilder = {
-    sqlIsRowExist () { return 'sql query' },
+    selectOne () { return 'sql query' },
     update () { return 'sql query' }
   }
   model.selectOne = (options) => Promise.resolve({some: 'result'})
 
-  model.validateBeforeUpdate = (id, data) => {
-    t.equal(id, 12, 'passes id')
-    t.deepEqual(data, {name: 'new name'})
+  model.validateBeforeUpdate = (id, newData, prevData) => {
     t.pass('update() calls validateBeforeUpdate()')
+
+    t.equal(id, 12, 'passes id', 'update() passes id')
+    t.deepEqual(newData, {name: 'new name'}, 'update() passes new data')
+    t.deepEqual(prevData, {some: 'data'}, 'update() passes previous data')
 
     return true // OK
   }
@@ -527,15 +546,15 @@ test('baseModel.validateBeforeUpdate() update() rejects if validation throws', (
 
   // mocks
   model.sqlBuilder = {
-    sqlIsRowExist () {
-      t.pass('it is called before validateBeforeUpdate()')
+    selectOne () {
+      t.pass('selectOne() is used to retrieve previous data')
       return 'sql query'
     },
     update () { t.fail('sqlBuilder.update() should not be called') }
   }
   model.selectOne = (options) => t.fail('selectOne() should not be called')
 
-  model.validateBeforeUpdate = (id, data) => {
+  model.validateBeforeUpdate = (id, newData, prevData) => {
     t.pass('validateBeforeUpdate() is called')
     throw new Error('some validation error')
   }
