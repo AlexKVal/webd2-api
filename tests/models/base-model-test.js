@@ -506,31 +506,39 @@ test('baseModel.create(data, schemaMixin) allows local schema extending', (t) =>
 test('baseModel.validateBeforeUpdate()', (t) => {
   t.plan(5)
 
+  const prevUncastData = {hide: '0', counter: '123'}
+  const prevCastData = {hide: false, counter: 123}
+  const newData = {hide: true, counter: 455}
+
   class SomeModel extends BaseModel {}
 
-  const db = { exec () { return Promise.resolve([{some: 'data'}]) } }
-  const model = new SomeModel({db, name: 'name', schema: { tableName: 'some' }})
+  const db = { exec () { return Promise.resolve([prevUncastData]) } } // prev '0'/false
+  const model = new SomeModel({db, name: 'name', schema: {
+    tableName: 'some',
+    hide: 'boolean',
+    counter: 'integer'
+  }})
 
   // mocks
   model.sqlBuilder = {
     selectOne () { return 'sql query' },
     update () { return 'sql query' }
   }
-  model.selectOne = (options) => Promise.resolve({some: 'result'})
+  model.selectOne = (options) => Promise.resolve(newData)
 
   model.validateBeforeUpdate = (id, newData, prevData) => {
     t.pass('update() calls validateBeforeUpdate()')
 
     t.equal(id, 12, 'passes id', 'update() passes id')
-    t.deepEqual(newData, {name: 'new name'}, 'update() passes new data')
-    t.deepEqual(prevData, {some: 'data'}, 'update() passes previous data')
+    t.deepEqual(newData, newData, 'update() passes new data')
+    t.deepEqual(prevData, prevCastData, 'update() passes type-casted previous data')
 
     return true // OK
   }
 
-  model.update(12, {name: 'new name'})
+  model.update(12, newData) // new 'true'
   .then((castData) => {
-    t.deepEqual(castData, { some: 'result' })
+    t.deepEqual(castData, { hide: true, counter: 455 })
   })
   .catch((e) => t.fail(e))
   .then(() => t.end())
