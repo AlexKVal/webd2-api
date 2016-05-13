@@ -422,18 +422,19 @@ test('BaseModel#create calls db.exec and returns saved model with cast types', (
 })
 
 test('baseModel.create(data, schemaMixin) allows local schema extending', (t) => {
-  t.plan(2)
+  t.plan(3)
 
   const db = {
     exec (sql) {
       return Promise.resolve([{
         id: '1',
-        name: 'new name',
+        name: 'new name'
 
-        // these should be type-casted
-        parentid: '1', // => 1
-        enabled: '0', // => false
-        hide: '1' // => true
+        /* selectOne() does not return these fields because they are private
+        parentid: '1',
+        enabled: '0',
+        hide: '1'
+        */
       }])
     }
   }
@@ -454,7 +455,10 @@ test('baseModel.create(data, schemaMixin) allows local schema extending', (t) =>
       )
       return Promise.resolve('sql query')
     },
-    selectOne () { return Promise.resolve('sql query') }
+    selectOne ({data}) {
+      t.pass('selectOne() does not get schemaMixin so it returns only public schema`s fields')
+      return Promise.resolve('sql query')
+    }
   }
 
   const externalData = {
@@ -471,11 +475,11 @@ test('baseModel.create(data, schemaMixin) allows local schema extending', (t) =>
       castData,
       {
         // main schema fields
-        id: '1', name: 'new name',
-        // schemaMixin fields
-        parentid: 1, enabled: false, hide: true
+        id: '1', name: 'new name'
+        // schemaMixin fields are not returned because they are private
+        // parentid: 1, enabled: false, hide: true
       },
-      'fields with schemaMixin should be type-casted too'
+      'at the end create() returns only public schema`s fields'
     )
   })
   .catch((e) => t.fail(e))
