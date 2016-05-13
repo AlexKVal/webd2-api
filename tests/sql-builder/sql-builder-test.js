@@ -833,6 +833,12 @@ test('sqlBuilder._wherePart() generates clauses for WHERE part', (t) => {
     ]
   )
 
+  t.throws(
+    () => sqlBuilder._wherePart({GrpID: undefined}),
+    /value of 'GrpID' key is undefined/,
+    'throws if any value in constraints is undefined'
+  )
+
   t.end()
 })
 
