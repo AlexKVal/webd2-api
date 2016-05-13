@@ -1,9 +1,9 @@
 'use strict'
 const test = require('tape')
 
-const {Database} = require('../../lib/utils/database')
+const { Database, getDatabase } = require('../../lib/utils/database')
 
-test('Database is a wrapper about odbc-db layer', (t) => {
+test('Database is a wrapper of odbc-db layer', (t) => {
   t.plan(2)
 
   const dbOdbc = {
@@ -42,4 +42,15 @@ test('Database#exec catches db-layer error message and returns it as Error objec
     t.assert(/db error message/.test(e.message), 'assert error message')
     t.end()
   })
+})
+
+test('getDatabase() uses GLOBAL.dbInstance', (t) => {
+  GLOBAL.dbInstance = { exec () { return [{}] } }
+
+  t.equal(
+    getDatabase(),
+    GLOBAL.dbInstance,
+    'returns value of GLOBAL.dbInstance if it is defined for testing purposes'
+  )
+  t.end()
 })
