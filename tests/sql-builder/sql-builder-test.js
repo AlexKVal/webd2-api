@@ -509,8 +509,9 @@ test('quoteValueIfString() throws if value is "null" or "undefined"', (t) => {
     quoteValueIfString('string', undefined)
   }
 
-  t.throws(fn0, /value for SQL query cannot be null or undefined/)
-  t.throws(fn1, /value for SQL query cannot be null or undefined/)
+  t.throws(fn0, /string-type value for SQL query cannot be null/)
+  t.throws(fn1, /string-type value for SQL query cannot be undefined/)
+
   t.end()
 })
 
