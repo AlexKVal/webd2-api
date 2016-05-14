@@ -6,7 +6,7 @@ const parseQueryParams = require('../../lib/utils/parse-query-params')
 
 test('parseQueryParams()', (t) => {
   const query = {
-    related: 'true',
+    includeJoined: 'true',
     fields: ['id', 'name', 'group'],
     filter: { hide: 'false' },
     order: 'name',
@@ -21,7 +21,7 @@ test('parseQueryParams()', (t) => {
   t.deepEqual(
     parsedOptions,
     {
-      withRelated: true,
+      sideloadJoinedRelations: true,
       fieldsOnly: ['id', 'name', 'group'],
       where: { hide: false },
       orderBy: ['name']
@@ -37,15 +37,15 @@ test('parseQueryParams()', (t) => {
     )
   }
 
-  validateParsing({related: 'true'}, {withRelated: true})
-  validateParsing({related: 'false'}, {withRelated: false})
-  validateParsing({related: true}, {})
-  validateParsing({related: false}, {})
-  validateParsing({related: 'any text value'}, {})
-  validateParsing({related: 123}, {})
-  validateParsing({related: ''}, {})
-  validateParsing({related: []}, {})
-  validateParsing({/* related is undefined */}, {})
+  validateParsing({includeJoined: 'true'}, {sideloadJoinedRelations: true})
+  validateParsing({includeJoined: 'false'}, {sideloadJoinedRelations: false})
+  validateParsing({includeJoined: true}, {})
+  validateParsing({includeJoined: false}, {})
+  validateParsing({includeJoined: 'any text value'}, {})
+  validateParsing({includeJoined: 123}, {})
+  validateParsing({includeJoined: ''}, {})
+  validateParsing({includeJoined: []}, {})
+  validateParsing({/* includeJoined is undefined */}, {})
 
   validateParsing({fields: 'anyString'}, {fieldsOnly: ['anyString']})
   validateParsing({fields: 'id'}, {fieldsOnly: 'id'})
