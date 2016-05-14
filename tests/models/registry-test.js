@@ -8,6 +8,8 @@ const BaseModel = require('../../lib/models/base-model')
 const dbMock = { exec () { return Promise.resolve() } }
 
 test('registry is a `singleton` store for models', (t) => {
+  registry.reset()
+
   t.equal(
     registry.model('User'),
     undefined,
@@ -65,6 +67,13 @@ test('registry is a `singleton` store for models', (t) => {
     registry.model('User Account'),
     userAccountModel,
     'it auto camelCase`s model`s names'
+  )
+
+  registry.reset()
+  t.doesNotThrow(
+    () => registry.model('User', User, dbMock),
+    /user is already defined in the registry/,
+    'it has reset() method'
   )
 
   t.end()
