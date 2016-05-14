@@ -657,7 +657,7 @@ test('apiWrapper.readMany() default', (t) => {
   )
 })
 
-test('apiWrapper.readMany() with /?related=true', (t) => {
+test('apiWrapper.readMany() with /?includeJoined=true', (t) => {
   t.plan(2)
 
   const wrapper = getMinimalWrapper()
@@ -665,14 +665,14 @@ test('apiWrapper.readMany() with /?related=true', (t) => {
   wrapper.apiFetchMany = (options) => {
     t.deepEqual(
       options,
-      { withRelated: true },
-      'with /?related=true'
+      { sideloadJoinedRelations: true },
+      'with /?includeJoined=true'
     )
     return Promise.resolve()
   }
 
   const next = () => t.fail('next() should not be called')
-  const req = { query: { related: 'true' } } // /?related=true
+  const req = { query: { includeJoined: 'true' } } // /?includeJoined=true
   const res = { json (serialized) { t.end() } }
 
   t.doesNotThrow(
