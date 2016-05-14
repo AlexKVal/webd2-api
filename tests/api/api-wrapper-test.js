@@ -394,7 +394,7 @@ test('apiWrapper.apiFetchMany() without related', (t) => {
   .then(() => t.end())
 })
 
-test('apiWrapper.apiFetchMany() with related', (t) => {
+test('apiWrapper.apiFetchMany() with JOIN-ed relations', (t) => {
   t.plan(4)
 
   const serializer = {
@@ -411,7 +411,7 @@ test('apiWrapper.apiFetchMany() with related', (t) => {
     name: 'someModelName',
     schema: { tableName: 'some' },
     selectMany (options) {
-      t.deepEqual(options, {withRelated: true}, 'options for model.selectMany()')
+      t.deepEqual(options, {sideloadJoinedRelations: true}, 'options for model.selectMany()')
       return Promise.resolve('data from selectMany')
     }
   }
@@ -432,7 +432,7 @@ test('apiWrapper.apiFetchMany() with related', (t) => {
   }
   apiWrappedModel._joinBelongsToRelations = () => t.fail('this._joinBelongsToRelations() should not be called')
 
-  apiWrappedModel.apiFetchMany({withRelated: true})
+  apiWrappedModel.apiFetchMany({sideloadJoinedRelations: true})
   .then((result) => t.equal(result, 'serialized data'))
   .catch((e) => t.fail(e))
   .then(() => t.end())
@@ -458,7 +458,7 @@ test('apiWrapper.apiFetchMany(options) with options for relations', (t) => {
       t.deepEqual(
         options,
         {
-          withRelated: true,
+          sideloadJoinedRelations: true,
 
           fieldsOnly: ['name', 'active', 'hide', 'group'],
           where: {active: true},
@@ -498,7 +498,7 @@ test('apiWrapper.apiFetchMany(options) with options for relations', (t) => {
   }
 
   const options = {
-    withRelated: true, // main testing option
+    sideloadJoinedRelations: true, // main testing option
 
     // constraints for parent model
     fieldsOnly: ['name', 'active', 'hide', 'group'],
@@ -1044,7 +1044,7 @@ test('I&T apiWrapper.apiFind()', (t) => {
   .then(() => t.end())
 })
 
-test('I&T apiWrapper.apiFetchMany({withRelated: true})', (t) => {
+test('I&T apiWrapper.apiFetchMany({sideloadJoinedRelations: true})', (t) => {
   t.plan(1)
 
   class RightsModel extends BaseModel {
@@ -1161,7 +1161,7 @@ test('I&T apiWrapper.apiFetchMany({withRelated: true})', (t) => {
 
   const apiWrappedUserModel = new ApiWrapper(userModel, registryMock)
 
-  apiWrappedUserModel.apiFetchMany({withRelated: true})
+  apiWrappedUserModel.apiFetchMany({sideloadJoinedRelations: true})
   .then((serialized) => {
     t.deepEqual(
       serialized,
@@ -1362,7 +1362,7 @@ test('I&T apiWrapper.apiFetchMany() with options for relations', (t) => {
   const apiWrappedUserModel = new ApiWrapper(userModel, registryMock)
 
   const options = {
-    withRelated: false,
+    sideloadJoinedRelations: false,
 
     fieldsOnly: ['id', 'name', 'group', 'rights'],
     where: {hide: false},
