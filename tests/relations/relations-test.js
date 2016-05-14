@@ -709,7 +709,7 @@ test('relations._fetchBelongsTo() if relation model is not found in Registry', (
   .then(() => t.end())
 })
 
-test('relations.fetchAndEmbed()', (t) => {
+test('relations.fetchAndEmbedJoined()', (t) => {
   t.plan(7)
 
   const modelRelations = new Relations('model-name', {tableName: 'table-name'})
@@ -734,7 +734,7 @@ test('relations.fetchAndEmbed()', (t) => {
     return 'parent`s rows with all relations data embedded'
   }
 
-  modelRelations.fetchAndEmbed('some parentRows', 'custom options')
+  modelRelations.fetchAndEmbedJoined('some parentRows', 'custom options')
   .then((parentRowsWithRelationsData) => {
     t.equal(
       parentRowsWithRelationsData,
@@ -996,7 +996,7 @@ test('I&T Relations _fetchBelongsTo() + _embedBelongsTo()', (t) => {
   .then(() => t.end())
 })
 
-test('I&T relations.fetchAndEmbed()', (t) => {
+test('I&T relations.fetchAndEmbedJoined()', (t) => {
   t.plan(1)
 
   const userModel = {
@@ -1088,7 +1088,7 @@ test('I&T relations.fetchAndEmbed()', (t) => {
     {id: '2', name: 'Smith', userGroupId: '102', rightsId: '13'}
   ]
 
-  userRelations.fetchAndEmbed(parentRows)
+  userRelations.fetchAndEmbedJoined(parentRows)
   .then((parentRowsWithRelationsData) => {
     t.deepEqual(
       parentRowsWithRelationsData,
@@ -1127,7 +1127,7 @@ test('I&T relations.fetchAndEmbed()', (t) => {
   .then(() => t.end())
 })
 
-test('I&T relations.justEmbedIds()', (t) => {
+test('I&T relations.justEmbedJoinedIds()', (t) => {
   t.plan(5)
 
   const userModel = {
@@ -1252,7 +1252,7 @@ test('I&T relations.justEmbedIds()', (t) => {
     }
   }
 
-  userRelations.justEmbedIds(parentRows, options)
+  userRelations.justEmbedJoinedIds(parentRows, options)
   .then((parentRowsWithRelationsIDs) => {
     t.deepEqual(
       parentRowsWithRelationsIDs,

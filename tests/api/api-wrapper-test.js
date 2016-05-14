@@ -377,7 +377,7 @@ test('apiWrapper.apiFetchMany() without related', (t) => {
 
   // mock it for testing
   apiWrappedModel.relations = {
-    justEmbedIds (parentRows) {
+    justEmbedJoinedIds (parentRows) {
       t.equal(
         parentRows,
         'data from selectMany',
@@ -420,7 +420,7 @@ test('apiWrapper.apiFetchMany() with JOIN-ed relations', (t) => {
 
   // mock it for testing
   apiWrappedModel.relations = {
-    fetchAndEmbed (parentRows) {
+    fetchAndEmbedJoined (parentRows) {
       t.equal(
         parentRows,
         'data from selectMany',
@@ -474,7 +474,7 @@ test('apiWrapper.apiFetchMany(options) with options for relations', (t) => {
 
   // mock it for testing
   apiWrappedModel.relations = {
-    fetchAndEmbed (parentRows, options) {
+    fetchAndEmbedJoined (parentRows, options) {
       t.deepEqual(
         options,
         {
