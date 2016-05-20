@@ -3,8 +3,7 @@
     "": "node.exe --harmony_destructuring"
   },
   "watch": [
-    "lib",
-    "tests"
+    "lib"
   ],
   "env": {
     "NODE_ENV": "development"
